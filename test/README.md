@@ -32,6 +32,8 @@ also manages setting up data directories for tests, which are stored in `_data`.
 
 * `LIT_OUTPUT_SHOW` - Tell the testlib to show output from all Lit(s)
 
+* `ORACLE_OUTPUT_SHOW` - Tell the testlib to show output from the dlcoracle
+
 * `LIT_ID_SHOW` - Used with the above, *only* show output from this Lit
 
 * `LIT_ITEST_ROOT` - Data dir path, only works when running tests directly.

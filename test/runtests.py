@@ -94,7 +94,6 @@ def run_test_list(tests):
         env = None
         try:
             testlib.clean_data_dir() # IMPORTANT!
-            print('------------------------------')
             env = testlib.TestEnv(t['node_cnt'])
         except Exception as e:
             print('Error initing env, this is a test framework bug:', e)

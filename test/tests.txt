@@ -23,3 +23,6 @@ pushbreak 2 forward
 pushbreak 2 reverse
 pushclose 2 forward
 pushclose 2 reverse
+
+# DLC subsystem
+dlc 2

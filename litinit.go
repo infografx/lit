@@ -53,11 +53,12 @@ func litSetup(conf *litConfig) *[32]byte {
 	// create home directory
 	_, err = os.Stat(conf.LitHomeDir)
 	if err != nil {
-		logging.Errorf("Error while creating a directory")
+		logging.Infof("LIT home directory does not exist")
 	}
 	if os.IsNotExist(err) {
 		// first time the guy is running lit, lets set tn3 to true
 		os.Mkdir(conf.LitHomeDir, 0700)
+		logging.Infof("LIT home directory have been created")
 		logging.Infof("Creating a new config file")
 		err := createDefaultConfigFile(conf.LitHomeDir)
 		if err != nil {

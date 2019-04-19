@@ -6,12 +6,18 @@ import subprocess
 import logging
 import random
 import shutil
+import json
 
 import testutil
 import btcrpc
 import litrpc
+import requests
 
-LIT_BIN = "%s/../lit" % paths.abspath(paths.dirname(__file__))
+
+# The dlcoracle binary must be accessible throught a PATH variable.
+
+#LIT_BIN = "%s/../lit" % paths.abspath(paths.dirname(__file__))
+LIT_BIN = "/home/andriy/Documents/go_lit/dev/lit"
 
 REGTEST_COINTYPE = 257
 
@@ -195,15 +201,16 @@ class BitcoinNode():
             "-rpcpassword=rpcpass",
             "-rpcport=" + str(self.rpc_port),
         ]
+
         self.proc = subprocess.Popen(args,
             stdout=subprocess.DEVNULL,
             stderr=subprocess.DEVNULL)
+
 
         # Make the RPC client for it.
         testutil.wait_until_port("localhost", self.rpc_port)
         testutil.wait_until_port("localhost", self.p2p_port)
         self.rpc = btcrpc.BtcClient("localhost", self.rpc_port, "rpcuser", "rpcpass")
-
         # Make sure that we're actually ready to accept RPC calls.
         def ck_ready():
             bci = self.rpc.getblockchaininfo() # just need "some call" that'll fail if we're not ready
@@ -234,10 +241,87 @@ class BitcoinNode():
         else:
             pass # do nothing I guess?
 
+class OracleNode():
+    def __init__(self, interval):
+
+        self.data_dir = new_data_dir("oracle")
+        self.httpport = str(new_port())
+        self.interval = str(interval)
+        self.rangefrom = "10"
+        self.rangeto = "20"
+
+        # Write a hexkey to the privkey file
+        with open(paths.join(self.data_dir, "privkey.hex"), 'w+') as f:
+            s = ''
+            for _ in range(192):
+                s += hexchars[random.randint(0, len(hexchars) - 1)]
+            print('Using key:', s)
+            f.write(s + "\n")
+
+        self.start()    
+
+
+    def start(self):
+
+        # See if we should print stdout
+        outputredir = subprocess.DEVNULL
+        ev_output_show = os.getenv("ORACLE_OUTPUT_SHOW", default="0")
+        if ev_output_show == "1":
+            outputredir = None
+
+        # Now figure out the args to use and then start Lit.
+        args = [
+            "dlcoracle",
+            "--DataDir="+self.data_dir,
+            "--HttpPort=" + self.httpport, 
+            "--Interval=" + self.interval,
+            "--RangeFrom=" + self.rangefrom,
+            "--RangeTo=" + self.rangeto
+        ]
+
+        penv = os.environ.copy()
+
+        self.proc = subprocess.Popen(args,
+        stdin=subprocess.DEVNULL,
+        stdout=outputredir,
+        stderr=outputredir,
+        env=penv)
+
+    def shutdown(self):
+        if self.proc is not None:
+            self.proc.kill()
+            self.proc.wait()
+            self.proc = None
+        else:
+            pass # do nothing I guess?
+
+        shutil.rmtree(self.data_dir)
+    
+    def get_pubkey(self):
+        res = requests.get("http://localhost:"+self.httpport+"/api/pubkey")
+        return res.text
+
+    def get_datasources(self):
+        res = requests.get("http://localhost:"+self.httpport+"/api/datasources")
+        return res.text
+
+              
+    def get_rpoint(self, datasourceID, unixTime):
+        res = requests.get("http://localhost:"+self.httpport+"/api/rpoint/" + str(datasourceID) + "/" + str(unixTime))
+        print("get_rpoint:", "http://localhost:"+self.httpport+"/api/rpoint/" + str(datasourceID) + "/" + str(unixTime))
+        print(res.text)
+        return res.text
+
+    def get_publication(self, rpoint):
+        res  = requests.get("http://localhost:"+self.httpport+"/api/publication/" + rpoint)
+        return res.text
+
+
 class TestEnv():
     def __init__(self, litcnt):
         logger.info("starting nodes...")
         self.bitcoind = BitcoinNode()
+        self.oracles = []
         self.lits = []
         for i in range(litcnt):
             node = LitNode(self.bitcoind)
@@ -260,6 +344,12 @@ class TestEnv():
         self.generate_block(count=0) # Force it to wait for sync.
         return node
 
+    def new_oracle(self, interval):
+        oracle = OracleNode(interval)
+        self.oracles.append(oracle)
+        return oracle
+
+
     def generate_block(self, count=1):
         if count > 0:
             self.bitcoind.rpc.generate(count)
@@ -279,6 +369,8 @@ class TestEnv():
         for l in self.lits:
             l.shutdown()
         self.bitcoind.shutdown()
+        for o in self.oracles:
+            o.shutdown()
 
 def clean_data_dir():
     datadir = get_root_data_dir()
