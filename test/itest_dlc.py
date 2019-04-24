@@ -168,11 +168,22 @@ def run_test(env):
         res = lit1.rpc.SettleContract(CIdx=contract["Contract"]["Idx"], OracleValue=oracle1_val, OracleSig=OracleSig)
         assert res["Success"], "SettleContract does not works."
         
-        env.generate_block(10)    
+        env.generate_block()
 
         print('SettleContract:')
         print(res)
 
+        time.sleep(2)
+
+        bals1 = lit1.get_balance_info()  
+        print('new lit1 balance:', bals1['TxoTotal'], 'in txos,', bals1['ChanTotal'], 'in chans')
+        bal1sum = bals1['TxoTotal'] + bals1['ChanTotal']
+        print('  = sum ', bal1sum)
+
+        bals2 = lit2.get_balance_info()
+        print('new lit2 balance:', bals2['TxoTotal'], 'in txos,', bals2['ChanTotal'], 'in chans')
+        bal2sum = bals2['TxoTotal'] + bals2['ChanTotal']
+        print('  = sum ', bal2sum)     
         
         
 
