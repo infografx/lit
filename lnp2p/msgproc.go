@@ -97,6 +97,8 @@ func (mp *MessageProcessor) HandleMessage(peer *Peer, buf []byte) error {
 
 	if mtype == 0xB3{
 
+		fmt.Print("Chunk\n")
+
 		msg, _ := lnutil.NewChunkMsgFromBytes(buf, peer.GetIdx())
 		mp.ChunksOfMsg[msg.TimeStamp].Data = append(mp.ChunksOfMsg[msg.TimeStamp].Data, msg.Data...)
 
