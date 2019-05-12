@@ -17,8 +17,8 @@ def run_test(env):
         # Create oracles
         #------------
 
-        env.new_oracle(1) # publishing interval is 1 second.
-        env.new_oracle(1)
+        env.new_oracle(1, 11, 20) # publishing interval is 1 second.
+        env.new_oracle(1, 11, 20)
 
         oracle1 = env.oracles[0]
         oracle2 = env.oracles[1]
@@ -43,6 +43,18 @@ def run_test(env):
         bc.rpc.sendtoaddress(addr2, 1)
 
         env.generate_block()
+        time.sleep(10)
+
+        print("Funding")
+        bals1 = lit1.get_balance_info()  
+        print('new lit1 balance:', bals1['TxoTotal'], 'in txos,', bals1['ChanTotal'], 'in chans')
+        bal1sum = bals1['TxoTotal'] + bals1['ChanTotal']
+        print('  = sum ', bal1sum)
+
+        bals2 = lit2.get_balance_info()
+        print('new lit2 balance:', bals2['TxoTotal'], 'in txos,', bals2['ChanTotal'], 'in chans')
+        bal2sum = bals2['TxoTotal'] + bals2['ChanTotal']
+        print('  = sum ', bal2sum)        
 
         #------------
         # Add oracles
@@ -69,6 +81,9 @@ def run_test(env):
 
         res = lit1.rpc.ListOracles(ListOraclesArgs={})
         assert len(res["Oracles"]) == 2, "ListOracles 2 does not works"
+
+        lit2.rpc.AddOracle(Key=oracle1_pubkey["A"], Name="oracle1")
+
 
         #------------
         # Now we have to create a contract in the lit1 node.
@@ -121,8 +136,8 @@ def run_test(env):
         assert res["Contract"]["OurFundingAmount"] == ourFundingAmount, "SetContractFunding does not works"
         assert res["Contract"]["TheirFundingAmount"] == theirFundingAmount, "SetContractFunding does not works"
 
-        valueFullyOurs=20000
-        valueFullyTheirs=10000
+        valueFullyOurs=20
+        valueFullyTheirs=10
 
         res = lit1.rpc.SetContractDivision(CIdx=contract["Contract"]["Idx"], ValueFullyOurs=valueFullyOurs, ValueFullyTheirs=valueFullyTheirs)
         assert res["Success"], "SetContractDivision does not works"
@@ -135,12 +150,27 @@ def run_test(env):
         res = lit1.rpc.OfferContract(CIdx=contract["Contract"]["Idx"], PeerIdx=lit1.get_peer_id(lit2))
         assert res["Success"], "OfferContract does not works"
 
-        time.sleep(6)
+        time.sleep(10)
 
         res = lit2.rpc.ContractRespond(AcceptOrDecline=True, CIdx=1)
         assert res["Success"], "ContractRespond on lit2 does not works"
 
-        time.sleep(6)
+        time.sleep(10)
+
+        env.generate_block()
+        time.sleep(10)
+
+        print("Accept")
+        bals1 = lit1.get_balance_info()  
+        print('new lit1 balance:', bals1['TxoTotal'], 'in txos,', bals1['ChanTotal'], 'in chans')
+        bal1sum = bals1['TxoTotal'] + bals1['ChanTotal']
+        print('  = sum ', bal1sum)
+
+        bals2 = lit2.get_balance_info()
+        print('new lit2 balance:', bals2['TxoTotal'], 'in txos,', bals2['ChanTotal'], 'in chans')
+        bal2sum = bals2['TxoTotal'] + bals2['ChanTotal']
+        print('  = sum ', bal2sum)   
+
 
         oracle1_val = ""
         oracle1_sig = ""
@@ -171,12 +201,18 @@ def run_test(env):
         res = lit1.rpc.SettleContract(CIdx=contract["Contract"]["Idx"], OracleValue=oracle1_val, OracleSig=OracleSig)
         assert res["Success"], "SettleContract does not works."
 
-        time.sleep(6)
+        time.sleep(10)
 
         print('SettleContract:')
         print(res)
 
-        # env.generate_block()
+        env.generate_block()
+        time.sleep(1)
+        env.generate_block()
+        time.sleep(1)
+        env.generate_block()
+
+        time.sleep(10)
 
         # And we get an error here:
         # 2019/04/24 14:33:27.516819 [ERROR] Write message error: write tcp4 127.0.0.1:51938->127.0.0.1:11000: use of closed network connection
@@ -189,16 +225,16 @@ def run_test(env):
 
         #------------------------------------------
         #------------------------------------------
+        print("Settle")
+        bals1 = lit1.get_balance_info()  
+        print('new lit1 balance:', bals1['TxoTotal'], 'in txos,', bals1['ChanTotal'], 'in chans')
+        bal1sum = bals1['TxoTotal'] + bals1['ChanTotal']
+        print('  = sum ', bal1sum)
 
-        # bals1 = lit1.get_balance_info()  
-        # print('new lit1 balance:', bals1['TxoTotal'], 'in txos,', bals1['ChanTotal'], 'in chans')
-        # bal1sum = bals1['TxoTotal'] + bals1['ChanTotal']
-        # print('  = sum ', bal1sum)
-
-        # bals2 = lit2.get_balance_info()
-        # print('new lit2 balance:', bals2['TxoTotal'], 'in txos,', bals2['ChanTotal'], 'in chans')
-        # bal2sum = bals2['TxoTotal'] + bals2['ChanTotal']
-        # print('  = sum ', bal2sum)     
+        bals2 = lit2.get_balance_info()
+        print('new lit2 balance:', bals2['TxoTotal'], 'in txos,', bals2['ChanTotal'], 'in chans')
+        bal2sum = bals2['TxoTotal'] + bals2['ChanTotal']
+        print('  = sum ', bal2sum)     
         
         
 

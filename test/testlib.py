@@ -122,9 +122,11 @@ class LitNode():
         self.lnid = lres["Adr"] # technically we do this more times than we have to, that's okay
 
     def get_sync_height(self):
+        print("get_sync_height()")
         for bal in self.rpc.balance():
             if bal['CoinType'] == REGTEST_COINTYPE:
                 return bal['SyncHeight']
+        print("return -1")
         return -1
 
     def connect_to_peer(self, other):
@@ -242,13 +244,13 @@ class BitcoinNode():
             pass # do nothing I guess?
 
 class OracleNode():
-    def __init__(self, interval):
+    def __init__(self, interval, rangefrom, rangeto):
 
         self.data_dir = new_data_dir("oracle")
         self.httpport = str(new_port())
         self.interval = str(interval)
-        self.rangefrom = "10"
-        self.rangeto = "20"
+        self.rangefrom = str(rangefrom)
+        self.rangeto = str(rangeto)
 
         # Write a hexkey to the privkey file
         with open(paths.join(self.data_dir, "privkey.hex"), 'w+') as f:
@@ -344,8 +346,8 @@ class TestEnv():
         self.generate_block(count=0) # Force it to wait for sync.
         return node
 
-    def new_oracle(self, interval):
-        oracle = OracleNode(interval)
+    def new_oracle(self, interval, rangefrom, rangeto):
+        oracle = OracleNode(interval, rangefrom, rangeto)
         self.oracles.append(oracle)
         return oracle
 
