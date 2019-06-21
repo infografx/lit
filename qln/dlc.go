@@ -2,6 +2,11 @@ package qln
 
 import (
 	"fmt"
+	"os"
+	"encoding/json"
+
+	"bytes"
+	"bufio"
 
 	"github.com/mit-dci/lit/btcutil"
 	"github.com/mit-dci/lit/btcutil/txscript"
@@ -372,6 +377,9 @@ func (nd *LitNode) DlcFundingSigsHandler(msg lnutil.DlcContractFundingSigsMsg, p
 
 	wal.SignMyInputs(msg.SignedFundingTx)
 
+
+	fmt.Printf("::%s::DlcFundingSigsHandler()::DirectSendTx::qln/dlc.go\n", os.Args[6][len(os.Args[6])-4:])
+
 	wal.DirectSendTx(msg.SignedFundingTx)
 
 	err = wal.WatchThis(c.FundingOutpoint)
@@ -537,6 +545,15 @@ func (nd *LitNode) SettleContract(cIdx uint64, oracleValue int64, oracleSig [32]
 		return [32]byte{}, [32]byte{}, err
 	}
 
+
+	fmt.Printf("::%s:: Begin Contract : SettleContract(): qln/dlc.go \n", os.Args[6][len(os.Args[6])-4:])
+
+	cmar, _ := json.Marshal(c)
+	fmt.Printf("%s\n", cmar)
+
+	fmt.Printf("::%s:: End Contract : SettleContract(): qln/dlc.go \n", os.Args[6][len(os.Args[6])-4:])
+
+
 	c.Status = lnutil.ContractStatusSettling
 	err = nd.DlcManager.SaveContract(c)
 	if err != nil {
@@ -602,6 +619,18 @@ func (nd *LitNode) SettleContract(cIdx uint64, oracleValue int64, oracleSig [32]
 		settleTx.TxIn[0].Witness = SpendMultiSigWitStack(pre, myBigSig, theirBigSig)
 	}
 
+
+	fmt.Printf("::%s::Settlement TX: SettleContract()::DirectSendTx::qln/dlc.go \n", os.Args[6][len(os.Args[6])-4:])
+
+	var buft bytes.Buffer
+	wtt := bufio.NewWriter(&buft)
+	settleTx.Serialize(wtt)
+	wtt.Flush()
+
+	fmt.Printf("::%s:: SettleContract(): qln/dlc.go: settleTx %x \n",os.Args[6][len(os.Args[6])-4:], buft.Bytes())
+
+
+
 	// Settlement TX should be valid here, so publish it.
 	err = wal.DirectSendTx(settleTx)
 	if err != nil {
@@ -610,13 +639,23 @@ func (nd *LitNode) SettleContract(cIdx uint64, oracleValue int64, oracleSig [32]
 	}
 
 
+
+
+	//===========================================
+	// Claim TX
+	//===========================================
+
+
+	fmt.Printf("::%s::SettleContract(): qln/dlc.go: d.ValueOurs: %d \n", os.Args[6][len(os.Args[6])-4:], d.ValueOurs)
+
+
 	if ( d.ValueOurs != 0){
 
 		fee := int64(1000)
 
 		if(c.OurFundingAmount + c.TheirFundingAmount == d.ValueOurs){
 			fee += int64(1000)
-		}	
+		}
 
 		// TODO: Claim the contract settlement output back to our wallet - otherwise the peer can claim it after locktime.
 		txClaim := wire.NewMsgTx()
@@ -626,7 +665,9 @@ func (nd *LitNode) SettleContract(cIdx uint64, oracleValue int64, oracleSig [32]
 		txClaim.AddTxIn(wire.NewTxIn(&settleOutpoint, nil, nil))
 
 		addr, err := wal.NewAdr()
-		txClaim.AddTxOut(wire.NewTxOut(d.ValueOurs-1000, lnutil.DirectWPKHScriptFromPKH(addr))) // todo calc fee - fee is double here because the contract output already had the fee deducted in the settlement TX
+		txClaim.AddTxOut(wire.NewTxOut(d.ValueOurs-fee, lnutil.DirectWPKHScriptFromPKH(addr))) // todo calc fee - fee is double here because the contract output already had the fee deducted in the settlement TX
+		// that became possible because fee is fixed and known. todo get fees from settlement tx output 
+
 
 		kg.Step[2] = UseContractPayoutBase
 		privSpend, _ := wal.GetPriv(kg)
@@ -647,6 +688,13 @@ func (nd *LitNode) SettleContract(cIdx uint64, oracleValue int64, oracleSig [32]
 			return [32]byte{}, [32]byte{}, err
 		}
 
+		var buf bytes.Buffer
+		wt := bufio.NewWriter(&buf)
+		txClaim.Serialize(wt)
+		wt.Flush()
+
+		fmt.Printf("::%s:: SettleContract(): qln/dlc.go: txClaim %x \n",os.Args[6][len(os.Args[6])-4:], buf.Bytes())
+
 		// Claim TX should be valid here, so publish it.
 		err = wal.DirectSendTx(txClaim)
 		if err != nil {
@@ -659,7 +707,11 @@ func (nd *LitNode) SettleContract(cIdx uint64, oracleValue int64, oracleSig [32]
 		if err != nil {
 			return [32]byte{}, [32]byte{}, err
 		}
+
+
+		
 		return settleTx.TxHash(), txClaim.TxHash(), nil
+
 
 	}else{
 

@@ -1,6 +1,7 @@
 package lnutil
 
 import (
+	"os"
 	"bufio"
 	"bytes"
 	"encoding/binary"
@@ -453,8 +454,6 @@ func SettlementTx(c *DlcContract, d DlcContractDivision,
 	feeTheirs := feeEach
 	valueOurs := d.ValueOurs
 
-	// This code produces bugs so I disable it
-
 	// // We don't have enough to pay for a fee. We get 0, our contract partner
 	// // pays the rest of the fee
 	// if valueOurs < feeEach {
@@ -463,11 +462,9 @@ func SettlementTx(c *DlcContract, d DlcContractDivision,
 	// } else {
 	// 	valueOurs = d.ValueOurs - feeOurs
 	// }
+
 	totalContractValue := c.TheirFundingAmount + c.OurFundingAmount
 	valueTheirs := totalContractValue - d.ValueOurs
-
-
-	// This code produces bugs so I disable it
 
 	// if valueTheirs < feeEach {
 	// 	feeTheirs = valueTheirs
@@ -475,11 +472,10 @@ func SettlementTx(c *DlcContract, d DlcContractDivision,
 	// 	feeOurs = totalFee - feeTheirs
 	// 	valueOurs = d.ValueOurs - feeOurs
 	// } else {
-	// 	valueTheirs -= feeTheirs
+	//	valueTheirs -= feeTheirs
 	// }
 
-
-	// New code to handle edges of a contract interval
+	fmt.Printf("::%s:: SettlementTx(): lnutil/dlclib.go: totalContractValue: %d, valueOurs: %d, valueTheirs: %d \n",os.Args[6][len(os.Args[6])-4:], totalContractValue, valueOurs, valueTheirs)
 
 	if valueOurs == 0 {
 		valueTheirs = valueTheirs - totalFee
@@ -493,6 +489,8 @@ func SettlementTx(c *DlcContract, d DlcContractDivision,
 		valueTheirs -= feeTheirs
 	}
 
+
+	fmt.Printf("::%s:: SettlementTx()2: lnutil/dlclib.go: valueOurs: %d, valueTheirs: %d \n",os.Args[6][len(os.Args[6])-4:], valueOurs, valueTheirs)
 
 
 	var buf bytes.Buffer
@@ -510,21 +508,35 @@ func SettlementTx(c *DlcContract, d DlcContractDivision,
 	// generated, so we can use their sigs
 	if ours {
 		if valueTheirs > 0 {
+
+
+			fmt.Printf("::%s:: SettlementTx(): lnutil/dlclib.go: OURS: valueTheirs: %d \n",os.Args[6][len(os.Args[6])-4:], valueTheirs)
+
 			tx.AddTxOut(DlcOutput(c.TheirPayoutBase, oracleSigPub,
 				c.OurPayoutBase, valueTheirs))
 		}
 
 		if valueOurs > 0 {
+
+			fmt.Printf("::%s:: SettlementTx(): lnutil/dlclib.go: OURS: valueOurs: %d \n",os.Args[6][len(os.Args[6])-4:], valueOurs)
+
 			tx.AddTxOut(wire.NewTxOut(valueOurs,
 				DirectWPKHScriptFromPKH(c.OurPayoutPKH)))
 		}
 	} else {
 		if valueOurs > 0 {
+
+			fmt.Printf("::%s:: SettlementTx(): lnutil/dlclib.go: THEIRS: valueOurs: %d \n",os.Args[6][len(os.Args[6])-4:], valueOurs)
+
 			tx.AddTxOut(DlcOutput(c.OurPayoutBase, oracleSigPub,
 				c.TheirPayoutBase, valueOurs))
 		}
 
 		if valueTheirs > 0 {
+
+
+			fmt.Printf("::%s:: SettlementTx(): lnutil/dlclib.go: THEIRS: valueTheirs: %d \n",os.Args[6][len(os.Args[6])-4:], valueTheirs)
+
 			tx.AddTxOut(wire.NewTxOut(valueTheirs,
 				DirectWPKHScriptFromPKH(c.TheirPayoutPKH)))
 		}
