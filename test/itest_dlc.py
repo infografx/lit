@@ -3,6 +3,8 @@ import testlib
 import time, datetime
 import json
 
+import pprint
+
 import requests # pip3 install requests
 
 import codecs
@@ -17,7 +19,7 @@ def run_test(env):
         # Create oracles
         #------------
 
-        env.new_oracle(1, 11, 20) # publishing interval is 1 second.
+        env.new_oracle(1, 20, 20) # publishing interval is 1 second.
         env.new_oracle(1, 11, 20)
 
         oracle1 = env.oracles[0]
@@ -32,18 +34,42 @@ def run_test(env):
         lit1 = env.lits[0]
         lit2 = env.lits[1]
 
+
+        pp = pprint.PrettyPrinter(indent=4)
+
+
+        #------------------------------------------
+        print("ADDRESSES BEFORE SEND TO ADDRESS")
+        print("LIT1 Addresses")
+        print(pp.pprint(lit1.rpc.GetAddresses()))
+
+        print("LIT2 Addresses")
+        print(pp.pprint(lit2.rpc.GetAddresses()))
+
+        print("bitcoind Addresses")
+        print(pp.pprint(bc.rpc.listaddressgroupings()))
+        #------------------------------------------ 
+
+
         lit1.connect_to_peer(lit2)
         print("---------------")
         print('Connecting lit1:', lit1.lnid, 'to lit2:', lit2.lnid)
 
         addr1 = lit1.make_new_addr()
-        bc.rpc.sendtoaddress(addr1, 1)
+        txid1 = bc.rpc.sendtoaddress(addr1, 1)
+
+        print("TXID1: " + str(txid1))
+
+        time.sleep(5)
 
         addr2 = lit2.make_new_addr()
-        bc.rpc.sendtoaddress(addr2, 1)
+        txid2 = bc.rpc.sendtoaddress(addr2, 1)
+        print("TXID2: " + str(txid2))
+
+        time.sleep(5)
 
         env.generate_block()
-        time.sleep(10)
+        time.sleep(5)
 
         print("Funding")
         bals1 = lit1.get_balance_info()  
@@ -54,11 +80,25 @@ def run_test(env):
         bals2 = lit2.get_balance_info()
         print('new lit2 balance:', bals2['TxoTotal'], 'in txos,', bals2['ChanTotal'], 'in chans')
         bal2sum = bals2['TxoTotal'] + bals2['ChanTotal']
-        print('  = sum ', bal2sum)        
+        print('  = sum ', bal2sum) 
 
-        #------------
-        # Add oracles
-        #------------
+
+        #------------------------------------------
+        print("ADDRESSES AFTER SEND TO ADDRESS")
+        print("LIT1 Addresses")
+        print(pp.pprint(lit1.rpc.GetAddresses()))
+
+        print("LIT2 Addresses")
+        print(pp.pprint(lit2.rpc.GetAddresses()))
+
+        print("bitcoind Addresses")
+        print(pp.pprint(bc.rpc.listaddressgroupings()))
+        #------------------------------------------          
+
+
+        # #------------
+        # # Add oracles
+        # #------------
 
         res = lit1.rpc.ListOracles()
         assert len(res) != 0, "Initial lis of oracles must be empty"
@@ -66,8 +106,8 @@ def run_test(env):
         oracle1_pubkey = json.loads(oracle1.get_pubkey())
         assert len(oracle1_pubkey["A"]) == 66, "Wrong oracle1 pub key"
         
-        oracle2_pubkey = json.loads(oracle2.get_pubkey())
-        assert len(oracle2_pubkey["A"]) == 66, "Wrong oracle2 pub key"
+        # oracle2_pubkey = json.loads(oracle2.get_pubkey())
+        # assert len(oracle2_pubkey["A"]) == 66, "Wrong oracle2 pub key"
 
         oracle_res1 = lit1.rpc.AddOracle(Key=oracle1_pubkey["A"], Name="oracle1")
         assert oracle_res1["Oracle"]["Idx"] == 1, "AddOracle does not works"
@@ -76,18 +116,18 @@ def run_test(env):
         assert len(res["Oracles"]) == 1, "ListOracles 1 does not works"
 
 
-        oracle_res2 = lit1.rpc.ImportOracle(Url="http://localhost:" + oracle2.httpport)
-        assert oracle_res2["Oracle"]["Idx"] == 2, "ImportOracle does not works"
+        # oracle_res2 = lit1.rpc.ImportOracle(Url="http://localhost:" + oracle2.httpport)
+        # assert oracle_res2["Oracle"]["Idx"] == 2, "ImportOracle does not works"
 
-        res = lit1.rpc.ListOracles(ListOraclesArgs={})
-        assert len(res["Oracles"]) == 2, "ListOracles 2 does not works"
+        # res = lit1.rpc.ListOracles(ListOraclesArgs={})
+        # assert len(res["Oracles"]) == 2, "ListOracles 2 does not works"
 
         lit2.rpc.AddOracle(Key=oracle1_pubkey["A"], Name="oracle1")
 
 
-        #------------
-        # Now we have to create a contract in the lit1 node.
-        #------------
+        # #------------
+        # # Now we have to create a contract in the lit1 node.
+        # #------------
 
         contract = lit1.rpc.NewContract()
 
@@ -104,8 +144,8 @@ def run_test(env):
 
         datasources = json.loads(oracle1.get_datasources())
 
-        # Since the oracle publishes data every 1 second (we set this time above), 
-        # we increase the time for a point by 3 seconds.
+        # # Since the oracle publishes data every 1 second (we set this time above), 
+        # # we increase the time for a point by 3 seconds.
 
         settlement_time = int(time.time()) + 3
 
@@ -142,23 +182,67 @@ def run_test(env):
         res = lit1.rpc.SetContractDivision(CIdx=contract["Contract"]["Idx"], ValueFullyOurs=valueFullyOurs, ValueFullyTheirs=valueFullyTheirs)
         assert res["Success"], "SetContractDivision does not works"
 
+        time.sleep(5)
+        print("Before OfferContract")
 
         res = lit1.rpc.ListConnections()
         print(res)
 
 
+        print("=====CONTRACT IN LIT1 AFTER SetContractDivision=====")
+        res = lit1.rpc.ListContracts()
+        print(pp.pprint(res))
+        print("=====CONTRACT IN LIT1=====")
+
+
+
         res = lit1.rpc.OfferContract(CIdx=contract["Contract"]["Idx"], PeerIdx=lit1.get_peer_id(lit2))
         assert res["Success"], "OfferContract does not works"
+        time.sleep(5)
+       
 
-        time.sleep(10)
+        print("After OfferContract")
+        print("Before ContractRespond")
 
         res = lit2.rpc.ContractRespond(AcceptOrDecline=True, CIdx=1)
         assert res["Success"], "ContractRespond on lit2 does not works"
 
-        time.sleep(10)
+        time.sleep(5)
+
+
+        print("After ContractRespond")
+
+
+        print("=====START CONTRACT N1=====")
+        res = lit1.rpc.ListContracts()
+        print(pp.pprint(res))
+        print("=====END CONTRACT N1=====")
+
+        print("=====START CONTRACT N2=====")
+        res = lit2.rpc.ListContracts()
+        print(pp.pprint(res))
+        print("=====END CONTRACT N2=====") 
+
+
+        #------------------------------------------
+        print("ADDRESSES AFTER CONTRACT RESPOND")
+        print("LIT1 Addresses")
+        print(lit1.rpc.GetAddresses())
+
+        print("LIT2 Addresses")
+        print(lit2.rpc.GetAddresses())
+
+        print("bitcoind Addresses")
+        print(bc.rpc.listaddressgroupings())
+        #------------------------------------------  
+
+
+        print("Before Generate Block")
 
         env.generate_block()
-        time.sleep(10)
+        time.sleep(5)
+
+        print("After Generate Block")
 
         print("Accept")
         bals1 = lit1.get_balance_info()  
@@ -191,11 +275,15 @@ def run_test(env):
                 print(e)
                 next
 
-        print("oracle value:", oracle1_val, "; oracle signature:", oracle1_sig)   
+        print("ORACLE VALUE:", oracle1_val, "; oracle signature:", oracle1_sig)   
 
 
         b_OracleSig = decode_hex(oracle1_sig)[0]
         OracleSig = [elem for elem in b_OracleSig]
+
+
+        print("Before SettleContract")
+        time.sleep(5)
 
 
         res = lit1.rpc.SettleContract(CIdx=contract["Contract"]["Idx"], OracleValue=oracle1_val, OracleSig=OracleSig)
@@ -203,38 +291,105 @@ def run_test(env):
 
         time.sleep(10)
 
-        print('SettleContract:')
+        print('After SettleContract:')
         print(res)
 
-        env.generate_block()
-        time.sleep(1)
-        env.generate_block()
-        time.sleep(1)
-        env.generate_block()
+        # bc.rpc.generate(2)
+
+        # time.sleep(2)
+
+        # bc.rpc.generate(2)
+
+        # time.sleep(2)
+
+        # bc.rpc.generate(2)
+
+
+
+        try:
+            env.generate_block(1)
+            time.sleep(2)
+            env.generate_block(10)
+            time.sleep(2)
+            env.generate_block(1)
+        except BaseException as be:
+            print(be)    
 
         time.sleep(10)
 
-        # And we get an error here:
-        # 2019/04/24 14:33:27.516819 [ERROR] Write message error: write tcp4 127.0.0.1:51938->127.0.0.1:11000: use of closed network connection
-        # Error: lits aren't syncing to bitcoind
+        # # And we get an error here:
+        # # 2019/04/24 14:33:27.516819 [ERROR] Write message error: write tcp4 127.0.0.1:51938->127.0.0.1:11000: use of closed network connection
+        # # Error: lits aren't syncing to bitcoind
 
-        # time.sleep(1)
+        # # time.sleep(1)
 
-        # print("--------end")
+        # # print("--------end")
+
+        #------------------------------------------
+
+
+        best_block_hash = bc.rpc.getbestblockhash()
+        bb = bc.rpc.getblock(best_block_hash)
+        print(bb)
+        print("bb['height']: " + str(bb['height']))
+
+        print("Balance from RPC: " + str(bc.rpc.getbalance()))
+
+        # batch support : print timestamps of blocks 0 to 99 in 2 RPC round-trips:
+        commands = [ [ "getblockhash", height] for height in range(bb['height'] + 1) ]
+        block_hashes = bc.rpc.batch_(commands)
+        blocks = bc.rpc.batch_([ [ "getblock", h ] for h in block_hashes ])
+        block_times = [ block["time"] for block in blocks ]
+        print(block_times)
+
+        print('--------------------')
+
+        for b in blocks:
+            print("--------BLOCK--------")
+            print(b)
+            tx = b["tx"]
+            #print(tx)
+            try:
+
+                for i in range(len(tx)):
+                    print("--------TRANSACTION--------")
+                    rtx = bc.rpc.getrawtransaction(tx[i])
+                    print(rtx)
+                    decoded = bc.rpc.decoderawtransaction(rtx)
+                    pp.pprint(decoded)
+            except BaseException as be:
+                print(be)
+            # print(type(rtx))
+            print('--------')
 
 
         #------------------------------------------
         #------------------------------------------
-        print("Settle")
+        print("AFter Settle")
         bals1 = lit1.get_balance_info()  
         print('new lit1 balance:', bals1['TxoTotal'], 'in txos,', bals1['ChanTotal'], 'in chans')
         bal1sum = bals1['TxoTotal'] + bals1['ChanTotal']
         print('  = sum ', bal1sum)
+        print(bals1)
 
         bals2 = lit2.get_balance_info()
         print('new lit2 balance:', bals2['TxoTotal'], 'in txos,', bals2['ChanTotal'], 'in chans')
         bal2sum = bals2['TxoTotal'] + bals2['ChanTotal']
-        print('  = sum ', bal2sum)     
+        print('  = sum ', bal2sum)
+        print(bals2)
+
+
+        #------------------------------------------
+        print("ADDRESSES AFTER SETTLE")
+        print("LIT1 Addresses")
+        print(pp.pprint(lit1.rpc.GetAddresses()))
+
+        print("LIT2 Addresses")
+        print(pp.pprint(lit2.rpc.GetAddresses()))
+
+        print("bitcoind Addresses")
+        print(pp.pprint(bc.rpc.listaddressgroupings()))
+        #------------------------------------------   
         
         
 

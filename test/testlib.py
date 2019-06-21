@@ -14,6 +14,9 @@ import litrpc
 import requests
 
 
+from bitcoinrpc.authproxy import AuthServiceProxy, JSONRPCException
+
+
 # The dlcoracle binary must be accessible throught a PATH variable.
 
 #LIT_BIN = "%s/../lit" % paths.abspath(paths.dirname(__file__))
@@ -202,6 +205,7 @@ class BitcoinNode():
             "-rpcuser=rpcuser",
             "-rpcpassword=rpcpass",
             "-rpcport=" + str(self.rpc_port),
+            "-txindex"
         ]
 
         self.proc = subprocess.Popen(args,
@@ -212,7 +216,14 @@ class BitcoinNode():
         # Make the RPC client for it.
         testutil.wait_until_port("localhost", self.rpc_port)
         testutil.wait_until_port("localhost", self.p2p_port)
-        self.rpc = btcrpc.BtcClient("localhost", self.rpc_port, "rpcuser", "rpcpass")
+
+
+        #self.rpc = btcrpc.BtcClient("localhost", self.rpc_port, "rpcuser", "rpcpass")
+
+
+        self.rpc = AuthServiceProxy("http://%s:%s@127.0.0.1:%s"%("rpcuser", "rpcpass", self.rpc_port))
+
+
         # Make sure that we're actually ready to accept RPC calls.
         def ck_ready():
             bci = self.rpc.getblockchaininfo() # just need "some call" that'll fail if we're not ready
