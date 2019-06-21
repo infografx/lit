@@ -22,6 +22,8 @@ import (
 
 func (nd *LitNode) AddContract() (*lnutil.DlcContract, error) {
 
+	fmt.Printf("::%s:: AddContract(): qln/dlc.go \n",os.Args[6][len(os.Args[6])-4:])
+
 	c, err := nd.DlcManager.AddContract()
 	if err != nil {
 		return nil, err
@@ -31,6 +33,10 @@ func (nd *LitNode) AddContract() (*lnutil.DlcContract, error) {
 }
 
 func (nd *LitNode) OfferDlc(peerIdx uint32, cIdx uint64) error {
+
+
+	fmt.Printf("::%s:: OfferDlc(): qln/dlc.go \n",os.Args[6][len(os.Args[6])-4:])
+
 	c, err := nd.DlcManager.LoadContract(cIdx)
 	if err != nil {
 		return err
@@ -137,6 +143,10 @@ func (nd *LitNode) DeclineDlc(cIdx uint64, reason uint8) error {
 }
 
 func (nd *LitNode) AcceptDlc(cIdx uint64) error {
+
+
+	fmt.Printf("::%s:: AcceptDlc(): qln/dlc.go \n",os.Args[6][len(os.Args[6])-4:])
+
 	c, err := nd.DlcManager.LoadContract(cIdx)
 	if err != nil {
 		return err
@@ -216,6 +226,9 @@ func (nd *LitNode) AcceptDlc(cIdx uint64) error {
 }
 
 func (nd *LitNode) DlcOfferHandler(msg lnutil.DlcOfferMsg, peer *RemotePeer) {
+
+	fmt.Printf("::%s:: DlcOfferHandler: qln/dlc.go \n",os.Args[6][len(os.Args[6])-4:])
+
 	c := new(lnutil.DlcContract)
 
 	c.PeerIdx = peer.Idx
@@ -275,6 +288,9 @@ func (nd *LitNode) DlcDeclineHandler(msg lnutil.DlcOfferDeclineMsg, peer *Remote
 }
 
 func (nd *LitNode) DlcAcceptHandler(msg lnutil.DlcOfferAcceptMsg, peer *RemotePeer) error {
+
+	fmt.Printf("::%s:: DlcAcceptHandler: qln/dlc.go \n",os.Args[6][len(os.Args[6])-4:])
+
 	c, err := nd.DlcManager.LoadContract(msg.Idx)
 	if err != nil {
 		logging.Errorf("DlcAcceptHandler FindContract err %s\n", err.Error())
@@ -319,6 +335,9 @@ func (nd *LitNode) DlcAcceptHandler(msg lnutil.DlcOfferAcceptMsg, peer *RemotePe
 }
 
 func (nd *LitNode) DlcContractAckHandler(msg lnutil.DlcContractAckMsg, peer *RemotePeer) {
+
+	fmt.Printf("::%s:: DlcContractAckHandler: qln/dlc.go \n",os.Args[6][len(os.Args[6])-4:])
+
 	c, err := nd.DlcManager.LoadContract(msg.Idx)
 	if err != nil {
 		logging.Errorf("DlcContractAckHandler FindContract err %s\n", err.Error())
@@ -360,6 +379,9 @@ func (nd *LitNode) DlcContractAckHandler(msg lnutil.DlcContractAckMsg, peer *Rem
 }
 
 func (nd *LitNode) DlcFundingSigsHandler(msg lnutil.DlcContractFundingSigsMsg, peer *RemotePeer) {
+
+	fmt.Printf("::%s:: DlcFundingSigsHandler(): qln/dlc.go \n",os.Args[6][len(os.Args[6])-4:])
+
 	c, err := nd.DlcManager.LoadContract(msg.Idx)
 	if err != nil {
 		logging.Errorf("DlcFundingSigsHandler FindContract err %s\n", err.Error())
@@ -401,6 +423,10 @@ func (nd *LitNode) DlcFundingSigsHandler(msg lnutil.DlcContractFundingSigsMsg, p
 }
 
 func (nd *LitNode) DlcSigProofHandler(msg lnutil.DlcContractSigProofMsg, peer *RemotePeer) {
+
+
+	fmt.Printf("::%s:: DlcSigProofHandler(): qln/dlc.go \n",os.Args[6][len(os.Args[6])-4:])
+
 	c, err := nd.DlcManager.LoadContract(msg.Idx)
 	if err != nil {
 		logging.Errorf("DlcSigProofHandler FindContract err %s\n", err.Error())
@@ -429,6 +455,9 @@ func (nd *LitNode) DlcSigProofHandler(msg lnutil.DlcContractSigProofMsg, peer *R
 }
 
 func (nd *LitNode) SignSettlementDivisions(c *lnutil.DlcContract) ([]lnutil.DlcContractSettlementSignature, error) {
+
+	fmt.Printf("::%s:: SignSettlementDivisions(): qln/dlc.go \n",os.Args[6][len(os.Args[6])-4:])
+
 	wal, ok := nd.SubWallet[c.CoinType]
 	if !ok {
 		return nil, fmt.Errorf("Wallet of type %d not found", c.CoinType)
@@ -472,6 +501,9 @@ func (nd *LitNode) SignSettlementDivisions(c *lnutil.DlcContract) ([]lnutil.DlcC
 }
 
 func (nd *LitNode) BuildDlcFundingTransaction(c *lnutil.DlcContract) (wire.MsgTx, error) {
+
+	fmt.Printf("::%s:: BuildDlcFundingTransaction(): qln/dlc.go \n",os.Args[6][len(os.Args[6])-4:])
+
 	// make the tx
 	tx := wire.NewMsgTx()
 
@@ -514,6 +546,10 @@ func (nd *LitNode) BuildDlcFundingTransaction(c *lnutil.DlcContract) (wire.MsgTx
 }
 
 func (nd *LitNode) FundContract(c *lnutil.DlcContract) error {
+
+	fmt.Printf("::%s:: FundContract(): qln/dlc.go \n",os.Args[6][len(os.Args[6])-4:])
+
+
 	wal, ok := nd.SubWallet[c.CoinType]
 	if !ok {
 		return fmt.Errorf("No wallet of type %d connected", c.CoinType)
@@ -538,6 +574,10 @@ func (nd *LitNode) FundContract(c *lnutil.DlcContract) error {
 }
 
 func (nd *LitNode) SettleContract(cIdx uint64, oracleValue int64, oracleSig [32]byte) ([32]byte, [32]byte, error) {
+
+
+	fmt.Printf("::%s:: SettleContract(): qln/dlc.go \n",os.Args[6][len(os.Args[6])-4:])
+
 
 	c, err := nd.DlcManager.LoadContract(cIdx)
 	if err != nil {

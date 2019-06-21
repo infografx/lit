@@ -3,6 +3,7 @@ package qln
 import (
 	"bytes"
 	"fmt"
+	"os"
 
 	"github.com/mit-dci/lit/logging"
 
@@ -534,6 +535,9 @@ func (nd *LitNode) HeightEventHandler(HeightEventChan chan lnutil.HeightEvent) {
 
 func (nd *LitNode) HandleContractOPEvent(c *lnutil.DlcContract,
 	opEvent *lnutil.OutPointEvent) error {
+
+
+	fmt.Printf("::%s:: HandleContractOPEvent: qln/dlc.go \n",os.Args[6][len(os.Args[6])-4:])  		
 
 	logging.Infof("Received OPEvent for contract %d!\n", c.Idx)
 	if opEvent.Tx != nil {
