@@ -19,7 +19,7 @@ def run_test(env):
         # Create oracles
         #------------
 
-        env.new_oracle(1, 10, 20) # publishing interval is 1 second.
+        env.new_oracle(1, 20, 20) # publishing interval is 1 second.
         env.new_oracle(1, 11, 20)
 
         oracle1 = env.oracles[0]

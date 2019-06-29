@@ -673,11 +673,13 @@ func (nd *LitNode) HandleContractOPEvent(c *lnutil.DlcContract,
 			payload = bw.Bytes()
 			lenp = len(payload)
 
-			fmt.Printf("::%s:: HandleContractOPEvent: qln/msghandler.go: len(payload)2 %d, txClaim.BtcEncode(&bw, 0, 2)2 %x \n",os.Args[6][len(os.Args[6])-4:], lenp, payload)			
+			fmt.Printf("::%s:: HandleContractOPEvent: qln/msghandler.go: len(payload)2 %d, txClaim.BtcEncode(&bw, 0, 0)2 %x \n",os.Args[6][len(os.Args[6])-4:], lenp, payload)			
 
 
 			fmt.Printf("::%s:: HandleContractOPEvent: qln/msghandler.go: ttxClaim.TxIn[0].Witness.Serialize() %d \n",
 			os.Args[6][len(os.Args[6])-4:], txClaim.TxIn[0].Witness.SerializeSize())
+
+
 
 			// fmt.Printf("::%s:: HandleContractOPEvent: qln/msghandler.go: txClaim.TxIn.Serialize() %d \n",
 			// os.Args[6][len(os.Args[6])-4:], txClaim.TxIn.SerializeSize())
@@ -687,7 +689,9 @@ func (nd *LitNode) HandleContractOPEvent(c *lnutil.DlcContract,
 
 			
 			
-
+			ctxvsize := (txClaim.SerializeSizeStripped() * 3 + txClaim.SerializeSize())/4
+		
+			fmt.Printf("::%s::HandleContractOPEvent: qln/msghandler.go: ClaimTX vsize %d \n", os.Args[6][len(os.Args[6])-4:], ctxvsize)
 
 
 			wal.DirectSendTx(txClaim)

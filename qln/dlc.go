@@ -708,6 +708,10 @@ func (nd *LitNode) SettleContract(cIdx uint64, oracleValue int64, oracleSig [32]
 	fmt.Printf("::%s:: SettleContract(): After Signing: settleTx %x \n",os.Args[6][len(os.Args[6])-4:], buftt.Bytes())
 
 
+	stxvsize := (settleTx.SerializeSizeStripped() * 3 + settleTx.SerializeSize())/4
+	
+	fmt.Printf("::%s::SettleContract(): qln/dlc.go: SettleTX vsize %d \n", os.Args[6][len(os.Args[6])-4:], stxvsize)	
+
 
 	// Settlement TX should be valid here, so publish it.
 	err = wal.DirectSendTx(settleTx)
@@ -743,8 +747,7 @@ func (nd *LitNode) SettleContract(cIdx uint64, oracleValue int64, oracleSig [32]
 		txClaim.AddTxIn(wire.NewTxIn(&settleOutpoint, nil, nil))
 
 		addr, err := wal.NewAdr()
-		txClaim.AddTxOut(wire.NewTxOut(settleTx.TxOut[0].Value-fee, lnutil.DirectWPKHScriptFromPKH(addr))) // todo calc fee - fee is double here because the contract output already had the fee deducted in the settlement TX
-		// that became possible because fee is fixed and known. todo get fees from settlement tx output 
+		txClaim.AddTxOut(wire.NewTxOut(settleTx.TxOut[0].Value-fee, lnutil.DirectWPKHScriptFromPKH(addr)))
 
 
 		kg.Step[2] = UseContractPayoutBase
@@ -794,6 +797,11 @@ func (nd *LitNode) SettleContract(cIdx uint64, oracleValue int64, oracleSig [32]
 
 
 		
+
+		ctxvsize := (txClaim.SerializeSizeStripped() * 3 + txClaim.SerializeSize())/4
+		
+		fmt.Printf("::%s::SettleContract(): qln/dlc.go: ClaimTX vsize %d \n", os.Args[6][len(os.Args[6])-4:], ctxvsize)
+
 		return settleTx.TxHash(), txClaim.TxHash(), nil
 
 
