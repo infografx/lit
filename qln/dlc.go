@@ -2,6 +2,7 @@ package qln
 
 import (
 	"fmt"
+	"math"
 	"os"
 	"encoding/json"
 
@@ -599,6 +600,30 @@ func (nd *LitNode) FundContract(c *lnutil.DlcContract) error {
 	return nil
 }
 
+
+// VarIntSerializeSize returns the number of bytes it would take to serialize
+// val as a variable length integer.
+func VarIntSerializeSize(val uint64) int {
+	// The value is small enough to be represented by itself, so it's
+	// just 1 byte.
+	if val < 0xfd {
+		return 1
+	}
+
+	// Discriminant 1 byte plus 2 bytes for the uint16.
+	if val <= math.MaxUint16 {
+		return 3
+	}
+
+	// Discriminant 1 byte plus 4 bytes for the uint32.
+	if val <= math.MaxUint32 {
+		return 5
+	}
+
+	// Discriminant 1 byte plus 8 bytes for the uint64.
+	return 9
+}
+
 func (nd *LitNode) SettleContract(cIdx uint64, oracleValue int64, oracleSig [32]byte) ([32]byte, [32]byte, error) {
 
 
@@ -653,14 +678,43 @@ func (nd *LitNode) SettleContract(cIdx uint64, oracleValue int64, oracleSig [32]
 
 	settleTx, err := lnutil.SettlementTx(c, *d, false)
 
-
 	var buft bytes.Buffer
 	wtt := bufio.NewWriter(&buft)
 	settleTx.Serialize(wtt)
 	wtt.Flush()
 
 
+	fmt.Printf("::%s:: SettleContract(): After lnutil.SettlementTx(c, *d, false) : %d \n",os.Args[6][len(os.Args[6])-4:], settleTx.SerializeSize())
+	fmt.Printf("::%s:: SettleContract(): After lnutil.SettlementTx(c, *d, false) Stripped : %d \n",os.Args[6][len(os.Args[6])-4:], settleTx.SerializeSizeStripped())
+
+	n := 8 + VarIntSerializeSize(uint64(len(settleTx.TxIn))) +
+	VarIntSerializeSize(uint64(len(settleTx.TxOut)))
+
+
+	n_out := 0
+	for i1, outtx := range settleTx.TxOut {
+
+		n_out += outtx.SerializeSize()
+		fmt.Printf("::%s:: i1 : %d \n",os.Args[6][len(os.Args[6])-4:], i1)
+
+	}
+
+	n_in := 0
+	for i2, intx := range settleTx.TxIn {
+
+		n_in += intx.SerializeSize()
+		fmt.Printf("::%s:: i2 : %d \n",os.Args[6][len(os.Args[6])-4:], i2)
+
+	}
+
+
+
+	fmt.Printf("::%s:: SettleContract(): n: %d \n",os.Args[6][len(os.Args[6])-4:], n)
+	fmt.Printf("::%s:: SettleContract(): n_out: %d \n",os.Args[6][len(os.Args[6])-4:], n_out)
+	fmt.Printf("::%s:: SettleContract(): n_in: %d \n",os.Args[6][len(os.Args[6])-4:], n_in)
+
 	fmt.Printf("::%s:: SettleContract(): Before Signing: settleTx: %x \n",os.Args[6][len(os.Args[6])-4:], buft.Bytes())
+
 
 
 
@@ -693,12 +747,17 @@ func (nd *LitNode) SettleContract(cIdx uint64, oracleValue int64, oracleSig [32]
 	// swap if needed
 	if swap {
 		settleTx.TxIn[0].Witness = SpendMultiSigWitStack(pre, theirBigSig, myBigSig)
+
+		fmt.Printf("::%s:: SettleContract(): swap True: settleTx.TxIn[0].Witness Size %d \n", os.Args[6][len(os.Args[6])-4:], settleTx.TxIn[0].Witness.SerializeSize())
+
 	} else {
 		settleTx.TxIn[0].Witness = SpendMultiSigWitStack(pre, myBigSig, theirBigSig)
+
+		fmt.Printf("::%s:: SettleContract(): settleTx.TxIn[0].Witness Size %d \n", os.Args[6][len(os.Args[6])-4:], settleTx.TxIn[0].Witness.SerializeSize())
+
 	}
 
 
-	fmt.Printf("::%s::Settlement TX: SettleContract()::DirectSendTx::qln/dlc.go \n", os.Args[6][len(os.Args[6])-4:])
 
 	var buftt bytes.Buffer
 	wttt := bufio.NewWriter(&buftt)
@@ -710,6 +769,8 @@ func (nd *LitNode) SettleContract(cIdx uint64, oracleValue int64, oracleSig [32]
 
 	stxvsize := (settleTx.SerializeSizeStripped() * 3 + settleTx.SerializeSize())/4
 	
+	fmt.Printf("::%s::SettleContract(): qln/dlc.go: SettleTX size %d \n", os.Args[6][len(os.Args[6])-4:], settleTx.SerializeSize())
+	fmt.Printf("::%s::SettleContract(): qln/dlc.go: SettleTX size Stripped %d \n", os.Args[6][len(os.Args[6])-4:], settleTx.SerializeSizeStripped())
 	fmt.Printf("::%s::SettleContract(): qln/dlc.go: SettleTX vsize %d \n", os.Args[6][len(os.Args[6])-4:], stxvsize)	
 
 

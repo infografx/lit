@@ -10,7 +10,7 @@ import (
 	"errors"
 
 	"github.com/mit-dci/lit/btcutil/chaincfg/chainhash"
-	"github.com/mit-dci/lit/consts"
+	//"github.com/mit-dci/lit/consts"
 	"github.com/mit-dci/lit/crypto/koblitz"
 	"github.com/mit-dci/lit/logging"
 	"github.com/mit-dci/lit/wire"
@@ -444,6 +444,22 @@ func SettlementTx(c *DlcContract, d DlcContractDivision,
 	ours bool) (*wire.MsgTx, error) {
 
 
+	// Maximum possible size of transaction here is
+	// Version 4 bytes + LockTime 4 bytes + Serialized varint size for the
+	// number of transaction inputs and outputs.
+	// n := 8 + VarIntSerializeSize(uint64(len(msg.TxIn))) +
+	// 	VarIntSerializeSize(uint64(len(msg.TxOut)))
+
+	// Plus Witness Data 218
+	// Plus Single input 41
+	// Plus Their output 43
+	// Plus Our output 31
+	// Plus 2 for all wittness transactions 
+	// Total max size of tx here is:  4 + 4 + 1 + 1 + 2 + 218 + 41 + 43 + 31 =  345
+	// Vsize: ( (345 - 218) * 3 + 345 ) / 4 = 196
+
+	maxVsize := 182
+
 	fmt.Printf("::%s:: SettlementTx: lnutil/dlcllib.go \n",os.Args[6][len(os.Args[6])-4:])	
 
 
@@ -453,7 +469,11 @@ func SettlementTx(c *DlcContract, d DlcContractDivision,
 
 	tx.AddTxIn(wire.NewTxIn(&c.FundingOutpoint, nil, nil))
 
-	totalFee := int64(consts.DlcSettlementTxFee) // TODO: Calculate
+
+	//totalFee := int64(consts.DlcSettlementTxFee) // TODO: Calculate
+
+	totalFee := int64(maxVsize * 80)	// 80 is fee per byte
+
 	feeEach := int64(float64(totalFee) / float64(2))
 	feeOurs := feeEach
 	feeTheirs := feeEach
@@ -472,11 +492,32 @@ func SettlementTx(c *DlcContract, d DlcContractDivision,
 
 	fmt.Printf("::%s:: SettlementTx(): lnutil/dlclib.go: totalContractValue: %d, valueOurs: %d, valueTheirs: %d \n",os.Args[6][len(os.Args[6])-4:], totalContractValue, valueOurs, valueTheirs)
 
+	vsize :=int64(0)
+
 	// We don't have enough to pay for a fee. We get 0, our contract partner
 	// pays the rest of the fee
 	if valueOurs < feeOurs {
 
-		if valueOurs == 0 {
+		// Just recalculate totalFee, feeOurs, feeTheirs to exclude one of the output.
+		if ours {
+
+			// exclude wire.NewTxOut from size (i.e 31)
+			vsize = int64(149)				
+			totalFee = vsize * 80				
+
+		}else{
+	
+			// exclude DlcOutput from size (i.e 43)
+			vsize = int64(137)				
+			totalFee = vsize * 80
+	
+		}
+
+		feeEach = int64(float64(totalFee) / float64(2))
+		feeOurs = feeEach
+		feeTheirs = feeEach
+
+		if valueOurs == 0 {  		// Also if we win 0, our contract partner pays the totalFee
 			feeTheirs = totalFee
 		}else{
 
@@ -486,8 +527,25 @@ func SettlementTx(c *DlcContract, d DlcContractDivision,
 		}
 	}
 
-
+	// Due to check above it is impossible (valueTheirs < feeTheirs) and 
+	// (valueOurs < feeOurs) are satisfied at the same time.
 	if valueTheirs < feeTheirs {
+
+		if ours {
+
+			vsize = int64(137)				
+			totalFee = vsize * 80							
+
+		}else{
+	
+			vsize = int64(149)				
+			totalFee = vsize * 80
+	
+		}
+		feeEach = int64(float64(totalFee) / float64(2))
+		feeOurs = feeEach
+		feeTheirs = feeEach		
+		
 
 		if valueTheirs == 0 {
 			feeOurs = totalFee
