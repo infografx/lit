@@ -7,6 +7,7 @@ import (
 	"encoding/binary"
 	"fmt"
 	"math/big"
+	"errors"
 
 	"github.com/mit-dci/lit/btcutil/chaincfg/chainhash"
 	"github.com/mit-dci/lit/consts"
@@ -442,6 +443,10 @@ func computePubKey(pubA, pubR [33]byte, msg []byte) ([33]byte, error) {
 func SettlementTx(c *DlcContract, d DlcContractDivision,
 	ours bool) (*wire.MsgTx, error) {
 
+
+	fmt.Printf("::%s:: SettlementTx: lnutil/dlcllib.go \n",os.Args[6][len(os.Args[6])-4:])	
+
+
 	tx := wire.NewMsgTx()
 	// set version 2, for op_csv
 	tx.Version = 2
@@ -452,42 +457,51 @@ func SettlementTx(c *DlcContract, d DlcContractDivision,
 	feeEach := int64(float64(totalFee) / float64(2))
 	feeOurs := feeEach
 	feeTheirs := feeEach
-	valueOurs := d.ValueOurs
-
-	// // We don't have enough to pay for a fee. We get 0, our contract partner
-	// // pays the rest of the fee
-	// if valueOurs < feeEach {
-	// 	feeOurs = valueOurs
-	// 	valueOurs = 0
-	// } else {
-	// 	valueOurs = d.ValueOurs - feeOurs
-	// }
 
 	totalContractValue := c.TheirFundingAmount + c.OurFundingAmount
+
+	valueOurs := d.ValueOurs
 	valueTheirs := totalContractValue - d.ValueOurs
 
-	// if valueTheirs < feeEach {
-	// 	feeTheirs = valueTheirs
-	// 	valueTheirs = 0
-	// 	feeOurs = totalFee - feeTheirs
-	// 	valueOurs = d.ValueOurs - feeOurs
-	// } else {
-	//	valueTheirs -= feeTheirs
-	// }
+
+	if totalContractValue < totalFee {
+		return nil, errors.New("totalContractValue < totalFee")
+	}
+
+	
 
 	fmt.Printf("::%s:: SettlementTx(): lnutil/dlclib.go: totalContractValue: %d, valueOurs: %d, valueTheirs: %d \n",os.Args[6][len(os.Args[6])-4:], totalContractValue, valueOurs, valueTheirs)
 
-	if valueOurs == 0 {
-		valueTheirs = valueTheirs - totalFee
-	}else{
-		valueOurs = d.ValueOurs - feeOurs
+	// We don't have enough to pay for a fee. We get 0, our contract partner
+	// pays the rest of the fee
+	if valueOurs < feeOurs {
+
+		if valueOurs == 0 {
+			feeTheirs = totalFee
+		}else{
+
+			feeTheirs += valueOurs
+			valueOurs = 0
+
+		}
 	}
 
-	if valueTheirs == 0 {
-		valueOurs = valueOurs - totalFee
-	}else{
-		valueTheirs -= feeTheirs
+
+	if valueTheirs < feeTheirs {
+
+		if valueTheirs == 0 {
+			feeOurs = totalFee
+		}else{
+
+			feeOurs += valueTheirs
+			valueTheirs = 0
+
+		}
 	}
+
+	valueOurs -= feeOurs
+	valueTheirs -= feeTheirs
+
 
 
 	fmt.Printf("::%s:: SettlementTx()2: lnutil/dlclib.go: valueOurs: %d, valueTheirs: %d \n",os.Args[6][len(os.Args[6])-4:], valueOurs, valueTheirs)
@@ -541,6 +555,16 @@ func SettlementTx(c *DlcContract, d DlcContractDivision,
 				DirectWPKHScriptFromPKH(c.TheirPayoutPKH)))
 		}
 	}
+
+
+	var buft bytes.Buffer
+	wtt := bufio.NewWriter(&buft)
+	tx.Serialize(wtt)
+	wtt.Flush()
+
+
+	fmt.Printf("::%s:: SettlementTx(): lnutil/dlclib.go: tx %x \n",os.Args[6][len(os.Args[6])-4:], buft.Bytes())
+
 
 	return tx, nil
 }

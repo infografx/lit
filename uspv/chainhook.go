@@ -181,6 +181,7 @@ func (s *SPVCon) PushTx(tx *wire.MsgTx) error {
 	if err != nil {
 		return err
 	}
+	
 	// broadcast inv message
 	s.outMsgQueue <- invMsg
 

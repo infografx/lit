@@ -2,6 +2,8 @@ package qln
 
 import (
 	"bytes"
+	"encoding/binary"
+	"bufio"
 	"fmt"
 	"os"
 
@@ -537,7 +539,7 @@ func (nd *LitNode) HandleContractOPEvent(c *lnutil.DlcContract,
 	opEvent *lnutil.OutPointEvent) error {
 
 
-	fmt.Printf("::%s:: HandleContractOPEvent: qln/dlc.go \n",os.Args[6][len(os.Args[6])-4:])  		
+	fmt.Printf("::%s:: HandleContractOPEvent: qln/msghandler.go \n",os.Args[6][len(os.Args[6])-4:])  		
 
 	logging.Infof("Received OPEvent for contract %d!\n", c.Idx)
 	if opEvent.Tx != nil {
@@ -547,6 +549,17 @@ func (nd *LitNode) HandleContractOPEvent(c *lnutil.DlcContract,
 				" for type %d", c.CoinType)
 		}
 
+
+		var buft bytes.Buffer
+		wtt := bufio.NewWriter(&buft)
+		opEvent.Tx.Serialize(wtt)
+		wtt.Flush()
+
+		buft.Len()
+
+		fmt.Printf("::%s:: HandleContractOPEvent: qln/msghandler.go: buft.Len(): %d, opEvent.Tx %x \n",os.Args[6][len(os.Args[6])-4:], buft.Len(), buft.Bytes())
+
+		
 		pkhIsMine := false
 		pkhIdx := uint32(0)
 		value := int64(0)
@@ -574,10 +587,34 @@ func (nd *LitNode) HandleContractOPEvent(c *lnutil.DlcContract,
 			settleOutpoint := wire.OutPoint{Hash: opEvent.Tx.TxHash(), Index: pkhIdx}
 			txClaim.AddTxIn(wire.NewTxIn(&settleOutpoint, nil, nil))
 
+
 			addr, err := wal.NewAdr()
 			if err != nil {
 				return err
 			}
+
+			fmt.Printf("::%s:: HandleContractOPEvent: qln/msghandler.go: value: %d \n",os.Args[6][len(os.Args[6])-4:], value)
+
+
+			//===========================================================================
+
+			txout := wire.NewTxOut(value-500,lnutil.DirectWPKHScriptFromPKH(addr))
+
+			var txout_buf bytes.Buffer
+			binary.Write(&txout_buf, binary.BigEndian, txout.Value)
+
+			fmt.Printf("::%s:: HandleContractOPEvent: qln/msghandler.go: 1 txout_buf.Len(): %d \n",os.Args[6][len(os.Args[6])-4:], txout_buf.Len())
+
+			txout_buf.Write(txout.PkScript)
+
+			fmt.Printf("::%s:: HandleContractOPEvent: qln/msghandler.go: 2 txout_buf.Len(): %d \n",os.Args[6][len(os.Args[6])-4:], txout_buf.Len())
+
+			fmt.Printf("::%s:: HandleContractOPEvent: qln/msghandler.go: 2 txout.SerializeSize(): %d \n",os.Args[6][len(os.Args[6])-4:], txout.SerializeSize())
+
+
+			//===========================================================================
+
+
 			txClaim.AddTxOut(wire.NewTxOut(value-500,
 				lnutil.DirectWPKHScriptFromPKH(addr))) // todo calc fee
 
@@ -600,6 +637,48 @@ func (nd *LitNode) HandleContractOPEvent(c *lnutil.DlcContract,
 			if err != nil {
 				return err
 			}
+
+			var buftt bytes.Buffer
+			wttt := bufio.NewWriter(&buftt)
+			txClaim.Serialize(wttt)
+			wttt.Flush()
+		
+			fmt.Printf("::%s:: HandleContractOPEvent: qln/msghandler.go: txClaim %x \n",os.Args[6][len(os.Args[6])-4:], buftt.Bytes())
+
+
+			// Encode the message payload.
+			var bw bytes.Buffer
+
+			_ = txClaim.BtcEncode(&bw, 0, 2)  // 0 pver, 2 WitnessEncoding
+
+			payload := bw.Bytes()
+			lenp := len(payload)
+
+			fmt.Printf("::%s:: HandleContractOPEvent: qln/msghandler.go: len(payload) %d, txClaim.BtcEncode(&bw, 0, 2) %x \n",os.Args[6][len(os.Args[6])-4:], lenp, payload)
+
+
+			_ = txClaim.BtcEncode(&bw, 0, 0)  // 0 pver, 2 WitnessEncoding
+
+			payload = bw.Bytes()
+			lenp = len(payload)
+
+			fmt.Printf("::%s:: HandleContractOPEvent: qln/msghandler.go: len(payload)2 %d, txClaim.BtcEncode(&bw, 0, 2)2 %x \n",os.Args[6][len(os.Args[6])-4:], lenp, payload)			
+
+
+			fmt.Printf("::%s:: HandleContractOPEvent: qln/msghandler.go: ttxClaim.TxIn[0].Witness.Serialize() %d \n",
+			os.Args[6][len(os.Args[6])-4:], txClaim.TxIn[0].Witness.SerializeSize())
+
+			// fmt.Printf("::%s:: HandleContractOPEvent: qln/msghandler.go: txClaim.TxIn.Serialize() %d \n",
+			// os.Args[6][len(os.Args[6])-4:], txClaim.TxIn.SerializeSize())
+
+			// fmt.Printf("::%s:: HandleContractOPEvent: qln/msghandler.go: txClaim.TxOut.Serialize() %d \n",
+			// os.Args[6][len(os.Args[6])-4:], txClaim.TxOut.SerializeSize())
+
+			
+			
+
+
+
 			wal.DirectSendTx(txClaim)
 
 			c.Status = lnutil.ContractStatusClosed

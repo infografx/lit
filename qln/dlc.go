@@ -524,7 +524,16 @@ func (nd *LitNode) BuildDlcFundingTransaction(c *lnutil.DlcContract) (wire.MsgTx
 	}
 
 	// add change and sort
+
+	fmt.Printf("::%s:: BuildDlcFundingTransaction(): theirInputTotal-c.TheirFundingAmount-500: %d \n",os.Args[6][len(os.Args[6])-4:], theirInputTotal-c.TheirFundingAmount-500)
+	fmt.Printf("::%s:: BuildDlcFundingTransaction(): theirInputTotal: %d, c.TheirFundingAmount: %d \n",os.Args[6][len(os.Args[6])-4:], theirInputTotal, c.TheirFundingAmount)
+
 	tx.AddTxOut(wire.NewTxOut(theirInputTotal-c.TheirFundingAmount-500, lnutil.DirectWPKHScriptFromPKH(c.TheirChangePKH)))
+
+
+	fmt.Printf("::%s:: BuildDlcFundingTransaction(): ourInputTotal-c.OurFundingAmount-500: %d \n",os.Args[6][len(os.Args[6])-4:], ourInputTotal-c.OurFundingAmount-500)
+	fmt.Printf("::%s:: BuildDlcFundingTransaction(): ourInputTotal: %d, c.OurFundingAmount: %d \n",os.Args[6][len(os.Args[6])-4:], ourInputTotal, c.OurFundingAmount)
+
 	tx.AddTxOut(wire.NewTxOut(ourInputTotal-c.OurFundingAmount-500, lnutil.DirectWPKHScriptFromPKH(c.OurChangePKH)))
 
 	txsort.InPlaceSort(tx)
@@ -541,6 +550,17 @@ func (nd *LitNode) BuildDlcFundingTransaction(c *lnutil.DlcContract) (wire.MsgTx
 	copy(txos[1:], tx.TxOut)
 	tx.TxOut = txos
 
+
+	var buft bytes.Buffer
+	wtt := bufio.NewWriter(&buft)
+	tx.Serialize(wtt)
+	wtt.Flush()
+
+
+	fmt.Printf("::%s:: BuildDlcFundingTransaction(): qln/dlc.go: tx: %x \n",os.Args[6][len(os.Args[6])-4:], buft.Bytes())
+
+
+
 	return *tx, nil
 
 }
@@ -555,6 +575,9 @@ func (nd *LitNode) FundContract(c *lnutil.DlcContract) error {
 		return fmt.Errorf("No wallet of type %d connected", c.CoinType)
 	}
 
+
+	fmt.Printf("::%s:: FundContract(): feePerByte: %d, wal.Fee(): %d \n", os.Args[6][len(os.Args[6])-4:], 500, wal.Fee())
+
 	utxos, _, err := wal.PickUtxos(int64(c.OurFundingAmount), 500, wal.Fee(), true)
 	if err != nil {
 		return err
@@ -562,6 +585,9 @@ func (nd *LitNode) FundContract(c *lnutil.DlcContract) error {
 
 	c.OurFundingInputs = make([]lnutil.DlcContractFundingInput, len(utxos))
 	for i := 0; i < len(utxos); i++ {
+
+		fmt.Printf("::%s:: FundContract(): Value: utxos[i].Value: %d \n", os.Args[6][len(os.Args[6])-4:], utxos[i].Value)
+
 		c.OurFundingInputs[i] = lnutil.DlcContractFundingInput{Outpoint: utxos[i].Op, Value: utxos[i].Value}
 	}
 
@@ -626,6 +652,18 @@ func (nd *LitNode) SettleContract(cIdx uint64, oracleValue int64, oracleSig [32]
 	}
 
 	settleTx, err := lnutil.SettlementTx(c, *d, false)
+
+
+	var buft bytes.Buffer
+	wtt := bufio.NewWriter(&buft)
+	settleTx.Serialize(wtt)
+	wtt.Flush()
+
+
+	fmt.Printf("::%s:: SettleContract(): Before Signing: settleTx: %x \n",os.Args[6][len(os.Args[6])-4:], buft.Bytes())
+
+
+
 	if err != nil {
 		logging.Errorf("SettleContract SettlementTx err %s\n", err.Error())
 		return [32]byte{}, [32]byte{}, err
@@ -662,12 +700,12 @@ func (nd *LitNode) SettleContract(cIdx uint64, oracleValue int64, oracleSig [32]
 
 	fmt.Printf("::%s::Settlement TX: SettleContract()::DirectSendTx::qln/dlc.go \n", os.Args[6][len(os.Args[6])-4:])
 
-	var buft bytes.Buffer
-	wtt := bufio.NewWriter(&buft)
-	settleTx.Serialize(wtt)
-	wtt.Flush()
+	var buftt bytes.Buffer
+	wttt := bufio.NewWriter(&buftt)
+	settleTx.Serialize(wttt)
+	wttt.Flush()
 
-	fmt.Printf("::%s:: SettleContract(): qln/dlc.go: settleTx %x \n",os.Args[6][len(os.Args[6])-4:], buft.Bytes())
+	fmt.Printf("::%s:: SettleContract(): After Signing: settleTx %x \n",os.Args[6][len(os.Args[6])-4:], buftt.Bytes())
 
 
 
@@ -686,7 +724,7 @@ func (nd *LitNode) SettleContract(cIdx uint64, oracleValue int64, oracleSig [32]
 	//===========================================
 
 
-	fmt.Printf("::%s::SettleContract(): qln/dlc.go: d.ValueOurs: %d \n", os.Args[6][len(os.Args[6])-4:], d.ValueOurs)
+	fmt.Printf("::%s::SettleContract(): Claim: d.ValueOurs: %d \n", os.Args[6][len(os.Args[6])-4:], d.ValueOurs)
 
 
 	if ( d.ValueOurs != 0){
@@ -723,6 +761,9 @@ func (nd *LitNode) SettleContract(cIdx uint64, oracleValue int64, oracleSig [32]
 
 		settleScript := lnutil.DlcCommitScript(c.OurPayoutBase, pubOracleBytes, c.TheirPayoutBase, 5)
 		err = nd.SignClaimTx(txClaim, settleTx.TxOut[0].Value, settleScript, privContractOutput, false)
+
+		fmt.Printf("::%s:: SettleContract(): settleTx.TxOut[0].Value: %d \n",os.Args[6][len(os.Args[6])-4:], settleTx.TxOut[0].Value)
+
 		if err != nil {
 			logging.Errorf("SettleContract SignClaimTx err %s", err.Error())
 			return [32]byte{}, [32]byte{}, err

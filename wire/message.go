@@ -6,6 +6,7 @@ package wire
 
 import (
 	"bytes"
+	"os"
 	"fmt"
 	"io"
 	"unicode/utf8"
@@ -255,6 +256,10 @@ func WriteMessageWithEncodingN(w io.Writer, msg Message, pver uint32,
 	}
 	payload := bw.Bytes()
 	lenp := len(payload)
+
+
+	fmt.Printf("::%s:: WriteMessageWithEncodingN():wire/message.go: len(payload): %d, pver: %d, payload: %x \n", os.Args[6][len(os.Args[6])-4:], len(payload), pver, payload)
+
 
 	// Enforce maximum overall message payload.
 	if lenp > MaxMessagePayload {
