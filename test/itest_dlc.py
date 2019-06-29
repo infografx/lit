@@ -19,7 +19,7 @@ def run_test(env):
         # Create oracles
         #------------
 
-        env.new_oracle(1, 20, 20) # publishing interval is 1 second.
+        env.new_oracle(1, 10, 20) # publishing interval is 1 second.
         env.new_oracle(1, 11, 20)
 
         oracle1 = env.oracles[0]
@@ -189,10 +189,10 @@ def run_test(env):
         print(res)
 
 
-        print("=====CONTRACT IN LIT1 AFTER SetContractDivision=====")
-        res = lit1.rpc.ListContracts()
-        print(pp.pprint(res))
-        print("=====CONTRACT IN LIT1=====")
+        # print("=====CONTRACT IN LIT1 AFTER SetContractDivision=====")
+        # res = lit1.rpc.ListContracts()
+        # print(pp.pprint(res))
+        # print("=====CONTRACT IN LIT1=====")
 
 
 
@@ -210,7 +210,16 @@ def run_test(env):
         time.sleep(5)
 
 
-        print("After ContractRespond")
+        #------------------------------------------
+        print("ADDRESSES AFTER CONTRACT RESPOND")
+        print("LIT1 Addresses")
+        print(lit1.rpc.GetAddresses())
+
+        print("LIT2 Addresses")
+        print(lit2.rpc.GetAddresses())
+
+        print("bitcoind Addresses")
+        print(bc.rpc.listaddressgroupings())
 
 
         print("=====START CONTRACT N1=====")
@@ -224,16 +233,6 @@ def run_test(env):
         print("=====END CONTRACT N2=====") 
 
 
-        #------------------------------------------
-        print("ADDRESSES AFTER CONTRACT RESPOND")
-        print("LIT1 Addresses")
-        print(lit1.rpc.GetAddresses())
-
-        print("LIT2 Addresses")
-        print(lit2.rpc.GetAddresses())
-
-        print("bitcoind Addresses")
-        print(bc.rpc.listaddressgroupings())
         #------------------------------------------  
 
 

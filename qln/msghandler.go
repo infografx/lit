@@ -564,7 +564,15 @@ func (nd *LitNode) HandleContractOPEvent(c *lnutil.DlcContract,
 		pkhIdx := uint32(0)
 		value := int64(0)
 		myPKHPkSript := lnutil.DirectWPKHScriptFromPKH(c.OurPayoutPKH)
+
+
+		fmt.Printf("::%s:: HandleContractOPEvent: qln/msghandler.go: c.OurPayoutPKH %x \n",os.Args[6][len(os.Args[6])-4:], c.OurPayoutPKH)
+		fmt.Printf("::%s:: HandleContractOPEvent: qln/msghandler.go: myPKHPkSript %x \n",os.Args[6][len(os.Args[6])-4:], myPKHPkSript)
+
 		for i, out := range opEvent.Tx.TxOut {
+
+			fmt.Printf("::%s:: HandleContractOPEvent: qln/msghandler.go: i %d, out.PkScript %x \n",os.Args[6][len(os.Args[6])-4:], i, out.PkScript)
+
 			if bytes.Equal(myPKHPkSript, out.PkScript) {
 				pkhIdx = uint32(i)
 				pkhIsMine = true
@@ -573,6 +581,9 @@ func (nd *LitNode) HandleContractOPEvent(c *lnutil.DlcContract,
 		}
 
 		if pkhIsMine {
+
+			fmt.Printf("::%s:: HandleContractOPEvent: qln/msghandler.go: pkhIsMine: %x  \n",os.Args[6][len(os.Args[6])-4:], myPKHPkSript)
+
 			c.Status = lnutil.ContractStatusSettling
 			err := nd.DlcManager.SaveContract(c)
 			if err != nil {
