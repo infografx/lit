@@ -729,11 +729,11 @@ func (nd *LitNode) SettleContract(cIdx uint64, oracleValue int64, oracleSig [32]
 
 	if ( d.ValueOurs != 0){
 
-		fee := int64(1000)
+		fee := int64(500)
 
-		if(c.OurFundingAmount + c.TheirFundingAmount == d.ValueOurs){
-			fee += int64(1000)
-		}
+		// if(c.OurFundingAmount + c.TheirFundingAmount == d.ValueOurs){
+		// 	fee += int64(1000)
+		// }
 
 		// TODO: Claim the contract settlement output back to our wallet - otherwise the peer can claim it after locktime.
 		txClaim := wire.NewMsgTx()
@@ -743,7 +743,7 @@ func (nd *LitNode) SettleContract(cIdx uint64, oracleValue int64, oracleSig [32]
 		txClaim.AddTxIn(wire.NewTxIn(&settleOutpoint, nil, nil))
 
 		addr, err := wal.NewAdr()
-		txClaim.AddTxOut(wire.NewTxOut(d.ValueOurs-fee, lnutil.DirectWPKHScriptFromPKH(addr))) // todo calc fee - fee is double here because the contract output already had the fee deducted in the settlement TX
+		txClaim.AddTxOut(wire.NewTxOut(settleTx.TxOut[0].Value-fee, lnutil.DirectWPKHScriptFromPKH(addr))) // todo calc fee - fee is double here because the contract output already had the fee deducted in the settlement TX
 		// that became possible because fee is fixed and known. todo get fees from settlement tx output 
 
 
@@ -762,7 +762,10 @@ func (nd *LitNode) SettleContract(cIdx uint64, oracleValue int64, oracleSig [32]
 		settleScript := lnutil.DlcCommitScript(c.OurPayoutBase, pubOracleBytes, c.TheirPayoutBase, 5)
 		err = nd.SignClaimTx(txClaim, settleTx.TxOut[0].Value, settleScript, privContractOutput, false)
 
-		fmt.Printf("::%s:: SettleContract(): settleTx.TxOut[0].Value: %d \n",os.Args[6][len(os.Args[6])-4:], settleTx.TxOut[0].Value)
+		for txout_idx, settle_txout := range settleTx.TxOut {
+			fmt.Printf("::%s:: SettleContract(): settleTx.TxOut[%d].Value: %d \n",os.Args[6][len(os.Args[6])-4:],txout_idx, settle_txout.Value)
+		}
+		
 
 		if err != nil {
 			logging.Errorf("SettleContract SignClaimTx err %s", err.Error())
