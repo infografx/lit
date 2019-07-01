@@ -403,6 +403,61 @@ func (nd *LitNode) DlcFundingSigsHandler(msg lnutil.DlcContractFundingSigsMsg, p
 
 	fmt.Printf("::%s::DlcFundingSigsHandler()::DirectSendTx::qln/dlc.go\n", os.Args[6][len(os.Args[6])-4:])
 
+
+	in_wit_size := 0
+	for _, intx := range msg.SignedFundingTx.TxIn {
+
+		in_wit_size += intx.Witness.SerializeSize()
+		fmt.Printf("::%s:: in_wit_size : %d \n",os.Args[6][len(os.Args[6])-4:], in_wit_size)
+
+	} 
+
+
+
+	//================================================================================
+
+
+	n := 8 + VarIntSerializeSize(uint64(len(msg.SignedFundingTx.TxIn))) +
+	VarIntSerializeSize(uint64(len(msg.SignedFundingTx.TxOut)))
+
+
+	n_out := 0
+	for _, outtx := range msg.SignedFundingTx.TxOut {
+
+		n_out += outtx.SerializeSize()
+		fmt.Printf("::%s:: n_out : %d \n",os.Args[6][len(os.Args[6])-4:], outtx.SerializeSize())
+
+	}
+
+	n_in := 0
+	for _, intx := range msg.SignedFundingTx.TxIn {
+
+		n_in += intx.SerializeSize()
+		fmt.Printf("::%s:: n_in : %d \n",os.Args[6][len(os.Args[6])-4:], intx.SerializeSize())
+
+	}
+
+
+
+	fmt.Printf("::%s:: DlcFundingSigsHandler()::qln/dlc.go: n: %d \n",os.Args[6][len(os.Args[6])-4:], n)			// ?
+	fmt.Printf("::%s:: DlcFundingSigsHandler()::qln/dlc.go: n_out: %d \n",os.Args[6][len(os.Args[6])-4:], n_out)	// ?
+	fmt.Printf("::%s:: DlcFundingSigsHandler()::qln/dlc.go: n_in: %d \n",os.Args[6][len(os.Args[6])-4:], n_in)		// ?	
+
+
+
+	fmt.Printf("::%s:: DlcFundingSigsHandler()::qln/dlc.go: msg.SignedFundingTx.SerializeSize() : %d \n",os.Args[6][len(os.Args[6])-4:], msg.SignedFundingTx.SerializeSize())    // ?
+	fmt.Printf("::%s:: DlcFundingSigsHandler()::qln/dlc.go: msg.SignedFundingTx.SerializeSizeStripped() : %d \n",os.Args[6][len(os.Args[6])-4:], msg.SignedFundingTx.SerializeSizeStripped())  // ?
+
+
+
+	ctxvsize := (msg.SignedFundingTx.SerializeSizeStripped() * 3 + msg.SignedFundingTx.SerializeSize())/4
+
+	fmt.Printf("::%s::DlcFundingSigsHandler()::qln/dlc.go: msg.SignedFundingTx vsize %d \n", os.Args[6][len(os.Args[6])-4:], ctxvsize)  // ?. 252 from the blockchain. good.
+
+
+	//=================================================================================
+
+
 	wal.DirectSendTx(msg.SignedFundingTx)
 
 	err = wal.WatchThis(c.FundingOutpoint)
@@ -515,27 +570,109 @@ func (nd *LitNode) BuildDlcFundingTransaction(c *lnutil.DlcContract) (wire.MsgTx
 	var ourInputTotal int64
 	var theirInputTotal int64
 
-	for _, u := range c.OurFundingInputs {
-		tx.AddTxIn(wire.NewTxIn(&u.Outpoint, nil, nil))
+	our_in_size := int(0)
+	their_in_size := int(0)
+
+	our_txin_num := 0
+	for i, u := range c.OurFundingInputs {
+		txin := wire.NewTxIn(&u.Outpoint, nil, nil)
+
+		our_in_size += txin.SerializeSize()
+
+		tx.AddTxIn(txin)
 		ourInputTotal += u.Value
+
+		our_txin_num = i
 	}
-	for _, u := range c.TheirFundingInputs {
-		tx.AddTxIn(wire.NewTxIn(&u.Outpoint, nil, nil))
+	our_txin_num += 1
+
+	their_txin_num := 0
+	for i, u := range c.TheirFundingInputs {
+		txin := wire.NewTxIn(&u.Outpoint, nil, nil)
+
+		their_in_size += txin.SerializeSize()
+
+		tx.AddTxIn(txin)
 		theirInputTotal += u.Value
+
+		their_txin_num = i
 	}
+	their_txin_num += 1
+
+	fmt.Printf("::%s:: BuildDlcFundingTransaction(): our_txin_num: %d \n",os.Args[6][len(os.Args[6])-4:], our_txin_num)
+	fmt.Printf("::%s:: BuildDlcFundingTransaction(): their_txin_num: %d \n",os.Args[6][len(os.Args[6])-4:], their_txin_num)
+
+
+	n_in_general := 0
+	for _, intx := range tx.TxIn {
+
+		n_in_general += intx.SerializeSize()
+
+	}	
+
+
+	fmt.Printf("::%s:: BuildDlcFundingTransaction(): n_in_general: %d \n",os.Args[6][len(os.Args[6])-4:], n_in_general)
+	fmt.Printf("::%s:: BuildDlcFundingTransaction(): our_in_size: %d \n",os.Args[6][len(os.Args[6])-4:], our_in_size)
+	fmt.Printf("::%s:: BuildDlcFundingTransaction(): their_in_size: %d \n",os.Args[6][len(os.Args[6])-4:], their_in_size)
+
+
+	
+	//====================================================
+
+	// Here can be a situation when peers have different number of inputs.
+	// Therefore we have to calculate fees for each peer separately.
+
+	// This transaction always will have 3 outputs ( 43 + 31 + 31)
+	tx_basesize := 10 + 43 + 31 + 31
+	tx_size_foreach := tx_basesize / 2
+	tx_size_foreach += 1 // rounding
+
+	input_wit_size := 107
+
+	our_tx_vsize := ((tx_size_foreach + (41 * our_txin_num)) * 3 + (tx_size_foreach + (41 * our_txin_num) + (input_wit_size*our_txin_num) )) / 4
+	their_tx_vsize := ((tx_size_foreach + (41 * their_txin_num)) * 3 + (tx_size_foreach + (41 * their_txin_num) + (input_wit_size*their_txin_num) )) / 4
+
+	//rounding
+	our_tx_vsize += 1
+	their_tx_vsize += 1
+
+	fmt.Printf("::%s:: BuildDlcFundingTransaction(): our_tx_vsize: %d \n",os.Args[6][len(os.Args[6])-4:], our_tx_vsize)
+	fmt.Printf("::%s:: BuildDlcFundingTransaction(): their_tx_vsize: %d \n",os.Args[6][len(os.Args[6])-4:], their_tx_vsize)
+
+	our_fee := int64(our_tx_vsize * 80)
+	their_fee := int64(their_tx_vsize * 80)
+
+	fmt.Printf("::%s:: BuildDlcFundingTransaction(): our_fee: %d \n",os.Args[6][len(os.Args[6])-4:], our_fee)
+	fmt.Printf("::%s:: BuildDlcFundingTransaction(): their_fee: %d \n",os.Args[6][len(os.Args[6])-4:], their_fee)	
+
+	//====================================================
 
 	// add change and sort
 
-	fmt.Printf("::%s:: BuildDlcFundingTransaction(): theirInputTotal-c.TheirFundingAmount-500: %d \n",os.Args[6][len(os.Args[6])-4:], theirInputTotal-c.TheirFundingAmount-500)
+	fmt.Printf("::%s:: BuildDlcFundingTransaction(): theirInputTotal-c.TheirFundingAmount-their_fee: %d \n",os.Args[6][len(os.Args[6])-4:], theirInputTotal-c.TheirFundingAmount-500)
 	fmt.Printf("::%s:: BuildDlcFundingTransaction(): theirInputTotal: %d, c.TheirFundingAmount: %d \n",os.Args[6][len(os.Args[6])-4:], theirInputTotal, c.TheirFundingAmount)
 
-	tx.AddTxOut(wire.NewTxOut(theirInputTotal-c.TheirFundingAmount-500, lnutil.DirectWPKHScriptFromPKH(c.TheirChangePKH)))
+	their_txout := wire.NewTxOut(theirInputTotal-c.TheirFundingAmount-their_fee, lnutil.DirectWPKHScriptFromPKH(c.TheirChangePKH)) 
+
+	fmt.Printf("::%s:: BuildDlcFundingTransaction(): their_txout Size: %d \n",os.Args[6][len(os.Args[6])-4:], their_txout.SerializeSize())
+
+	tx.AddTxOut(their_txout)
+
+	
+	//-----------------------------
 
 
-	fmt.Printf("::%s:: BuildDlcFundingTransaction(): ourInputTotal-c.OurFundingAmount-500: %d \n",os.Args[6][len(os.Args[6])-4:], ourInputTotal-c.OurFundingAmount-500)
+	fmt.Printf("::%s:: BuildDlcFundingTransaction(): ourInputTotal-c.OurFundingAmount-our_fee: %d \n",os.Args[6][len(os.Args[6])-4:], ourInputTotal-c.OurFundingAmount-500)
 	fmt.Printf("::%s:: BuildDlcFundingTransaction(): ourInputTotal: %d, c.OurFundingAmount: %d \n",os.Args[6][len(os.Args[6])-4:], ourInputTotal, c.OurFundingAmount)
 
-	tx.AddTxOut(wire.NewTxOut(ourInputTotal-c.OurFundingAmount-500, lnutil.DirectWPKHScriptFromPKH(c.OurChangePKH)))
+	our_txout := wire.NewTxOut(ourInputTotal-c.OurFundingAmount-our_fee, lnutil.DirectWPKHScriptFromPKH(c.OurChangePKH))
+
+	fmt.Printf("::%s:: BuildDlcFundingTransaction(): our_txout Size: %d \n",os.Args[6][len(os.Args[6])-4:], our_txout.SerializeSize())
+
+	tx.AddTxOut(our_txout)
+
+	
+
 
 	txsort.InPlaceSort(tx)
 
@@ -624,10 +761,24 @@ func VarIntSerializeSize(val uint64) int {
 	return 9
 }
 
+
+
+
+
+
+
+//==========================================================================
+//==========================================================================
+//==========================================================================
+//==========================================================================
+
+
+
+
+
+
+
 func (nd *LitNode) SettleContract(cIdx uint64, oracleValue int64, oracleSig [32]byte) ([32]byte, [32]byte, error) {
-
-
-	fmt.Printf("::%s:: SettleContract(): qln/dlc.go \n",os.Args[6][len(os.Args[6])-4:])
 
 
 	c, err := nd.DlcManager.LoadContract(cIdx)
@@ -637,12 +788,8 @@ func (nd *LitNode) SettleContract(cIdx uint64, oracleValue int64, oracleSig [32]
 	}
 
 
-	fmt.Printf("::%s:: Begin Contract : SettleContract(): qln/dlc.go \n", os.Args[6][len(os.Args[6])-4:])
-
 	cmar, _ := json.Marshal(c)
 	fmt.Printf("%s\n", cmar)
-
-	fmt.Printf("::%s:: End Contract : SettleContract(): qln/dlc.go \n", os.Args[6][len(os.Args[6])-4:])
 
 
 	c.Status = lnutil.ContractStatusSettling
@@ -709,9 +856,9 @@ func (nd *LitNode) SettleContract(cIdx uint64, oracleValue int64, oracleSig [32]
 
 
 
-	fmt.Printf("::%s:: SettleContract(): n: %d \n",os.Args[6][len(os.Args[6])-4:], n)
-	fmt.Printf("::%s:: SettleContract(): n_out: %d \n",os.Args[6][len(os.Args[6])-4:], n_out)
-	fmt.Printf("::%s:: SettleContract(): n_in: %d \n",os.Args[6][len(os.Args[6])-4:], n_in)
+	fmt.Printf("::%s:: SettleContract(): settleTx: n: %d \n",os.Args[6][len(os.Args[6])-4:], n)
+	fmt.Printf("::%s:: SettleContract(): settleTx: n_out: %d \n",os.Args[6][len(os.Args[6])-4:], n_out)
+	fmt.Printf("::%s:: SettleContract(): settleTx: n_in: %d \n",os.Args[6][len(os.Args[6])-4:], n_in)
 
 	fmt.Printf("::%s:: SettleContract(): Before Signing: settleTx: %x \n",os.Args[6][len(os.Args[6])-4:], buft.Bytes())
 
@@ -789,16 +936,28 @@ func (nd *LitNode) SettleContract(cIdx uint64, oracleValue int64, oracleSig [32]
 	//===========================================
 
 
+	// Here the transaction size is always the same
+	// n := 8 + VarIntSerializeSize(uint64(len(msg.TxIn))) +
+	// 	VarIntSerializeSize(uint64(len(msg.TxOut)))
+	// n = 10
+	// Plus Single input 41
+	// Plus Single output 31
+	// Plus 2 for all wittness transactions
+	// Plus Witness Data 151
+
+	// TxSize = 4 + 4 + 1 + 1 + 2 + 151 + 41 + 31 = 235
+	// Vsize = ((235 - 151 - 2) * 3 + 235) / 4 = 120,25
+
+
 	fmt.Printf("::%s::SettleContract(): Claim: d.ValueOurs: %d \n", os.Args[6][len(os.Args[6])-4:], d.ValueOurs)
 
 
 	if ( d.ValueOurs != 0){
 
-		fee := int64(500)
 
-		// if(c.OurFundingAmount + c.TheirFundingAmount == d.ValueOurs){
-		// 	fee += int64(1000)
-		// }
+		vsize := int64(121)
+		fee := vsize * 80
+
 
 		// TODO: Claim the contract settlement output back to our wallet - otherwise the peer can claim it after locktime.
 		txClaim := wire.NewMsgTx()
@@ -843,6 +1002,57 @@ func (nd *LitNode) SettleContract(cIdx uint64, oracleValue int64, oracleSig [32]
 
 		fmt.Printf("::%s:: SettleContract(): qln/dlc.go: txClaim %x \n",os.Args[6][len(os.Args[6])-4:], buf.Bytes())
 
+
+
+		//=====================================================================
+
+
+		n := 8 + VarIntSerializeSize(uint64(len(txClaim.TxIn))) +
+		VarIntSerializeSize(uint64(len(txClaim.TxOut)))
+	
+	
+		n_out := 0
+		for i1, outtx := range txClaim.TxOut {
+	
+			n_out += outtx.SerializeSize()
+			fmt.Printf("::%s:: i1 : %d \n",os.Args[6][len(os.Args[6])-4:], i1)
+	
+		}
+	
+		n_in := 0
+		for i2, intx := range txClaim.TxIn {
+	
+			n_in += intx.SerializeSize()
+			fmt.Printf("::%s:: i2 : %d \n",os.Args[6][len(os.Args[6])-4:], i2)
+	
+		}
+
+
+
+		fmt.Printf("::%s:: SettleContract(): qln/dlc.go: txClaim n: %d \n",os.Args[6][len(os.Args[6])-4:], n)			// 10
+		fmt.Printf("::%s:: SettleContract(): qln/dlc.go: txClaim n_out: %d \n",os.Args[6][len(os.Args[6])-4:], n_out)	// 31
+		fmt.Printf("::%s:: SettleContract(): qln/dlc.go: txClaim n_in: %d \n",os.Args[6][len(os.Args[6])-4:], n_in)		// 41	
+
+
+
+		fmt.Printf("::%s:: SettleContract(): txClaim.TxIn[0].Witness Size %d \n", os.Args[6][len(os.Args[6])-4:], txClaim.TxIn[0].Witness.SerializeSize())  // 151
+
+
+		fmt.Printf("::%s:: SettleContract(): qln/dlc.go: txClaim.SerializeSize() : %d \n",os.Args[6][len(os.Args[6])-4:], txClaim.SerializeSize())    // 235
+		fmt.Printf("::%s:: SettleContract(): qln/dlc.go.go: txClaim.SerializeSizeStripped() : %d \n",os.Args[6][len(os.Args[6])-4:], txClaim.SerializeSizeStripped())  // 82
+	
+
+
+		ctxvsize := (txClaim.SerializeSizeStripped() * 3 + txClaim.SerializeSize())/4
+
+		fmt.Printf("::%s::SettleContract(): qln/dlc.goo: ClaimTX vsize %d \n", os.Args[6][len(os.Args[6])-4:], ctxvsize)  // 120. 121 from the blockchain. good.
+
+
+
+
+		//=====================================================================
+
+
 		// Claim TX should be valid here, so publish it.
 		err = wal.DirectSendTx(txClaim)
 		if err != nil {
@@ -856,12 +1066,6 @@ func (nd *LitNode) SettleContract(cIdx uint64, oracleValue int64, oracleSig [32]
 			return [32]byte{}, [32]byte{}, err
 		}
 
-
-		
-
-		ctxvsize := (txClaim.SerializeSizeStripped() * 3 + txClaim.SerializeSize())/4
-		
-		fmt.Printf("::%s::SettleContract(): qln/dlc.go: ClaimTX vsize %d \n", os.Args[6][len(os.Args[6])-4:], ctxvsize)
 
 		return settleTx.TxHash(), txClaim.TxHash(), nil
 

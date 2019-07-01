@@ -2,7 +2,7 @@ package qln
 
 import (
 	"bytes"
-	"encoding/binary"
+	//"encoding/binary"
 	"bufio"
 	"fmt"
 	"os"
@@ -582,7 +582,6 @@ func (nd *LitNode) HandleContractOPEvent(c *lnutil.DlcContract,
 
 		if pkhIsMine {
 
-			fmt.Printf("::%s:: HandleContractOPEvent: qln/msghandler.go: pkhIsMine: %x  \n",os.Args[6][len(os.Args[6])-4:], myPKHPkSript)
 
 			c.Status = lnutil.ContractStatusSettling
 			err := nd.DlcManager.SaveContract(c)
@@ -604,30 +603,39 @@ func (nd *LitNode) HandleContractOPEvent(c *lnutil.DlcContract,
 				return err
 			}
 
-			fmt.Printf("::%s:: HandleContractOPEvent: qln/msghandler.go: value: %d \n",os.Args[6][len(os.Args[6])-4:], value)
+			fmt.Printf("::%s:: HandleContractOPEvent: qln/msghandler.go: value: %f \n",os.Args[6][len(os.Args[6])-4:], value)
 
 
 			//===========================================================================
 
-			txout := wire.NewTxOut(value-500,lnutil.DirectWPKHScriptFromPKH(addr))
+			// Here the transaction size is always the same
+			// n := 8 + VarIntSerializeSize(uint64(len(msg.TxIn))) +
+			// 	VarIntSerializeSize(uint64(len(msg.TxOut)))
+			// n = 10
+			// Plus Single input 41
+			// Plus Single output 31
+			// Plus 2 for all wittness transactions
+			// Plus Witness Data 108
 
-			var txout_buf bytes.Buffer
-			binary.Write(&txout_buf, binary.BigEndian, txout.Value)
+			// TxSize = 4 + 4 + 1 + 1 + 2 + 108 + 41 + 31 = 192
+			// Vsize = ((192 - 108 - 2) * 3 + 192) / 4 = 109,5
+	
 
-			fmt.Printf("::%s:: HandleContractOPEvent: qln/msghandler.go: 1 txout_buf.Len(): %d \n",os.Args[6][len(os.Args[6])-4:], txout_buf.Len())
+			vsize := int64(110)
 
-			txout_buf.Write(txout.PkScript)
+			fee := vsize * 80
 
-			fmt.Printf("::%s:: HandleContractOPEvent: qln/msghandler.go: 2 txout_buf.Len(): %d \n",os.Args[6][len(os.Args[6])-4:], txout_buf.Len())
 
-			fmt.Printf("::%s:: HandleContractOPEvent: qln/msghandler.go: 2 txout.SerializeSize(): %d \n",os.Args[6][len(os.Args[6])-4:], txout.SerializeSize())
+			fmt.Printf("::%s:: HandleContractOPEvent: qln/msghandler.go: vsize: %f \n",os.Args[6][len(os.Args[6])-4:], vsize)
+			fmt.Printf("::%s:: HandleContractOPEvent: qln/msghandler.go: fee: %f \n",os.Args[6][len(os.Args[6])-4:], fee)
 
 
 			//===========================================================================
 
 
-			txClaim.AddTxOut(wire.NewTxOut(value-500,
-				lnutil.DirectWPKHScriptFromPKH(addr))) // todo calc fee
+
+
+			txClaim.AddTxOut(wire.NewTxOut(value-fee, lnutil.DirectWPKHScriptFromPKH(addr)))
 
 			var kg portxo.KeyGen
 			kg.Depth = 5
@@ -680,18 +688,42 @@ func (nd *LitNode) HandleContractOPEvent(c *lnutil.DlcContract,
 			os.Args[6][len(os.Args[6])-4:], txClaim.TxIn[0].Witness.SerializeSize())
 
 
-
-			// fmt.Printf("::%s:: HandleContractOPEvent: qln/msghandler.go: txClaim.TxIn.Serialize() %d \n",
-			// os.Args[6][len(os.Args[6])-4:], txClaim.TxIn.SerializeSize())
-
-			// fmt.Printf("::%s:: HandleContractOPEvent: qln/msghandler.go: txClaim.TxOut.Serialize() %d \n",
-			// os.Args[6][len(os.Args[6])-4:], txClaim.TxOut.SerializeSize())
-
-			
-			
-			ctxvsize := (txClaim.SerializeSizeStripped() * 3 + txClaim.SerializeSize())/4
+			n := 8 + VarIntSerializeSize(uint64(len(txClaim.TxIn))) +
+			VarIntSerializeSize(uint64(len(txClaim.TxOut)))
 		
-			fmt.Printf("::%s::HandleContractOPEvent: qln/msghandler.go: ClaimTX vsize %d \n", os.Args[6][len(os.Args[6])-4:], ctxvsize)
+		
+			n_out := 0
+			for i1, outtx := range txClaim.TxOut {
+		
+				n_out += outtx.SerializeSize()
+				fmt.Printf("::%s:: i1 : %d \n",os.Args[6][len(os.Args[6])-4:], i1)
+		
+			}
+		
+			n_in := 0
+			for i2, intx := range txClaim.TxIn {
+		
+				n_in += intx.SerializeSize()
+				fmt.Printf("::%s:: i2 : %d \n",os.Args[6][len(os.Args[6])-4:], i2)
+		
+			}
+
+
+			fmt.Printf("::%s:: HandleContractOPEvent(): n: %d \n",os.Args[6][len(os.Args[6])-4:], n)			// 10
+			fmt.Printf("::%s:: HandleContractOPEvent(): n_out: %d \n",os.Args[6][len(os.Args[6])-4:], n_out)	// 31
+			fmt.Printf("::%s:: HandleContractOPEvent(): n_in: %d \n",os.Args[6][len(os.Args[6])-4:], n_in)		// 41				
+		
+
+			fmt.Printf("::%s:: HandleContractOPEvent(): txClaim.TxIn[0].Witness Size %d \n", os.Args[6][len(os.Args[6])-4:], txClaim.TxIn[0].Witness.SerializeSize())  // 108
+
+
+			fmt.Printf("::%s:: HandleContractOPEvent: qln/msghandler.go: txClaim.SerializeSize() : %d \n",os.Args[6][len(os.Args[6])-4:], txClaim.SerializeSize())    // 192
+			fmt.Printf("::%s:: HandleContractOPEvent: qln/msghandler.go: txClaim.SerializeSizeStripped() : %d \n",os.Args[6][len(os.Args[6])-4:], txClaim.SerializeSizeStripped())  // 82
+		
+
+			ctxvsize := (txClaim.SerializeSizeStripped() * 3 + txClaim.SerializeSize())/4
+
+			fmt.Printf("::%s::HandleContractOPEvent: qln/msghandler.go: ClaimTX Vsize %d \n", os.Args[6][len(os.Args[6])-4:], ctxvsize)  // 109. 110 from the blockchain. good.
 
 
 			wal.DirectSendTx(txClaim)

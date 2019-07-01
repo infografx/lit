@@ -456,9 +456,9 @@ func SettlementTx(c *DlcContract, d DlcContractDivision,
 	// Plus Our output 31
 	// Plus 2 for all wittness transactions 
 	// Total max size of tx here is:  4 + 4 + 1 + 1 + 2 + 218 + 41 + 43 + 31 =  345
-	// Vsize: ( (345 - 218) * 3 + 345 ) / 4 = 196
+	// Vsize: ( (345 - 218 - 2) * 3 + 345 ) / 4 = 180
 
-	maxVsize := 182
+	maxVsize := 180
 
 	fmt.Printf("::%s:: SettlementTx: lnutil/dlcllib.go \n",os.Args[6][len(os.Args[6])-4:])	
 
@@ -560,6 +560,9 @@ func SettlementTx(c *DlcContract, d DlcContractDivision,
 	valueOurs -= feeOurs
 	valueTheirs -= feeTheirs
 
+
+	fmt.Printf("::%s:: SettlementTx()2: lnutil/dlclib.go: feeOurs %d \n",os.Args[6][len(os.Args[6])-4:], feeOurs)
+	fmt.Printf("::%s:: SettlementTx()2: lnutil/dlclib.go: feeTheirs %d \n",os.Args[6][len(os.Args[6])-4:], feeTheirs)
 
 
 	fmt.Printf("::%s:: SettlementTx()2: lnutil/dlclib.go: valueOurs: %d, valueTheirs: %d \n",os.Args[6][len(os.Args[6])-4:], valueOurs, valueTheirs)
