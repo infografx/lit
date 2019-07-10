@@ -62,6 +62,11 @@ def get_new_id():
     next_id += 1
     return id
 
+privkeys = [
+    "d7d46a502bc83b6d86c940fc31dbe3920a8aaf02e032e64e192f40842cc0fd15",
+    "67098bad6d372350a2ff077077a693b772067e60537591b4e9134627c3fe501a"
+]
+
 class LitNode():
     def __init__(self, bcnode):
         self.bcnode = bcnode
@@ -74,9 +79,10 @@ class LitNode():
 
         # Write a hexkey to the privkey file
         with open(paths.join(self.data_dir, "privkey.hex"), 'w+') as f:
-            s = ''
-            for _ in range(64):
-                s += hexchars[random.randint(0, len(hexchars) - 1)]
+            s = privkeys[self.id]
+            # for _ in range(64):
+            #     s += hexchars[random.randint(0, len(hexchars) - 1)]
+            # print('Using key:', s)
             print('Using key:', s)
             f.write(s + "\n")
 

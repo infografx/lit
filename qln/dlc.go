@@ -111,6 +111,9 @@ func (nd *LitNode) OfferDlc(peerIdx uint32, cIdx uint64) error {
 		return err
 	}
 
+
+	fmt.Printf("::%s:: OfferDlc(): qln/dlc.go: c: %#v \n",os.Args[6][len(os.Args[6])-4:], c)
+
 	nd.tmpSendLitMsg(msg)
 
 	return nil
@@ -221,6 +224,9 @@ func (nd *LitNode) AcceptDlc(cIdx uint64) error {
 		c.Status = lnutil.ContractStatusAccepted
 
 		nd.DlcManager.SaveContract(c)
+
+		fmt.Printf("::%s::AcceptDlc(): qln/dlc.go: c: %#v \n",os.Args[6][len(os.Args[6])-4:], c)
+
 		nd.tmpSendLitMsg(msg)
 	}(nd, c)
 	return nil
@@ -264,6 +270,10 @@ func (nd *LitNode) DlcOfferHandler(msg lnutil.DlcOfferMsg, peer *RemotePeer) {
 		logging.Errorf("DlcOfferHandler SaveContract err %s\n", err.Error())
 		return
 	}
+
+
+	fmt.Printf("::%s:: DlcOfferHandler: qln/dlc.go: c: %#v \n",os.Args[6][len(os.Args[6])-4:], c)
+
 
 	_, ok := nd.SubWallet[msg.Contract.CoinType]
 	if !ok {
@@ -329,6 +339,8 @@ func (nd *LitNode) DlcAcceptHandler(msg lnutil.DlcOfferAcceptMsg, peer *RemotePe
 		return err
 	}
 
+	fmt.Printf("::%s:: DlcAcceptHandler: qln/dlc.go: c %#v \n",os.Args[6][len(os.Args[6])-4:], c)
+
 	nd.tmpSendLitMsg(outMsg)
 
 	return nil
@@ -376,6 +388,8 @@ func (nd *LitNode) DlcContractAckHandler(msg lnutil.DlcContractAckMsg, peer *Rem
 
 	outMsg := lnutil.NewDlcContractFundingSigsMsg(c, &tx)
 
+	fmt.Printf("::%s:: DlcContractAckHandler: qln/dlc.go: c %#v \n",os.Args[6][len(os.Args[6])-4:], c)
+
 	nd.tmpSendLitMsg(outMsg)
 }
 
@@ -386,7 +400,7 @@ func (nd *LitNode) DlcFundingSigsHandler(msg lnutil.DlcContractFundingSigsMsg, p
 	c, err := nd.DlcManager.LoadContract(msg.Idx)
 	if err != nil {
 		logging.Errorf("DlcFundingSigsHandler FindContract err %s\n", err.Error())
-		return
+		returnа
 	}
 
 	// TODO: Check signatures
@@ -551,6 +565,9 @@ func (nd *LitNode) SignSettlementDivisions(c *lnutil.DlcContract) ([]lnutil.DlcC
 		}
 		returnValue[i].Outcome = d.OracleValue
 		returnValue[i].Signature = sig
+
+		fmt.Printf("::%s:: BuildDlcFundingTransaction(): returnValue[i].Outcome %d \n",os.Args[6][len(os.Args[6])-4:], returnValue[i].Outcome)
+		fmt.Printf("::%s:: BuildDlcFundingTransaction(): returnValue[i].Signature %x \n",os.Args[6][len(os.Args[6])-4:], returnValue[i].Signature)
 	}
 
 	return returnValue, nil
@@ -774,10 +791,6 @@ func VarIntSerializeSize(val uint64) int {
 
 
 
-
-
-
-
 func (nd *LitNode) SettleContract(cIdx uint64, oracleValue int64, oracleSig [32]byte) ([32]byte, [32]byte, error) {
 
 
@@ -822,6 +835,10 @@ func (nd *LitNode) SettleContract(cIdx uint64, oracleValue int64, oracleSig [32]
 	if err != nil {
 		return [32]byte{}, [32]byte{}, fmt.Errorf("SettleContract Could not get private key for contract %d", c.Idx)
 	}
+
+
+	fmt.Printf("::%s:: SettleContract(): priv.Serialize() : %d \n",os.Args[6][len(os.Args[6])-4:], priv.Serialize())
+
 
 	settleTx, err := lnutil.SettlementTx(c, *d, false)
 
@@ -880,6 +897,8 @@ func (nd *LitNode) SettleContract(cIdx uint64, oracleValue int64, oracleSig [32]
 
 	theirSig, err := c.GetTheirSettlementSignature(oracleValue)
 	theirBigSig := sig64.SigDecompress(theirSig)
+
+	fmt.Printf("::%s:: SettleContract():theirSig: %x \n",os.Args[6][len(os.Args[6])-4:], theirSig)
 
 	// put the sighash all byte on the end of both signatures
 	myBigSig = append(myBigSig, byte(txscript.SigHashAll))

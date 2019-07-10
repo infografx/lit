@@ -22,6 +22,8 @@ def run_test(env):
         env.new_oracle(1, 11, 20) # publishing interval is 1 second.
         env.new_oracle(1, 11, 20)
 
+        settle_lit = env.lits[1]
+
         oracle1 = env.oracles[0]
         oracle2 = env.oracles[1]
 
@@ -211,6 +213,7 @@ def run_test(env):
 
 
         #------------------------------------------
+        
         print("ADDRESSES AFTER CONTRACT RESPOND")
         print("LIT1 Addresses")
         print(lit1.rpc.GetAddresses())
@@ -220,17 +223,6 @@ def run_test(env):
 
         print("bitcoind Addresses")
         print(bc.rpc.listaddressgroupings())
-
-
-        print("=====START CONTRACT N1=====")
-        res = lit1.rpc.ListContracts()
-        print(pp.pprint(res))
-        print("=====END CONTRACT N1=====")
-
-        print("=====START CONTRACT N2=====")
-        res = lit2.rpc.ListContracts()
-        print(pp.pprint(res))
-        print("=====END CONTRACT N2=====") 
 
 
         #------------------------------------------  
@@ -285,7 +277,7 @@ def run_test(env):
         time.sleep(5)
 
 
-        res = lit1.rpc.SettleContract(CIdx=contract["Contract"]["Idx"], OracleValue=oracle1_val, OracleSig=OracleSig)
+        res = settle_lit.rpc.SettleContract(CIdx=contract["Contract"]["Idx"], OracleValue=oracle1_val, OracleSig=OracleSig)
         assert res["Success"], "SettleContract does not works."
 
         time.sleep(10)
@@ -312,6 +304,7 @@ def run_test(env):
             time.sleep(2)
             env.generate_block(1)
         except BaseException as be:
+            print("Exception After SettleContract: ")
             print(be)    
 
         time.sleep(10)
@@ -389,6 +382,20 @@ def run_test(env):
         print("bitcoind Addresses")
         print(pp.pprint(bc.rpc.listaddressgroupings()))
         #------------------------------------------   
+
+ 
+ 
+        print("=====START CONTRACT N1=====")
+        res = lit1.rpc.ListContracts()
+        #print(pp.pprint(res))
+        print(res)
+        print("=====END CONTRACT N1=====")
+
+        print("=====START CONTRACT N2=====")
+        res = lit2.rpc.ListContracts()
+        #print(pp.pprint(res))
+        print(res)
+        print("=====END CONTRACT N2=====")
         
         
 
