@@ -361,6 +361,8 @@ func (nd *LitNode) DlcContractAckHandler(msg lnutil.DlcContractAckMsg, peer *Rem
 
 	c.Status = lnutil.ContractStatusAcknowledged
 
+	c.TheirSettlementSignatures = msg.SettlementSignatures
+
 	err = nd.DlcManager.SaveContract(c)
 	if err != nil {
 		logging.Errorf("DlcContractAckHandler SaveContract err %s\n", err.Error())
@@ -400,7 +402,7 @@ func (nd *LitNode) DlcFundingSigsHandler(msg lnutil.DlcContractFundingSigsMsg, p
 	c, err := nd.DlcManager.LoadContract(msg.Idx)
 	if err != nil {
 		logging.Errorf("DlcFundingSigsHandler FindContract err %s\n", err.Error())
-		returnа
+		return
 	}
 
 	// TODO: Check signatures
