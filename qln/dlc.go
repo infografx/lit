@@ -211,6 +211,8 @@ func (nd *LitNode) AcceptDlc(cIdx uint64) error {
 		}
 		copy(c.OurPayoutPKH[:], btcutil.Hash160(ourPayoutPKHKey[:]))
 
+		fmt.Printf("::%s:: AcceptDlc(): qln/dlc.go: Before SignSettlementDivisions() \n",os.Args[6][len(os.Args[6])-4:])
+
 		// Now we can sign the division
 		sigs, err := nd.SignSettlementDivisions(c)
 		if err != nil {
@@ -557,6 +559,10 @@ func (nd *LitNode) SignSettlementDivisions(c *lnutil.DlcContract) ([]lnutil.DlcC
 
 	returnValue := make([]lnutil.DlcContractSettlementSignature, len(c.Division))
 	for i, d := range c.Division {
+
+		fmt.Printf("::%s:: BuildDlcFundingTransaction(): ------------------------- \n",os.Args[6][len(os.Args[6])-4:])
+		fmt.Printf("::%s:: BuildDlcFundingTransaction(): d %d \n",os.Args[6][len(os.Args[6])-4:], d)
+
 		tx, err := lnutil.SettlementTx(c, d, true)
 		if err != nil {
 			return nil, err
@@ -571,6 +577,8 @@ func (nd *LitNode) SignSettlementDivisions(c *lnutil.DlcContract) ([]lnutil.DlcC
 		fmt.Printf("::%s:: BuildDlcFundingTransaction(): returnValue[i].Outcome %d \n",os.Args[6][len(os.Args[6])-4:], returnValue[i].Outcome)
 		fmt.Printf("::%s:: BuildDlcFundingTransaction(): returnValue[i].Signature %x \n",os.Args[6][len(os.Args[6])-4:], returnValue[i].Signature)
 	}
+
+	fmt.Printf("::%s:: BuildDlcFundingTransaction(): ------------------------- \n",os.Args[6][len(os.Args[6])-4:])
 
 	return returnValue, nil
 }
@@ -906,22 +914,32 @@ func (nd *LitNode) SettleContract(cIdx uint64, oracleValue int64, oracleSig [32]
 	myBigSig = append(myBigSig, byte(txscript.SigHashAll))
 	theirBigSig = append(theirBigSig, byte(txscript.SigHashAll))
 
+	fmt.Printf("::%s:: SettleContract():FundTxScript(c.OurFundMultisigPub, c.TheirFundMultisigPub): %x, %x \n",os.Args[6][len(os.Args[6])-4:], c.OurFundMultisigPub, c.TheirFundMultisigPub)
+
+	fmt.Printf("::%s:: From SettleContract(): qln/dlc.go \n",os.Args[6][len(os.Args[6])-4:])
+
 	pre, swap, err := lnutil.FundTxScript(c.OurFundMultisigPub, c.TheirFundMultisigPub)
 	if err != nil {
 		logging.Errorf("SettleContract FundTxScript err %s", err.Error())
 		return [32]byte{}, [32]byte{}, err
 	}
 
+	fmt.Printf("::%s:: From SettleContract(): qln/dlc.go: pre: %x \n",os.Args[6][len(os.Args[6])-4:], pre)
+
 	// swap if needed
 	if swap {
-		settleTx.TxIn[0].Witness = SpendMultiSigWitStack(pre, theirBigSig, myBigSig)
 
 		fmt.Printf("::%s:: SettleContract(): swap True: settleTx.TxIn[0].Witness Size %d \n", os.Args[6][len(os.Args[6])-4:], settleTx.TxIn[0].Witness.SerializeSize())
+		fmt.Printf("::%s:: SettleContract(): SpendMultiSigWitStack(pre, theirBigSig, myBigSig) \n", os.Args[6][len(os.Args[6])-4:])
+
+		settleTx.TxIn[0].Witness = SpendMultiSigWitStack(pre, theirBigSig, myBigSig)
 
 	} else {
-		settleTx.TxIn[0].Witness = SpendMultiSigWitStack(pre, myBigSig, theirBigSig)
 
 		fmt.Printf("::%s:: SettleContract(): settleTx.TxIn[0].Witness Size %d \n", os.Args[6][len(os.Args[6])-4:], settleTx.TxIn[0].Witness.SerializeSize())
+		fmt.Printf("::%s:: SettleContract(): SpendMultiSigWitStack(pre, myBigSig, theirBigSig) \n", os.Args[6][len(os.Args[6])-4:])
+
+		settleTx.TxIn[0].Witness = SpendMultiSigWitStack(pre, myBigSig, theirBigSig)
 
 	}
 
@@ -988,6 +1006,7 @@ func (nd *LitNode) SettleContract(cIdx uint64, oracleValue int64, oracleSig [32]
 		txClaim.AddTxIn(wire.NewTxIn(&settleOutpoint, nil, nil))
 
 		addr, err := wal.NewAdr()
+		fmt.Printf("::%s::SettleContract(): Claim: d.ValueOurs: %d \n", os.Args[6][len(os.Args[6])-4:], d.ValueOurs)
 		txClaim.AddTxOut(wire.NewTxOut(settleTx.TxOut[0].Value-fee, lnutil.DirectWPKHScriptFromPKH(addr)))
 
 

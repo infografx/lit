@@ -3,6 +3,7 @@ package lnutil
 import (
 	"bytes"
 	"fmt"
+	"os"
 
 	"github.com/mit-dci/lit/logging"
 
@@ -64,6 +65,11 @@ func FundTxScript(aPub, bPub [33]byte) ([]byte, bool, error) {
 	bldr.AddOp(txscript.OP_CHECKMULTISIG)
 	// get byte slice
 	pre, err := bldr.Script()
+
+	fmt.Printf("::%s::FundTxScript(aPub, bPub): %x, %x \n",os.Args[6][len(os.Args[6])-4:], aPub, bPub)
+	fmt.Printf("::%s::FundTxScript(): swapped: %b \n",os.Args[6][len(os.Args[6])-4:], swapped)
+	fmt.Printf("::%s::FundTxScript(): %x \n",os.Args[6][len(os.Args[6])-4:], pre)
+
 	return pre, swapped, err
 }
 
@@ -75,11 +81,20 @@ func FundTxOut(pubA, pubB [33]byte, amt int64) (*wire.TxOut, error) {
 	if amt < 0 {
 		return nil, fmt.Errorf("Can't create FundTx script with negative coins")
 	}
+
+	fmt.Printf("::%s:: From FundTxOut(): lnutil/lnlib.go \n",os.Args[6][len(os.Args[6])-4:])
+
 	scriptBytes, _, err := FundTxScript(pubA, pubB)
 	if err != nil {
 		return nil, err
 	}
+
+	fmt.Printf("::%s:: From FundTxOut(): lnutil/lnlib.go: scriptBytes %x \n",os.Args[6][len(os.Args[6])-4:], scriptBytes)
+
 	scriptBytes = P2WSHify(scriptBytes)
+
+
+	fmt.Printf("::%s:: From FundTxOut(): lnutil/lnlib.go: P2WSHify(scriptBytes) %x \n",os.Args[6][len(os.Args[6])-4:], scriptBytes)
 
 	return wire.NewTxOut(amt, scriptBytes), nil
 }

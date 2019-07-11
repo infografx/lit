@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/binary"
 	"fmt"
+	"os"
 
 	"github.com/mit-dci/lit/btcutil"
 	"github.com/mit-dci/lit/btcutil/blockchain"
@@ -92,8 +93,12 @@ func DirectWPKHScript(pub [33]byte) []byte {
 
 func DirectWPKHScriptFromPKH(pkh [20]byte) []byte {
 	builder := txscript.NewScriptBuilder()
+
+	fmt.Printf("::%s::DirectWPKHScriptFromPKH pkh: %x \n", os.Args[6][len(os.Args[6])-4:], pkh)
+
 	builder.AddOp(txscript.OP_0).AddData(pkh[:])
 	b, _ := builder.Script()
+	fmt.Printf("::%s::DirectWPKHScriptFromPKH(): %x \n", os.Args[6][len(os.Args[6])-4:], b)
 	return b
 }
 

@@ -342,7 +342,12 @@ func PrintTx(tx *wire.MsgTx) {
 // (PubKeyPeer+PubKeyOracleSig or (OurPubKey and TimeDelay))
 func DlcOutput(pkPeer, pkOracleSig, pkOurs [33]byte, value int64) *wire.TxOut {
 	scriptBytes := DlcCommitScript(pkPeer, pkOracleSig, pkOurs, 5)
+
+	fmt.Printf("::%s:: DlcOutput: lnutil/dlclib.go: DlcCommitScript(): %x \n",os.Args[6][len(os.Args[6])-4:], scriptBytes)
+
 	scriptBytes = P2WSHify(scriptBytes)
+
+	fmt.Printf("::%s:: DlcOutput: lnutil/dlclib.go: P2WSHifyt(): %x \n",os.Args[6][len(os.Args[6])-4:], scriptBytes)
 
 	return wire.NewTxOut(value, scriptBytes)
 }
@@ -585,6 +590,10 @@ func SettlementTx(c *DlcContract, d DlcContractDivision,
 		if valueTheirs > 0 {
 
 
+			fmt.Printf("::%s:: SettlementTx(): lnutil/dlclib.go: OURS: c.TheirPayoutBase: %x \n",os.Args[6][len(os.Args[6])-4:], c.TheirPayoutBase)
+			fmt.Printf("::%s:: SettlementTx(): lnutil/dlclib.go: OURS: oracleSigPub: %x \n",os.Args[6][len(os.Args[6])-4:], oracleSigPub)
+			fmt.Printf("::%s:: SettlementTx(): lnutil/dlclib.go: OURS: c.OurPayoutBase: %x \n",os.Args[6][len(os.Args[6])-4:], c.OurPayoutBase)
+			
 			fmt.Printf("::%s:: SettlementTx(): lnutil/dlclib.go: OURS: valueTheirs: %d \n",os.Args[6][len(os.Args[6])-4:], valueTheirs)
 
 			tx.AddTxOut(DlcOutput(c.TheirPayoutBase, oracleSigPub,
@@ -595,11 +604,17 @@ func SettlementTx(c *DlcContract, d DlcContractDivision,
 
 			fmt.Printf("::%s:: SettlementTx(): lnutil/dlclib.go: OURS: valueOurs: %d \n",os.Args[6][len(os.Args[6])-4:], valueOurs)
 
+			fmt.Printf("::%s:: SettlementTx(): lnutil/dlclib.go: OURS: c.OurPayoutPKH: %x \n",os.Args[6][len(os.Args[6])-4:], c.OurPayoutPKH)
+
 			tx.AddTxOut(wire.NewTxOut(valueOurs,
 				DirectWPKHScriptFromPKH(c.OurPayoutPKH)))
 		}
 	} else {
 		if valueOurs > 0 {
+
+			fmt.Printf("::%s:: SettlementTx(): lnutil/dlclib.go: THEIRS: c.OurPayoutBase: %x \n",os.Args[6][len(os.Args[6])-4:], c.OurPayoutBase)
+			fmt.Printf("::%s:: SettlementTx(): lnutil/dlclib.go: THEIRS: oracleSigPub: %x \n",os.Args[6][len(os.Args[6])-4:], oracleSigPub)
+			fmt.Printf("::%s:: SettlementTx(): lnutil/dlclib.go: THEIRS: c.TheirPayoutBase: %x \n",os.Args[6][len(os.Args[6])-4:], c.TheirPayoutBase)
 
 			fmt.Printf("::%s:: SettlementTx(): lnutil/dlclib.go: THEIRS: valueOurs: %d \n",os.Args[6][len(os.Args[6])-4:], valueOurs)
 
@@ -611,6 +626,8 @@ func SettlementTx(c *DlcContract, d DlcContractDivision,
 
 
 			fmt.Printf("::%s:: SettlementTx(): lnutil/dlclib.go: THEIRS: valueTheirs: %d \n",os.Args[6][len(os.Args[6])-4:], valueTheirs)
+
+			fmt.Printf("::%s:: SettlementTx(): lnutil/dlclib.go: THEIRS: c.TheirPayoutPKH: %x \n",os.Args[6][len(os.Args[6])-4:], c.OurPayoutPKH)
 
 			tx.AddTxOut(wire.NewTxOut(valueTheirs,
 				DirectWPKHScriptFromPKH(c.TheirPayoutPKH)))

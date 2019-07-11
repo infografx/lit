@@ -3,6 +3,7 @@ package qln
 import (
 	"bytes"
 	"fmt"
+	"os"
 
 	"github.com/mit-dci/lit/btcutil/txscript"
 	"github.com/mit-dci/lit/crypto/koblitz"
@@ -106,8 +107,13 @@ func (nd *LitNode) SignSettlementTx(c *lnutil.DlcContract, tx *wire.MsgTx,
 	hCache := txscript.NewTxSigHashes(tx)
 
 	// generate script preimage for signing (ignore key order)
+
+	fmt.Printf("::%s:: From SignSettlementTx(): qln/signtx.go \n",os.Args[6][len(os.Args[6])-4:])
+
 	pre, _, err := lnutil.FundTxScript(c.OurFundMultisigPub,
 		c.TheirFundMultisigPub)
+		
+	fmt.Printf("::%s:: From SignSettlementTx(): qln/signtx.go: pre %x \n",os.Args[6][len(os.Args[6])-4:], pre)	
 
 	if err != nil {
 		return sig, err

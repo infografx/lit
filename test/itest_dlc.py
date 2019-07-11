@@ -22,7 +22,7 @@ def run_test(env):
         env.new_oracle(1, 11, 20) # publishing interval is 1 second.
         env.new_oracle(1, 11, 20)
 
-        settle_lit = env.lits[1]
+        settle_lit = env.lits[0]
 
         oracle1 = env.oracles[0]
         oracle2 = env.oracles[1]

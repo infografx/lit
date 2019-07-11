@@ -3,6 +3,7 @@ package qln
 import (
 	"bytes"
 	"fmt"
+	"os"
 
 	"github.com/mit-dci/lit/logging"
 
@@ -478,6 +479,10 @@ func SpendMultiSigWitStack(pre, sigA, sigB []byte) [][]byte {
 	witStack[1] = sigA
 	witStack[2] = sigB
 	witStack[3] = pre
+
+	fmt.Printf("::%s:: SpendMultiSigWitStack: pre : %x \n",os.Args[6][len(os.Args[6])-4:], pre)
+	fmt.Printf("::%s:: SpendMultiSigWitStack: sigA : %x \n",os.Args[6][len(os.Args[6])-4:], sigA)
+	fmt.Printf("::%s:: SpendMultiSigWitStack: sigB : %x \n",os.Args[6][len(os.Args[6])-4:], sigB)
 
 	return witStack
 }
