@@ -97,6 +97,22 @@ func (nd *LitNode) OfferDlc(peerIdx uint32, cIdx uint64) error {
 		return err
 	}
 
+
+	// --------------------------- // !!!                                         Мы добавляем
+
+    ourPayoutPKHKey, err := nd.GetUsePub(kg, UseContractPayoutPKH)
+    if err != nil {
+        logging.Errorf("Error while getting our payout pubkey: %s", err.Error())
+        c.Status = lnutil.ContractStatusError
+        nd.DlcManager.SaveContract(c)
+        return err
+	}
+
+	copy(c.OurPayoutPKH[:], btcutil.Hash160(ourPayoutPKHKey[:]))
+	
+	// ---------------------------
+
+
 	// Fund the contract
 	err = nd.FundContract(c)
 	if err != nil {
@@ -254,6 +270,12 @@ func (nd *LitNode) DlcOfferHandler(msg lnutil.DlcOfferMsg, peer *RemotePeer) {
 	c.OurChangePKH = msg.Contract.TheirChangePKH
 	c.TheirChangePKH = msg.Contract.OurChangePKH
 	c.TheirIdx = msg.Contract.Idx
+
+    // --------------------------- // !!!                                         Мы добавляем
+    
+    c.TheirPayoutPKH = msg.Contract.OurPayoutPKH
+    
+    // ---------------------------	
 
 	c.Division = make([]lnutil.DlcContractDivision, len(msg.Contract.Division))
 	for i := 0; i < len(msg.Contract.Division); i++ {
@@ -560,8 +582,8 @@ func (nd *LitNode) SignSettlementDivisions(c *lnutil.DlcContract) ([]lnutil.DlcC
 	returnValue := make([]lnutil.DlcContractSettlementSignature, len(c.Division))
 	for i, d := range c.Division {
 
-		fmt.Printf("::%s:: BuildDlcFundingTransaction(): ------------------------- \n",os.Args[6][len(os.Args[6])-4:])
-		fmt.Printf("::%s:: BuildDlcFundingTransaction(): d %d \n",os.Args[6][len(os.Args[6])-4:], d)
+		fmt.Printf("::%s:: SignSettlementDivisions(): ------------------------- \n",os.Args[6][len(os.Args[6])-4:])
+		fmt.Printf("::%s:: SignSettlementDivisions(): d %d \n",os.Args[6][len(os.Args[6])-4:], d)
 
 		tx, err := lnutil.SettlementTx(c, d, true)
 		if err != nil {
@@ -574,11 +596,11 @@ func (nd *LitNode) SignSettlementDivisions(c *lnutil.DlcContract) ([]lnutil.DlcC
 		returnValue[i].Outcome = d.OracleValue
 		returnValue[i].Signature = sig
 
-		fmt.Printf("::%s:: BuildDlcFundingTransaction(): returnValue[i].Outcome %d \n",os.Args[6][len(os.Args[6])-4:], returnValue[i].Outcome)
-		fmt.Printf("::%s:: BuildDlcFundingTransaction(): returnValue[i].Signature %x \n",os.Args[6][len(os.Args[6])-4:], returnValue[i].Signature)
+		fmt.Printf("::%s:: SignSettlementDivisions(): returnValue[i].Outcome %d \n",os.Args[6][len(os.Args[6])-4:], returnValue[i].Outcome)
+		fmt.Printf("::%s:: SignSettlementDivisions(): returnValue[i].Signature %x \n",os.Args[6][len(os.Args[6])-4:], returnValue[i].Signature)
 	}
 
-	fmt.Printf("::%s:: BuildDlcFundingTransaction(): ------------------------- \n",os.Args[6][len(os.Args[6])-4:])
+	fmt.Printf("::%s:: SignSettlementDivisions(): ------------------------- \n",os.Args[6][len(os.Args[6])-4:])
 
 	return returnValue, nil
 }
@@ -702,6 +724,14 @@ func (nd *LitNode) BuildDlcFundingTransaction(c *lnutil.DlcContract) (wire.MsgTx
 
 
 	txsort.InPlaceSort(tx)
+
+
+	fmt.Printf("::%s:: BuildDlcFundingTransaction(): c.OurFundingAmount+c.TheirFundingAmount: %d \n",os.Args[6][len(os.Args[6])-4:], 
+	c.OurFundingAmount+c.TheirFundingAmount)
+
+
+	fmt.Printf("::%s:: BuildDlcFundingTransaction(): c.TheirFundMultisigPub: %x, c.OurFundMultisigPub: %x \n",os.Args[6][len(os.Args[6])-4:], 
+	c.TheirFundMultisigPub, c.OurFundMultisigPub)	
 
 	// get txo for channel
 	txo, err := lnutil.FundTxOut(c.TheirFundMultisigPub, c.OurFundMultisigPub, c.OurFundingAmount+c.TheirFundingAmount)

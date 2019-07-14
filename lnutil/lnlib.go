@@ -48,6 +48,9 @@ func CommitScript(RKey, TKey [33]byte, delay uint16) []byte {
 // useful for making transactions spending the fundtx.
 // returns a bool which is true if swapping occurs.
 func FundTxScript(aPub, bPub [33]byte) ([]byte, bool, error) {
+
+	fmt.Printf("::%s::FundTxScript(aPub, bPub) 1: %x, %x \n",os.Args[6][len(os.Args[6])-4:], aPub, bPub)
+
 	var swapped bool
 	if bytes.Compare(aPub[:], bPub[:]) == -1 { // swap to sort pubkeys if needed
 		aPub, bPub = bPub, aPub
@@ -66,8 +69,8 @@ func FundTxScript(aPub, bPub [33]byte) ([]byte, bool, error) {
 	// get byte slice
 	pre, err := bldr.Script()
 
-	fmt.Printf("::%s::FundTxScript(aPub, bPub): %x, %x \n",os.Args[6][len(os.Args[6])-4:], aPub, bPub)
-	fmt.Printf("::%s::FundTxScript(): swapped: %b \n",os.Args[6][len(os.Args[6])-4:], swapped)
+	fmt.Printf("::%s::FundTxScript(aPub, bPub) 2: %x, %x \n",os.Args[6][len(os.Args[6])-4:], aPub, bPub)
+	fmt.Printf("::%s::FundTxScript(): swapped: %t \n",os.Args[6][len(os.Args[6])-4:], swapped)
 	fmt.Printf("::%s::FundTxScript(): %x \n",os.Args[6][len(os.Args[6])-4:], pre)
 
 	return pre, swapped, err

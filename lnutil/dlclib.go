@@ -627,7 +627,7 @@ func SettlementTx(c *DlcContract, d DlcContractDivision,
 
 			fmt.Printf("::%s:: SettlementTx(): lnutil/dlclib.go: THEIRS: valueTheirs: %d \n",os.Args[6][len(os.Args[6])-4:], valueTheirs)
 
-			fmt.Printf("::%s:: SettlementTx(): lnutil/dlclib.go: THEIRS: c.TheirPayoutPKH: %x \n",os.Args[6][len(os.Args[6])-4:], c.OurPayoutPKH)
+			fmt.Printf("::%s:: SettlementTx(): lnutil/dlclib.go: THEIRS: c.TheirPayoutPKH: %x \n",os.Args[6][len(os.Args[6])-4:], c.TheirPayoutPKH)
 
 			tx.AddTxOut(wire.NewTxOut(valueTheirs,
 				DirectWPKHScriptFromPKH(c.TheirPayoutPKH)))
