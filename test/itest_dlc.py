@@ -398,11 +398,11 @@ def run_t(env, params):
 
 def t_10_0(env):
 
-    oracle_value = 1100
+    oracle_value = 11
     node_to_settle = 0
 
-    valueFullyOurs=1000
-    valueFullyTheirs=2000
+    valueFullyOurs=10
+    valueFullyTheirs=20
 
     deb_mod = False
 

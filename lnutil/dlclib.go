@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"math/big"
 	"errors"
+	"os"
 
 	"github.com/mit-dci/lit/btcutil/chaincfg/chainhash"
 	"github.com/mit-dci/lit/crypto/koblitz"
@@ -487,6 +488,11 @@ func SettlementTx(c *DlcContract, d DlcContractDivision,
 
 	valueOurs := d.ValueOurs
 	valueTheirs := totalContractValue - d.ValueOurs
+
+	mt.Printf("::%s:: SettlementTx()1: qln/dlclib.go: --------------------: \n",os.Args[6][len(os.Args[6])-4:])
+	mt.Printf("::%s:: SettlementTx()1: qln/dlclib.go: valueOurs: %d\n",os.Args[6][len(os.Args[6])-4:], valueOurs)
+	mt.Printf("::%s:: SettlementTx()1: qln/dlclib.go: valueTheirs: %d\n",os.Args[6][len(os.Args[6])-4:], valueTheirs)
+	mt.Printf("::%s:: SettlementTx()1: qln/dlclib.go: --------------------: \n",os.Args[6][len(os.Args[6])-4:])	
 	
 
 	if totalContractValue < int64(totalFee) {
@@ -504,16 +510,13 @@ func SettlementTx(c *DlcContract, d DlcContractDivision,
 		if ours {
 
 			// exclude wire.NewTxOut from size (i.e 31)
-			vsize = uint32(149)				
-			totalFee = vsize * uint32(c.FeePerByte)				
-
+			vsize = uint32(149)								
 		}else{
-	
 			// exclude DlcOutput from size (i.e 43)
 			vsize = uint32(137)			
-			totalFee = vsize * uint32(c.FeePerByte)
 	
 		}
+		totalFee = vsize * uint32(c.FeePerByte)
 
 		feeEach = uint32(float64(totalFee) / float64(2))
 		feeOurs = feeEach
@@ -523,7 +526,8 @@ func SettlementTx(c *DlcContract, d DlcContractDivision,
 			feeTheirs = totalFee
 		}else{
 
-			feeTheirs += uint32(valueOurs)
+			feeTheirs += uint32(valueOurs)		// Also if we win less that the fees, our prize goes
+												// to a counterparty to increase his fee for a tx.
 			valueOurs = 0
 
 		}
@@ -538,6 +542,8 @@ func SettlementTx(c *DlcContract, d DlcContractDivision,
 			vsize = uint32(149)					
 		}
 		totalFee = vsize * c.FeePerByte
+
+
 		feeEach = uint32(float64(totalFee) / float64(2))
 		feeOurs = feeEach
 		feeTheirs = feeEach		
@@ -551,9 +557,23 @@ func SettlementTx(c *DlcContract, d DlcContractDivision,
 		}
 	}
 
+	mt.Printf("::%s:: SettlementTx()2: qln/dlclib.go: --------------------: \n",os.Args[6][len(os.Args[6])-4:])
+	mt.Printf("::%s:: SettlementTx()2: qln/dlclib.go: valueOurs: %d\n",os.Args[6][len(os.Args[6])-4:], valueOurs)
+	mt.Printf("::%s:: SettlementTx()2: qln/dlclib.go: valueTheirs: %d\n",os.Args[6][len(os.Args[6])-4:], valueTheirs)
+	mt.Printf("::%s:: SettlementTx()2: qln/dlclib.go: --------------------: \n",os.Args[6][len(os.Args[6])-4:])
+
 	valueOurs -= int64(feeOurs)
 	valueTheirs -= int64(feeTheirs)
 
+	mt.Printf("::%s:: SettlementTx()3: qln/dlclib.go: --------------------: \n",os.Args[6][len(os.Args[6])-4:])
+	mt.Printf("::%s:: SettlementTx()3: qln/dlclib.go: totalFee: %d \n",os.Args[6][len(os.Args[6])-4:], totalFee)
+	mt.Printf("::%s:: SettlementTx()3: qln/dlclib.go: feeEach: %d\n",os.Args[6][len(os.Args[6])-4:], feeEach)
+	mt.Printf("::%s:: SettlementTx()3: qln/dlclib.go: feeOurs: %d\n",os.Args[6][len(os.Args[6])-4:], feeOurs)
+	mt.Printf("::%s:: SettlementTx()3: qln/dlclib.go: feeTheirs: %d\n",os.Args[6][len(os.Args[6])-4:], feeTheirs)
+	mt.Printf("::%s:: SettlementTx()3: qln/dlclib.go: valueOurs: %d\n",os.Args[6][len(os.Args[6])-4:], valueOurs)
+	mt.Printf("::%s:: SettlementTx()3: qln/dlclib.go: valueTheirs: %d\n",os.Args[6][len(os.Args[6])-4:], valueTheirs)
+	mt.Printf("::%s:: SettlementTx()3: qln/dlclib.go: vsize: %d\n",os.Args[6][len(os.Args[6])-4:], vsize)
+	mt.Printf("::%s:: SettlementTx()3: qln/dlclib.go: --------------------: \n",os.Args[6][len(os.Args[6])-4:])
 
 	var buf bytes.Buffer
 	binary.Write(&buf, binary.BigEndian, uint64(0))
