@@ -489,10 +489,10 @@ func SettlementTx(c *DlcContract, d DlcContractDivision,
 	valueOurs := d.ValueOurs
 	valueTheirs := totalContractValue - d.ValueOurs
 
-	mt.Printf("::%s:: SettlementTx()1: qln/dlclib.go: --------------------: \n",os.Args[6][len(os.Args[6])-4:])
-	mt.Printf("::%s:: SettlementTx()1: qln/dlclib.go: valueOurs: %d\n",os.Args[6][len(os.Args[6])-4:], valueOurs)
-	mt.Printf("::%s:: SettlementTx()1: qln/dlclib.go: valueTheirs: %d\n",os.Args[6][len(os.Args[6])-4:], valueTheirs)
-	mt.Printf("::%s:: SettlementTx()1: qln/dlclib.go: --------------------: \n",os.Args[6][len(os.Args[6])-4:])	
+	fmt.Printf("::%s:: SettlementTx()1: qln/dlclib.go: --------------------: \n",os.Args[6][len(os.Args[6])-4:])
+	fmt.Printf("::%s:: SettlementTx()1: qln/dlclib.go: valueOurs: %d\n",os.Args[6][len(os.Args[6])-4:], valueOurs)
+	fmt.Printf("::%s:: SettlementTx()1: qln/dlclib.go: valueTheirs: %d\n",os.Args[6][len(os.Args[6])-4:], valueTheirs)
+	fmt.Printf("::%s:: SettlementTx()1: qln/dlclib.go: --------------------: \n",os.Args[6][len(os.Args[6])-4:])	
 	
 
 	if totalContractValue < int64(totalFee) {
@@ -557,23 +557,23 @@ func SettlementTx(c *DlcContract, d DlcContractDivision,
 		}
 	}
 
-	mt.Printf("::%s:: SettlementTx()2: qln/dlclib.go: --------------------: \n",os.Args[6][len(os.Args[6])-4:])
-	mt.Printf("::%s:: SettlementTx()2: qln/dlclib.go: valueOurs: %d\n",os.Args[6][len(os.Args[6])-4:], valueOurs)
-	mt.Printf("::%s:: SettlementTx()2: qln/dlclib.go: valueTheirs: %d\n",os.Args[6][len(os.Args[6])-4:], valueTheirs)
-	mt.Printf("::%s:: SettlementTx()2: qln/dlclib.go: --------------------: \n",os.Args[6][len(os.Args[6])-4:])
+	fmt.Printf("::%s:: SettlementTx()2: qln/dlclib.go: --------------------: \n",os.Args[6][len(os.Args[6])-4:])
+	fmt.Printf("::%s:: SettlementTx()2: qln/dlclib.go: valueOurs: %d\n",os.Args[6][len(os.Args[6])-4:], valueOurs)
+	fmt.Printf("::%s:: SettlementTx()2: qln/dlclib.go: valueTheirs: %d\n",os.Args[6][len(os.Args[6])-4:], valueTheirs)
+	fmt.Printf("::%s:: SettlementTx()2: qln/dlclib.go: --------------------: \n",os.Args[6][len(os.Args[6])-4:])
 
 	valueOurs -= int64(feeOurs)
 	valueTheirs -= int64(feeTheirs)
 
-	mt.Printf("::%s:: SettlementTx()3: qln/dlclib.go: --------------------: \n",os.Args[6][len(os.Args[6])-4:])
-	mt.Printf("::%s:: SettlementTx()3: qln/dlclib.go: totalFee: %d \n",os.Args[6][len(os.Args[6])-4:], totalFee)
-	mt.Printf("::%s:: SettlementTx()3: qln/dlclib.go: feeEach: %d\n",os.Args[6][len(os.Args[6])-4:], feeEach)
-	mt.Printf("::%s:: SettlementTx()3: qln/dlclib.go: feeOurs: %d\n",os.Args[6][len(os.Args[6])-4:], feeOurs)
-	mt.Printf("::%s:: SettlementTx()3: qln/dlclib.go: feeTheirs: %d\n",os.Args[6][len(os.Args[6])-4:], feeTheirs)
-	mt.Printf("::%s:: SettlementTx()3: qln/dlclib.go: valueOurs: %d\n",os.Args[6][len(os.Args[6])-4:], valueOurs)
-	mt.Printf("::%s:: SettlementTx()3: qln/dlclib.go: valueTheirs: %d\n",os.Args[6][len(os.Args[6])-4:], valueTheirs)
-	mt.Printf("::%s:: SettlementTx()3: qln/dlclib.go: vsize: %d\n",os.Args[6][len(os.Args[6])-4:], vsize)
-	mt.Printf("::%s:: SettlementTx()3: qln/dlclib.go: --------------------: \n",os.Args[6][len(os.Args[6])-4:])
+	fmt.Printf("::%s:: SettlementTx()3: qln/dlclib.go: --------------------: \n",os.Args[6][len(os.Args[6])-4:])
+	fmt.Printf("::%s:: SettlementTx()3: qln/dlclib.go: totalFee: %d \n",os.Args[6][len(os.Args[6])-4:], totalFee)
+	fmt.Printf("::%s:: SettlementTx()3: qln/dlclib.go: feeEach: %d\n",os.Args[6][len(os.Args[6])-4:], feeEach)
+	fmt.Printf("::%s:: SettlementTx()3: qln/dlclib.go: feeOurs: %d\n",os.Args[6][len(os.Args[6])-4:], feeOurs)
+	fmt.Printf("::%s:: SettlementTx()3: qln/dlclib.go: feeTheirs: %d\n",os.Args[6][len(os.Args[6])-4:], feeTheirs)
+	fmt.Printf("::%s:: SettlementTx()3: qln/dlclib.go: valueOurs: %d\n",os.Args[6][len(os.Args[6])-4:], valueOurs)
+	fmt.Printf("::%s:: SettlementTx()3: qln/dlclib.go: valueTheirs: %d\n",os.Args[6][len(os.Args[6])-4:], valueTheirs)
+	fmt.Printf("::%s:: SettlementTx()3: qln/dlclib.go: vsize: %d\n",os.Args[6][len(os.Args[6])-4:], vsize)
+	fmt.Printf("::%s:: SettlementTx()3: qln/dlclib.go: --------------------: \n",os.Args[6][len(os.Args[6])-4:])
 
 	var buf bytes.Buffer
 	binary.Write(&buf, binary.BigEndian, uint64(0))

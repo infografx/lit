@@ -9,7 +9,7 @@ import requests # pip3 install requests
 
 import codecs
 
-deb_mod = False
+deb_mod = True
 
 def run_t(env, params):
     global deb_mod
@@ -19,6 +19,7 @@ def run_t(env, params):
         node_to_settle = params[1]
         valueFullyOurs=params[2]
         valueFullyTheirs=params[3]
+        funding_amt = params[1]
 
         bc = env.bitcoind
 
@@ -64,7 +65,7 @@ def run_t(env, params):
         print('Connecting lit1:', lit1.lnid, 'to lit2:', lit2.lnid)
 
         addr1 = lit1.make_new_addr()
-        txid1 = bc.rpc.sendtoaddress(addr1, 1)
+        txid1 = bc.rpc.sendtoaddress(addr1, funding_amt)
 
         if deb_mod:
             print("TXID1: " + str(txid1))
@@ -72,7 +73,7 @@ def run_t(env, params):
         time.sleep(5)
 
         addr2 = lit2.make_new_addr()
-        txid2 = bc.rpc.sendtoaddress(addr2, 1)
+        txid2 = bc.rpc.sendtoaddress(addr2, funding_amt)
 
         if deb_mod:
             print("TXID2: " + str(txid2))
@@ -402,6 +403,79 @@ def t_10_0(env):
     valueFullyOurs=10
     valueFullyTheirs=20
 
-    params = [oracle_value, node_to_settle, valueFullyOurs, valueFullyTheirs]
+    funding_amt = 1     # 1 BTC
+
+
+    #-----------------------------
+    # 1)Funding transaction.
+    # Here can be a situation when peers have different number of inputs.
+
+    # ::lit1:: BuildDlcFundingTransaction: qln/dlc.go: our_tx_vsize: 126
+    # ::lit1:: BuildDlcFundingTransaction: qln/dlc.go: their_tx_vsize: 126
+    # ::lit1:: BuildDlcFundingTransaction: qln/dlc.go: our_fee: 10080
+    #::lit1:: BuildDlcFundingTransaction: qln/dlc.go: their_fee: 10080
+
+    # Vsize from Blockchain: 252
+
+    # So we expect lit1, and lit2 balances equal to 89989920 !!!
+    # 90000000 - 89989920 = 10080
+    # But this is only when peers have one input each. What we expect.
+
+    #-----------------------------
+    # 2) SettlementTx vsize will be printed
+
+    # ::lit0:: SettlementTx()1: qln/dlclib.go: --------------------: 
+    # ::lit0:: SettlementTx()1: qln/dlclib.go: valueOurs: 18000000
+    # ::lit0:: SettlementTx()1: qln/dlclib.go: valueTheirs: 2000000
+    # ::lit0:: SettlementTx()1: qln/dlclib.go: --------------------: 
+    # ::lit0:: SettlementTx()2: qln/dlclib.go: --------------------: 
+    # ::lit0:: SettlementTx()2: qln/dlclib.go: valueOurs: 18000000
+    # ::lit0:: SettlementTx()2: qln/dlclib.go: valueTheirs: 2000000
+    # ::lit0:: SettlementTx()2: qln/dlclib.go: --------------------: 
+    # ::lit0:: SettlementTx()3: qln/dlclib.go: --------------------: 
+    # ::lit0:: SettlementTx()3: qln/dlclib.go: totalFee: 14400 
+    # ::lit0:: SettlementTx()3: qln/dlclib.go: feeEach: 7200
+    # ::lit0:: SettlementTx()3: qln/dlclib.go: feeOurs: 7200
+    # ::lit0:: SettlementTx()3: qln/dlclib.go: feeTheirs: 7200
+    # ::lit0:: SettlementTx()3: qln/dlclib.go: valueOurs: 17992800
+    # ::lit0:: SettlementTx()3: qln/dlclib.go: valueTheirs: 1992800
+    # ::lit0:: SettlementTx()3: qln/dlclib.go: vsize: 0   # But we have 14400/80 = 180
+    # ::lit0:: SettlementTx()3: qln/dlclib.go: --------------------:     
+
+
+    # Vsize from Blockchain 181
+
+    # There fore we expect here
+    # valueOurs: 17992800 = 18000000 - 7200     !!!
+    # valueTheirs: 1992800 = 2000000 - 7200     !!!
+
+
+    #-----------------------------
+
+    # 3) Claim TX in SettleContract 
+    # Here the transaction vsize is always the same: 121
+
+
+    # Vsize from Blockchain
+
+    #-----------------------------
+
+    # 4) Claim TX from another peer
+    # Here the transaction vsize is always the same: 110
+
+    # Vsize from Blockchain
+
+    #-----------------------------
+
+    # AFter Settle
+    # new lit1 balance: 107973040 in txos, 0 in chans
+    #   = sum  107973040
+    # {'CoinType': 257, 'SyncHeight': 514, 'ChanTotal': 0, 'TxoTotal': 107973040, 'MatureWitty': 107973040, 'FeeRate': 80}
+    # new lit2 balance: 91973920 in txos, 0 in chans
+    #   = sum  91973920
+
+    #-----------------------------
+
+    params = [oracle_value, node_to_settle, valueFullyOurs, valueFullyTheirs, funding_amt]
 
     run_t(env, params)

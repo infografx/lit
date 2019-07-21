@@ -2,7 +2,7 @@ package qln
 
 import (
 	"fmt"
-	// "os"
+	"os"
 	// "bytes"
 	// "bufio"
 
@@ -545,6 +545,17 @@ func (nd *LitNode) BuildDlcFundingTransaction(c *lnutil.DlcContract) (wire.MsgTx
 
 	our_fee := int64(our_tx_vsize * c.FeePerByte)
 	their_fee := int64(their_tx_vsize * c.FeePerByte)
+
+
+	fmt.Printf("::%s:: BuildDlcFundingTransaction: qln/dlc.go: --------------------: \n",os.Args[6][len(os.Args[6])-4:])
+
+	fmt.Printf("::%s:: BuildDlcFundingTransaction: qln/dlc.go: our_tx_vsize: %d\n",os.Args[6][len(os.Args[6])-4:], our_tx_vsize)
+	fmt.Printf("::%s:: BuildDlcFundingTransaction: qln/dlc.go: their_tx_vsize: %d\n",os.Args[6][len(os.Args[6])-4:], their_tx_vsize)
+
+	fmt.Printf("::%s:: BuildDlcFundingTransaction: qln/dlc.go: our_fee: %d\n",os.Args[6][len(os.Args[6])-4:], our_fee)
+	fmt.Printf("::%s:: BuildDlcFundingTransaction: qln/dlc.go: their_fee: %d\n",os.Args[6][len(os.Args[6])-4:], their_fee)
+
+	fmt.Printf("::%s:: BuildDlcFundingTransaction: qln/dlc.go: --------------------: \n",os.Args[6][len(os.Args[6])-4:])
 
 
 	// add change and sort
