@@ -2,6 +2,9 @@ package qln
 
 import (
 	"fmt"
+	"os"
+	"bytes"
+	"bufio"
 
 	"github.com/mit-dci/lit/btcutil"
 	"github.com/mit-dci/lit/btcutil/txscript"
@@ -390,6 +393,13 @@ func (nd *LitNode) DlcFundingSigsHandler(msg lnutil.DlcContractFundingSigsMsg, p
 
 	wal.SignMyInputs(msg.SignedFundingTx)
 
+	var buf bytes.Buffer
+	wt := bufio.NewWriter(&buf)
+	msg.SignedFundingTx.Serialize(wt)
+	wt.Flush()
+
+	fmt.Printf("::%s:: DlcFundingSigsHandler(): msg.SignedFundingTx: %x \n",os.Args[6][len(os.Args[6])-4:], buf.Bytes())	
+
 	wal.DirectSendTx(msg.SignedFundingTx)
 
 	err = wal.WatchThis(c.FundingOutpoint)
@@ -492,28 +502,22 @@ func (nd *LitNode) BuildDlcFundingTransaction(c *lnutil.DlcContract) (wire.MsgTx
 	var ourInputTotal int64
 	var theirInputTotal int64
 
-	our_in_size := int(0)
-	their_in_size := int(0)
-
-	for i, u := range c.OurFundingInputs {
+	our_txin_num := 0
+	for _, u := range c.OurFundingInputs {
 		txin := wire.NewTxIn(&u.Outpoint, nil, nil)
-
-		our_in_size += txin.SerializeSize()
-
 		tx.AddTxIn(txin)
 		ourInputTotal += u.Value
+		our_txin_num += 1
 
 	}
 
 
 	their_txin_num := 0
-	for i, u := range c.TheirFundingInputs {
+	for _, u := range c.TheirFundingInputs {
 		txin := wire.NewTxIn(&u.Outpoint, nil, nil)
-
-		their_in_size += txin.SerializeSize()
-
 		tx.AddTxIn(txin)
 		theirInputTotal += u.Value
+		their_txin_num += 1
 
 	}
 

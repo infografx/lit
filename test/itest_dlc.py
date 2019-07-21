@@ -19,10 +19,10 @@ def run_test(env):
         # Create oracles
         #------------
 
-        env.new_oracle(1, 20, 20) # publishing interval is 1 second.
+        env.new_oracle(1, 10, 20) # publishing interval is 1 second.
         env.new_oracle(1, 11, 20)
 
-        settle_lit = env.lits[0]
+        settle_lit = env.lits[1]
 
         oracle1 = env.oracles[0]
         oracle2 = env.oracles[1]
@@ -169,6 +169,11 @@ def run_test(env):
         lit1.rpc.SetContractCoinType(CIdx=contract["Contract"]["Idx"], CoinType = 257)
         res = lit1.rpc.GetContract(Idx=contract["Contract"]["Idx"])
         assert res["Contract"]["CoinType"] == 257, "SetContractCoinType does not works"
+
+
+        lit1.rpc.SetContractFeePerByte(CIdx=contract["Contract"]["Idx"], FeePerByte = 80)
+        res = lit1.rpc.GetContract(Idx=contract["Contract"]["Idx"])
+        assert res["Contract"]["FeePerByte"] == 80, "SetContractFeePerByte does not works"        
 
         ourFundingAmount = 10000000
         theirFundingAmount = 10000000
