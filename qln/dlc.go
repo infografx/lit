@@ -2,9 +2,9 @@ package qln
 
 import (
 	"fmt"
-	"os"
-	"bytes"
-	"bufio"
+	// "os"
+	// "bytes"
+	// "bufio"
 
 	"github.com/mit-dci/lit/btcutil"
 	"github.com/mit-dci/lit/btcutil/txscript"
@@ -393,12 +393,12 @@ func (nd *LitNode) DlcFundingSigsHandler(msg lnutil.DlcContractFundingSigsMsg, p
 
 	wal.SignMyInputs(msg.SignedFundingTx)
 
-	var buf bytes.Buffer
-	wt := bufio.NewWriter(&buf)
-	msg.SignedFundingTx.Serialize(wt)
-	wt.Flush()
+	// var buf bytes.Buffer
+	// wt := bufio.NewWriter(&buf)
+	// msg.SignedFundingTx.Serialize(wt)
+	// wt.Flush()
 
-	fmt.Printf("::%s:: DlcFundingSigsHandler(): msg.SignedFundingTx: %x \n",os.Args[6][len(os.Args[6])-4:], buf.Bytes())	
+	//fmt.Printf("::%s:: DlcFundingSigsHandler(): msg.SignedFundingTx: %x \n",os.Args[6][len(os.Args[6])-4:], buf.Bytes())	
 
 	wal.DirectSendTx(msg.SignedFundingTx)
 

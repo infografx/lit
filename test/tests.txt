@@ -25,4 +25,4 @@
 #pushclose 2 reverse
 
 # DLC subsystem
-dlc 2
+dlc 2 t_10_0

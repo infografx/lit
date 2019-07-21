@@ -9,23 +9,30 @@ import requests # pip3 install requests
 
 import codecs
 
+deb_mod = False
 
-def run_test(env):
-
+def run_t(env, params):
+    global deb_mod
     try:
+
+        oracle_value = params[0]
+        node_to_settle = params[1]
+        valueFullyOurs=params[2]
+        valueFullyTheirs=params[3]
+        deb_mod = params[4]
+        
+
         bc = env.bitcoind
 
         #------------
         # Create oracles
         #------------
 
-        env.new_oracle(1, 10, 20) # publishing interval is 1 second.
-        env.new_oracle(1, 11, 20)
+        env.new_oracle(1, oracle_value) # publishing interval is 1 second.
 
-        settle_lit = env.lits[1]
+        settle_lit = env.lits[node_to_settle]
 
         oracle1 = env.oracles[0]
-        oracle2 = env.oracles[1]
 
         time.sleep(2)
 
@@ -41,15 +48,16 @@ def run_test(env):
 
 
         #------------------------------------------
-        print("ADDRESSES BEFORE SEND TO ADDRESS")
-        print("LIT1 Addresses")
-        print(pp.pprint(lit1.rpc.GetAddresses()))
+        if deb_mod:
+            print("ADDRESSES BEFORE SEND TO ADDRESS")
+            print("LIT1 Addresses")
+            print(pp.pprint(lit1.rpc.GetAddresses()))
 
-        print("LIT2 Addresses")
-        print(pp.pprint(lit2.rpc.GetAddresses()))
+            print("LIT2 Addresses")
+            print(pp.pprint(lit2.rpc.GetAddresses()))
 
-        print("bitcoind Addresses")
-        print(pp.pprint(bc.rpc.listaddressgroupings()))
+            print("bitcoind Addresses")
+            print(pp.pprint(bc.rpc.listaddressgroupings()))
         #------------------------------------------ 
 
 
@@ -60,13 +68,16 @@ def run_test(env):
         addr1 = lit1.make_new_addr()
         txid1 = bc.rpc.sendtoaddress(addr1, 1)
 
-        print("TXID1: " + str(txid1))
+        if deb_mod:
+            print("TXID1: " + str(txid1))
 
         time.sleep(5)
 
         addr2 = lit2.make_new_addr()
         txid2 = bc.rpc.sendtoaddress(addr2, 1)
-        print("TXID2: " + str(txid2))
+
+        if deb_mod:
+            print("TXID2: " + str(txid2))
 
         time.sleep(5)
 
@@ -86,15 +97,16 @@ def run_test(env):
 
 
         #------------------------------------------
-        print("ADDRESSES AFTER SEND TO ADDRESS")
-        print("LIT1 Addresses")
-        print(pp.pprint(lit1.rpc.GetAddresses()))
+        if deb_mod:
+            print("ADDRESSES AFTER SEND TO ADDRESS")
+            print("LIT1 Addresses")
+            print(pp.pprint(lit1.rpc.GetAddresses()))
 
-        print("LIT2 Addresses")
-        print(pp.pprint(lit2.rpc.GetAddresses()))
+            print("LIT2 Addresses")
+            print(pp.pprint(lit2.rpc.GetAddresses()))
 
-        print("bitcoind Addresses")
-        print(pp.pprint(bc.rpc.listaddressgroupings()))
+            print("bitcoind Addresses")
+            print(pp.pprint(bc.rpc.listaddressgroupings()))
         #------------------------------------------          
 
 
@@ -118,12 +130,6 @@ def run_test(env):
         assert len(res["Oracles"]) == 1, "ListOracles 1 does not works"
 
 
-        # oracle_res2 = lit1.rpc.ImportOracle(Url="http://localhost:" + oracle2.httpport)
-        # assert oracle_res2["Oracle"]["Idx"] == 2, "ImportOracle does not works"
-
-        # res = lit1.rpc.ListOracles(ListOraclesArgs={})
-        # assert len(res["Oracles"]) == 2, "ListOracles 2 does not works"
-
         lit2.rpc.AddOracle(Key=oracle1_pubkey["A"], Name="oracle1")
 
 
@@ -146,8 +152,8 @@ def run_test(env):
 
         datasources = json.loads(oracle1.get_datasources())
 
-        # # Since the oracle publishes data every 1 second (we set this time above), 
-        # # we increase the time for a point by 3 seconds.
+        # Since the oracle publishes data every 1 second (we set this time above), 
+        # we increase the time for a point by 3 seconds.
 
         settlement_time = int(time.time()) + 3
 
@@ -183,54 +189,53 @@ def run_test(env):
         assert res["Contract"]["OurFundingAmount"] == ourFundingAmount, "SetContractFunding does not works"
         assert res["Contract"]["TheirFundingAmount"] == theirFundingAmount, "SetContractFunding does not works"
 
-        valueFullyOurs=20
-        valueFullyTheirs=10
-
+        print("Before SetContractDivision")
+        
         res = lit1.rpc.SetContractDivision(CIdx=contract["Contract"]["Idx"], ValueFullyOurs=valueFullyOurs, ValueFullyTheirs=valueFullyTheirs)
         assert res["Success"], "SetContractDivision does not works"
+        
+        print("After SetContractDivision")
 
-        time.sleep(5)
-        print("Before OfferContract")
+        time.sleep(8)
+  
 
         res = lit1.rpc.ListConnections()
         print(res)
 
-
-        # print("=====CONTRACT IN LIT1 AFTER SetContractDivision=====")
-        # res = lit1.rpc.ListContracts()
-        # print(pp.pprint(res))
-        # print("=====CONTRACT IN LIT1=====")
-
-
+        print("Before OfferContract")
 
         res = lit1.rpc.OfferContract(CIdx=contract["Contract"]["Idx"], PeerIdx=lit1.get_peer_id(lit2))
         assert res["Success"], "OfferContract does not works"
-        time.sleep(5)
-       
 
         print("After OfferContract")
+
+        time.sleep(8)
+       
+
         print("Before ContractRespond")
 
         res = lit2.rpc.ContractRespond(AcceptOrDecline=True, CIdx=1)
         assert res["Success"], "ContractRespond on lit2 does not works"
 
-        time.sleep(5)
+        print("After ContractRespond")
 
+        time.sleep(8)
 
         #------------------------------------------
         
-        print("ADDRESSES AFTER CONTRACT RESPOND")
-        print("LIT1 Addresses")
-        print(lit1.rpc.GetAddresses())
+        if deb_mod:
+            print("ADDRESSES AFTER CONTRACT RESPOND")
+            print("LIT1 Addresses")
+            print(lit1.rpc.GetAddresses())
 
-        print("LIT2 Addresses")
-        print(lit2.rpc.GetAddresses())
+            print("LIT2 Addresses")
+            print(lit2.rpc.GetAddresses())
 
-        print("bitcoind Addresses")
-        print(bc.rpc.listaddressgroupings())
+            print("bitcoind Addresses")
+            print(bc.rpc.listaddressgroupings())
 
 
-        #------------------------------------------  
+        # #------------------------------------------  
 
 
         print("Before Generate Block")
@@ -279,27 +284,16 @@ def run_test(env):
 
 
         print("Before SettleContract")
-        time.sleep(5)
+        time.sleep(8)
 
 
         res = settle_lit.rpc.SettleContract(CIdx=contract["Contract"]["Idx"], OracleValue=oracle1_val, OracleSig=OracleSig)
         assert res["Success"], "SettleContract does not works."
 
-        time.sleep(10)
+        time.sleep(8)
 
         print('After SettleContract:')
         print(res)
-
-        # bc.rpc.generate(2)
-
-        # time.sleep(2)
-
-        # bc.rpc.generate(2)
-
-        # time.sleep(2)
-
-        # bc.rpc.generate(2)
-
 
 
         try:
@@ -313,51 +307,43 @@ def run_test(env):
             print(be)    
 
         time.sleep(10)
-
-        # # And we get an error here:
-        # # 2019/04/24 14:33:27.516819 [ERROR] Write message error: write tcp4 127.0.0.1:51938->127.0.0.1:11000: use of closed network connection
-        # # Error: lits aren't syncing to bitcoind
-
-        # # time.sleep(1)
-
-        # # print("--------end")
-
         #------------------------------------------
 
+        if deb_mod:
 
-        best_block_hash = bc.rpc.getbestblockhash()
-        bb = bc.rpc.getblock(best_block_hash)
-        print(bb)
-        print("bb['height']: " + str(bb['height']))
+            best_block_hash = bc.rpc.getbestblockhash()
+            bb = bc.rpc.getblock(best_block_hash)
+            print(bb)
+            print("bb['height']: " + str(bb['height']))
 
-        print("Balance from RPC: " + str(bc.rpc.getbalance()))
+            print("Balance from RPC: " + str(bc.rpc.getbalance()))
 
-        # batch support : print timestamps of blocks 0 to 99 in 2 RPC round-trips:
-        commands = [ [ "getblockhash", height] for height in range(bb['height'] + 1) ]
-        block_hashes = bc.rpc.batch_(commands)
-        blocks = bc.rpc.batch_([ [ "getblock", h ] for h in block_hashes ])
-        block_times = [ block["time"] for block in blocks ]
-        print(block_times)
+            # batch support : print timestamps of blocks 0 to 99 in 2 RPC round-trips:
+            commands = [ [ "getblockhash", height] for height in range(bb['height'] + 1) ]
+            block_hashes = bc.rpc.batch_(commands)
+            blocks = bc.rpc.batch_([ [ "getblock", h ] for h in block_hashes ])
+            block_times = [ block["time"] for block in blocks ]
+            print(block_times)
 
-        print('--------------------')
+            print('--------------------')
 
-        for b in blocks:
-            print("--------BLOCK--------")
-            print(b)
-            tx = b["tx"]
-            #print(tx)
-            try:
+            for b in blocks:
+                print("--------BLOCK--------")
+                print(b)
+                tx = b["tx"]
+                #print(tx)
+                try:
 
-                for i in range(len(tx)):
-                    print("--------TRANSACTION--------")
-                    rtx = bc.rpc.getrawtransaction(tx[i])
-                    print(rtx)
-                    decoded = bc.rpc.decoderawtransaction(rtx)
-                    pp.pprint(decoded)
-            except BaseException as be:
-                print(be)
-            # print(type(rtx))
-            print('--------')
+                    for i in range(len(tx)):
+                        print("--------TRANSACTION--------")
+                        rtx = bc.rpc.getrawtransaction(tx[i])
+                        print(rtx)
+                        decoded = bc.rpc.decoderawtransaction(rtx)
+                        pp.pprint(decoded)
+                except BaseException as be:
+                    print(be)
+                # print(type(rtx))
+                print('--------')
 
 
         #------------------------------------------
@@ -377,39 +363,49 @@ def run_test(env):
 
 
         #------------------------------------------
-        print("ADDRESSES AFTER SETTLE")
-        print("LIT1 Addresses")
-        print(pp.pprint(lit1.rpc.GetAddresses()))
+        if deb_mod:
+            print("ADDRESSES AFTER SETTLE")
+            print("LIT1 Addresses")
+            print(pp.pprint(lit1.rpc.GetAddresses()))
 
-        print("LIT2 Addresses")
-        print(pp.pprint(lit2.rpc.GetAddresses()))
+            print("LIT2 Addresses")
+            print(pp.pprint(lit2.rpc.GetAddresses()))
 
-        print("bitcoind Addresses")
-        print(pp.pprint(bc.rpc.listaddressgroupings()))
-        #------------------------------------------   
+            print("bitcoind Addresses")
+            print(pp.pprint(bc.rpc.listaddressgroupings()))
+            #------------------------------------------   
 
- 
- 
-        print("=====START CONTRACT N1=====")
-        res = lit1.rpc.ListContracts()
-        #print(pp.pprint(res))
-        print(res)
-        print("=====END CONTRACT N1=====")
+    
+    
+            print("=====START CONTRACT N1=====")
+            res = lit1.rpc.ListContracts()
+            #print(pp.pprint(res))
+            print(res)
+            print("=====END CONTRACT N1=====")
 
-        print("=====START CONTRACT N2=====")
-        res = lit2.rpc.ListContracts()
-        #print(pp.pprint(res))
-        print(res)
-        print("=====END CONTRACT N2=====")
+            print("=====START CONTRACT N2=====")
+            res = lit2.rpc.ListContracts()
+            #print(pp.pprint(res))
+            print(res)
+            print("=====END CONTRACT N2=====")
         
         
 
     except BaseException as be:
-        raise be
-    
+        raise be  
 
 
 
+def t_10_0(env):
 
+    oracle_value = 1100
+    node_to_settle = 0
 
+    valueFullyOurs=1000
+    valueFullyTheirs=2000
 
+    deb_mod = False
+
+    params = [oracle_value, node_to_settle, valueFullyOurs, valueFullyTheirs, deb_mod]
+
+    run_t(env, params)

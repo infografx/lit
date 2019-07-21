@@ -2,6 +2,7 @@ package lnp2p
 
 import (
 	"fmt"
+	"os"
 	"github.com/mit-dci/lit/logging"
 	"sync"
 	"github.com/mit-dci/lit/lnutil"
@@ -91,6 +92,8 @@ func (mp *MessageProcessor) HandleMessage(peer *Peer, buf []byte) error {
 
 		mp.ChunksOfMsg[msg.TimeStamp] = chunk_msg
 
+		fmt.Printf("::%s:: HandleMessage: lnp2p/msgproc: BEGIN CHUNKS \n",os.Args[6][len(os.Args[6])-4:])
+
 		return nil
 
 	}
@@ -99,6 +102,8 @@ func (mp *MessageProcessor) HandleMessage(peer *Peer, buf []byte) error {
 
 		msg, _ := lnutil.NewChunkMsgFromBytes(buf, peer.GetIdx())
 		mp.ChunksOfMsg[msg.TimeStamp].Data = append(mp.ChunksOfMsg[msg.TimeStamp].Data, msg.Data...)
+
+		fmt.Printf("::%s:: HandleMessage: lnp2p/msgproc: CHUNK \n",os.Args[6][len(os.Args[6])-4:])
 
 		return nil
 
@@ -112,6 +117,8 @@ func (mp *MessageProcessor) HandleMessage(peer *Peer, buf []byte) error {
 		mtype = buf[0]
 
 		delete(mp.ChunksOfMsg, msg.TimeStamp)
+
+		fmt.Printf("::%s:: HandleMessage: lnp2p/msgproc: END CHUNKS \n",os.Args[6][len(os.Args[6])-4:])
 
 	}
 

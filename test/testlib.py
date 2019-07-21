@@ -127,7 +127,6 @@ class LitNode():
         self.lnid = lres["Adr"] # technically we do this more times than we have to, that's okay
 
     def get_sync_height(self):
-        print("get_sync_height()")
         for bal in self.rpc.balance():
             if bal['CoinType'] == REGTEST_COINTYPE:
                 return bal['SyncHeight']
@@ -219,7 +218,7 @@ class BitcoinNode():
         testutil.wait_until_port("localhost", self.rpc_port)
         testutil.wait_until_port("localhost", self.p2p_port)
 
-        self.rpc = AuthServiceProxy("http://%s:%s@127.0.0.1:%s"%("rpcuser", "rpcpass", self.rpc_port))
+        self.rpc = AuthServiceProxy("http://%s:%s@127.0.0.1:%s"%("rpcuser", "rpcpass", self.rpc_port), timeout=240)
 
         # Make sure that we're actually ready to accept RPC calls.
         def ck_ready():
@@ -252,13 +251,12 @@ class BitcoinNode():
             pass # do nothing I guess?
 
 class OracleNode():
-    def __init__(self, interval, rangefrom, rangeto):
+    def __init__(self, interval, valueToPublish):
 
         self.data_dir = new_data_dir("oracle")
         self.httpport = str(new_port())
         self.interval = str(interval)
-        self.rangefrom = str(rangefrom)
-        self.rangeto = str(rangeto)
+        self.valueToPublish = str(valueToPublish)
 
         # Write a hexkey to the privkey file
         with open(paths.join(self.data_dir, "privkey.hex"), 'w+') as f:
@@ -285,8 +283,7 @@ class OracleNode():
             "--DataDir="+self.data_dir,
             "--HttpPort=" + self.httpport, 
             "--Interval=" + self.interval,
-            "--RangeFrom=" + self.rangefrom,
-            "--RangeTo=" + self.rangeto
+            "--ValueToPublish=" + self.valueToPublish,
         ]
 
         penv = os.environ.copy()
@@ -354,8 +351,8 @@ class TestEnv():
         self.generate_block(count=0) # Force it to wait for sync.
         return node
 
-    def new_oracle(self, interval, rangefrom, rangeto):
-        oracle = OracleNode(interval, rangefrom, rangeto)
+    def new_oracle(self, interval, valueToPublish):
+        oracle = OracleNode(interval, valueToPublish)
         self.oracles.append(oracle)
         return oracle
 
