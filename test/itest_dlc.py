@@ -19,8 +19,6 @@ def run_t(env, params):
         node_to_settle = params[1]
         valueFullyOurs=params[2]
         valueFullyTheirs=params[3]
-        deb_mod = params[4]
-        
 
         bc = env.bitcoind
 
@@ -404,8 +402,6 @@ def t_10_0(env):
     valueFullyOurs=10
     valueFullyTheirs=20
 
-    deb_mod = False
-
-    params = [oracle_value, node_to_settle, valueFullyOurs, valueFullyTheirs, deb_mod]
+    params = [oracle_value, node_to_settle, valueFullyOurs, valueFullyTheirs]
 
     run_t(env, params)
