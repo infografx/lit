@@ -15,8 +15,6 @@ def run_t(env, params):
     global deb_mod
     try:
 
-        #     params = [lit_funding_amt, contract_funding_amt, oracle_value, node_to_settle, valueFullyOurs, valueFullyTheirs, vsizes, feeperbyte]
-
         lit_funding_amt = params[0]
         contract_funding_amt = params[1]
         oracle_value = params[2]
