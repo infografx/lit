@@ -773,24 +773,24 @@ def t_10_0(env):
 
     # Vsize from Blockchain: 110
 
-    #-----------------------------
-
-    # 17992800 - (121 * 80) = 17983120
-    # 89989920 + 17983120 = 107973040
-
-    # 1992800 - (110*80) = 1984000
-    # 89989920 + 1984000 = 91973920
 
     #-----------------------------
 
-    # AFter Settle
-    # new lit1 balance: 107973040 in txos, 0 in chans
-    #   = sum  107973040
-    # {'CoinType': 257, 'SyncHeight': 514, 'ChanTotal': 0, 'TxoTotal': 107973040, 'MatureWitty': 107973040, 'FeeRate': 80}
-    # new lit2 balance: 91973920 in txos, 0 in chans
-    #   = sum  91973920
+    # ============== Fees Calc ===========================
+    # lit1_bal_after_settle 19988080
+    # lit2_bal_after_settle 0
+    # lit1_bal_after_claim 19978400
+    # lit2_bal_after_claim 0
+    # lit1_bal_result:  109968320
+    # lit2_bal_result:  89989920
+    # ====================================================
+    # new lit1 balance: 109968320 in txos, 0 in chans
+    # {'CoinType': 257, 'SyncHeight': 514, 'ChanTotal': 0, 'TxoTotal': 109968320, 'MatureWitty': 109968320, 'FeeRate': 80}
+    #   = sum  109968320
+    # new lit2 balance: 89989920 in txos, 0 in chans
+    # {'CoinType': 257, 'SyncHeight': 514, 'ChanTotal': 0, 'TxoTotal': 89989920, 'MatureWitty': 89989920, 'FeeRate': 80}
+    #   = sum  89989920
 
-    #-----------------------------
 
     oracle_value = 10
     node_to_settle = 0
@@ -804,11 +804,11 @@ def t_10_0(env):
     FundingTxVsize = 252
     SettlementTxVsize = 181
 
-    SetTxFeeOurs = 7200
-    SetTxFeeTheirs = 7200
+    SetTxFeeOurs = 11920
+    SetTxFeeTheirs = 0
 
     ClaimTxFeeOurs = 121 * 80
-    ClaimTxFeeTheirs = 110 * 80
+    ClaimTxFeeTheirs = 0
 
 
     feeperbyte = 80
