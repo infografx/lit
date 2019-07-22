@@ -15,11 +15,27 @@ def run_t(env, params):
     global deb_mod
     try:
 
-        oracle_value = params[0]
-        node_to_settle = params[1]
-        valueFullyOurs=params[2]
-        valueFullyTheirs=params[3]
-        funding_amt = params[1]
+        #     params = [lit_funding_amt, contract_funding_amt, oracle_value, node_to_settle, valueFullyOurs, valueFullyTheirs, vsizes, feeperbyte]
+
+        lit_funding_amt = params[0]
+        contract_funding_amt = params[1]
+        oracle_value = params[2]
+        node_to_settle = params[3]
+        valueFullyOurs=params[4]
+        valueFullyTheirs=params[5]
+
+        FundingTxVsize = params[6][0]
+        SettlementTxVsize = params[6][1]
+        SettleContractClaimTxVsize = params[6][2]
+        PeerClaimTxVsize = params[6][3]
+
+        feeperbyte = params[7]
+
+        SetTxFeeOurs = params[8]
+        SetTxFeeTheirs = params[9]
+
+        ClaimTxFeeOurs = params[10]
+        ClaimTxFeeTheirs = params[11]
 
         bc = env.bitcoind
 
@@ -29,7 +45,7 @@ def run_t(env, params):
 
         env.new_oracle(1, oracle_value) # publishing interval is 1 second.
 
-        settle_lit = env.lits[node_to_settle]
+        #settle_lit = env.lits[node_to_settle]
 
         oracle1 = env.oracles[0]
 
@@ -65,18 +81,18 @@ def run_t(env, params):
         print('Connecting lit1:', lit1.lnid, 'to lit2:', lit2.lnid)
 
         addr1 = lit1.make_new_addr()
-        txid1 = bc.rpc.sendtoaddress(addr1, funding_amt)
+        txid1 = bc.rpc.sendtoaddress(addr1, lit_funding_amt)
 
         if deb_mod:
-            print("TXID1: " + str(txid1))
+            print("Funding TxId lit1: " + str(txid1))
 
         time.sleep(5)
 
         addr2 = lit2.make_new_addr()
-        txid2 = bc.rpc.sendtoaddress(addr2, funding_amt)
+        txid2 = bc.rpc.sendtoaddress(addr2, lit_funding_amt)
 
         if deb_mod:
-            print("TXID2: " + str(txid2))
+            print("Funding TxId lit2: " + str(txid2))
 
         time.sleep(5)
 
@@ -89,11 +105,20 @@ def run_t(env, params):
         bal1sum = bals1['TxoTotal'] + bals1['ChanTotal']
         print('  = sum ', bal1sum)
 
+        print(lit_funding_amt)
+
+        lit_funding_amt *= 100000000        # to satoshi
+
+        assert bal1sum == lit_funding_amt, "Funding lit1 does not works"
+
+
         bals2 = lit2.get_balance_info()
         print('new lit2 balance:', bals2['TxoTotal'], 'in txos,', bals2['ChanTotal'], 'in chans')
         bal2sum = bals2['TxoTotal'] + bals2['ChanTotal']
         print('  = sum ', bal2sum) 
 
+        assert bal2sum == lit_funding_amt, "Funding lit2 does not works"
+        
 
         #------------------------------------------
         if deb_mod:
@@ -176,12 +201,12 @@ def run_t(env, params):
         assert res["Contract"]["CoinType"] == 257, "SetContractCoinType does not works"
 
 
-        lit1.rpc.SetContractFeePerByte(CIdx=contract["Contract"]["Idx"], FeePerByte = 80)
+        lit1.rpc.SetContractFeePerByte(CIdx=contract["Contract"]["Idx"], FeePerByte = feeperbyte)
         res = lit1.rpc.GetContract(Idx=contract["Contract"]["Idx"])
-        assert res["Contract"]["FeePerByte"] == 80, "SetContractFeePerByte does not works"        
+        assert res["Contract"]["FeePerByte"] == feeperbyte, "SetContractFeePerByte does not works"        
 
-        ourFundingAmount = 10000000
-        theirFundingAmount = 10000000
+        ourFundingAmount = contract_funding_amt
+        theirFundingAmount = contract_funding_amt
 
         lit1.rpc.SetContractFunding(CIdx=contract["Contract"]["Idx"], OurAmount=ourFundingAmount, TheirAmount=theirFundingAmount)
         res = lit1.rpc.GetContract(Idx=contract["Contract"]["Idx"])
@@ -250,11 +275,16 @@ def run_t(env, params):
         bal1sum = bals1['TxoTotal'] + bals1['ChanTotal']
         print('  = sum ', bal1sum)
 
+        lit1_bal_after_accept = (lit_funding_amt - ourFundingAmount) - (126*feeperbyte)
+        assert bal1sum == lit1_bal_after_accept, "lit1 Balance after contract accept does not match"
+
         bals2 = lit2.get_balance_info()
         print('new lit2 balance:', bals2['TxoTotal'], 'in txos,', bals2['ChanTotal'], 'in chans')
         bal2sum = bals2['TxoTotal'] + bals2['ChanTotal']
         print('  = sum ', bal2sum)   
 
+        lit2_bal_after_accept = (lit_funding_amt - theirFundingAmount) - (126*feeperbyte)
+        assert bal2sum == lit2_bal_after_accept, "lit2 Balance after contract accept does not match"        
 
         oracle1_val = ""
         oracle1_sig = ""
@@ -275,7 +305,39 @@ def run_t(env, params):
                 print(e)
                 next
 
-        print("ORACLE VALUE:", oracle1_val, "; oracle signature:", oracle1_sig)   
+        print("ORACLE VALUE:", oracle1_val, "; oracle signature:", oracle1_sig)
+
+        if node_to_settle == 0: 
+
+            valueOurs = env.lits[node_to_settle].rpc.GetContractDivision(CIdx=contract["Contract"]["Idx"],OracleValue=oracle1_val)['ValueOurs']
+            valueTheirs = contract_funding_amt * 2 - valueOurs
+
+            print("valueOurs:", valueOurs, "; valueTheirs:", valueTheirs)
+
+
+        elif node_to_settle == 1: 
+
+            valueTheirs = env.lits[node_to_settle].rpc.GetContractDivision(CIdx=contract["Contract"]["Idx"],OracleValue=oracle1_val)['ValueOurs']
+            valueOurs = contract_funding_amt * 2 - valueOurs
+
+            print("valueOurs:", valueOurs, "; valueTheirs:", valueTheirs)
+
+        else:
+            assert False, "Unknown node index."
+
+
+        lit1_bal_after_settle = valueOurs - SetTxFeeOurs
+        lit2_bal_after_settle = valueTheirs - SetTxFeeTheirs
+        
+
+        lit1_bal_after_claim = lit1_bal_after_settle - ClaimTxFeeOurs
+        lit2_bal_after_claim = lit2_bal_after_settle - ClaimTxFeeTheirs
+
+        lit1_bal_result = lit1_bal_after_claim  + lit1_bal_after_accept
+        lit2_bal_result = lit2_bal_after_claim  + lit2_bal_after_accept
+
+        print("lit1_bal_result: ", lit1_bal_result)
+        print("lit2_bal_result: ", lit2_bal_result)
 
 
         b_OracleSig = decode_hex(oracle1_sig)[0]
@@ -286,7 +348,7 @@ def run_t(env, params):
         time.sleep(8)
 
 
-        res = settle_lit.rpc.SettleContract(CIdx=contract["Contract"]["Idx"], OracleValue=oracle1_val, OracleSig=OracleSig)
+        res = env.lits[node_to_settle].rpc.SettleContract(CIdx=contract["Contract"]["Idx"], OracleValue=oracle1_val, OracleSig=OracleSig)
         assert res["Success"], "SettleContract does not works."
 
         time.sleep(8)
@@ -354,11 +416,21 @@ def run_t(env, params):
         print('  = sum ', bal1sum)
         print(bals1)
 
+        print("lit1_bal_result: ", lit1_bal_result)
+        assert bal1sum == bal1sum, "The resulting lit1 node balance does not match." 
+
+
         bals2 = lit2.get_balance_info()
         print('new lit2 balance:', bals2['TxoTotal'], 'in txos,', bals2['ChanTotal'], 'in chans')
         bal2sum = bals2['TxoTotal'] + bals2['ChanTotal']
         print('  = sum ', bal2sum)
         print(bals2)
+
+        print("lit2_bal_result: ", lit2_bal_result)
+        assert bal2sum == lit2_bal_result, "The resulting lit2 node balance does not match." 
+
+
+
 
 
         #------------------------------------------
@@ -395,16 +467,7 @@ def run_t(env, params):
 
 
 
-def t_10_0(env):
-
-    oracle_value = 11
-    node_to_settle = 0
-
-    valueFullyOurs=10
-    valueFullyTheirs=20
-
-    funding_amt = 1     # 1 BTC
-
+def t_11_0(env):
 
     #-----------------------------
     # 1)Funding transaction.
@@ -413,7 +476,7 @@ def t_10_0(env):
     # ::lit1:: BuildDlcFundingTransaction: qln/dlc.go: our_tx_vsize: 126
     # ::lit1:: BuildDlcFundingTransaction: qln/dlc.go: their_tx_vsize: 126
     # ::lit1:: BuildDlcFundingTransaction: qln/dlc.go: our_fee: 10080
-    #::lit1:: BuildDlcFundingTransaction: qln/dlc.go: their_fee: 10080
+    # ::lit1:: BuildDlcFundingTransaction: qln/dlc.go: their_fee: 10080
 
     # Vsize from Blockchain: 252
 
@@ -443,7 +506,7 @@ def t_10_0(env):
     # ::lit0:: SettlementTx()3: qln/dlclib.go: --------------------:     
 
 
-    # Vsize from Blockchain 181
+    # Vsize from Blockchain: 181
 
     # There fore we expect here
     # valueOurs: 17992800 = 18000000 - 7200     !!!
@@ -456,14 +519,14 @@ def t_10_0(env):
     # Here the transaction vsize is always the same: 121
 
 
-    # Vsize from Blockchain
+    # Vsize from Blockchain: 121
 
     #-----------------------------
 
     # 4) Claim TX from another peer
     # Here the transaction vsize is always the same: 110
 
-    # Vsize from Blockchain
+    # Vsize from Blockchain: 110
 
     #-----------------------------
 
@@ -476,6 +539,32 @@ def t_10_0(env):
 
     #-----------------------------
 
-    params = [oracle_value, node_to_settle, valueFullyOurs, valueFullyTheirs, funding_amt]
+    oracle_value = 11
+    node_to_settle = 0
+
+    valueFullyOurs=10
+    valueFullyTheirs=20
+
+    lit_funding_amt =      1     # 1 BTC
+    contract_funding_amt = 10000000     # satoshi
+
+    FundingTxVsize = 252
+    SettlementTxVsize = 181
+    SettleContractClaimTxVsize = 121
+    PeerClaimTxVsize = 110
+
+    SetTxFeeOurs = 7200
+    SetTxFeeTheirs = 7200
+
+    ClaimTxFeeOurs = 121 * 80
+    ClaimTxFeeTheirs = 110 * 80
+
+
+    feeperbyte = 80
+
+
+    vsizes = [FundingTxVsize, SettlementTxVsize, SettleContractClaimTxVsize, PeerClaimTxVsize]
+
+    params = [lit_funding_amt, contract_funding_amt, oracle_value, node_to_settle, valueFullyOurs, valueFullyTheirs, vsizes, feeperbyte, SetTxFeeOurs, SetTxFeeTheirs, ClaimTxFeeOurs, ClaimTxFeeTheirs]
 
     run_t(env, params)
