@@ -539,11 +539,11 @@ def t_11_0(env):
 
     #-----------------------------
 
-    oracle_value = 11
+    oracle_value = 1300
     node_to_settle = 0
 
-    valueFullyOurs=10
-    valueFullyTheirs=20
+    valueFullyOurs=1000
+    valueFullyTheirs=2000
 
     lit_funding_amt =      1     # 1 BTC
     contract_funding_amt = 10000000     # satoshi
@@ -568,3 +568,6 @@ def t_11_0(env):
     params = [lit_funding_amt, contract_funding_amt, oracle_value, node_to_settle, valueFullyOurs, valueFullyTheirs, vsizes, feeperbyte, SetTxFeeOurs, SetTxFeeTheirs, ClaimTxFeeOurs, ClaimTxFeeTheirs]
 
     run_t(env, params)
+
+
+
