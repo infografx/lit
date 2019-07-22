@@ -26,8 +26,6 @@ def run_t(env, params):
 
         FundingTxVsize = params[6][0]
         SettlementTxVsize = params[6][1]
-        SettleContractClaimTxVsize = params[6][2]
-        PeerClaimTxVsize = params[6][3]
 
         feeperbyte = params[7]
 
@@ -109,7 +107,7 @@ def run_t(env, params):
 
         lit_funding_amt *= 100000000        # to satoshi
 
-        assert bal1sum == lit_funding_amt, "Funding lit1 does not works"
+        
 
 
         bals2 = lit2.get_balance_info()
@@ -117,6 +115,8 @@ def run_t(env, params):
         bal2sum = bals2['TxoTotal'] + bals2['ChanTotal']
         print('  = sum ', bal2sum) 
 
+
+        assert bal1sum == lit_funding_amt, "Funding lit1 does not works"
         assert bal2sum == lit_funding_amt, "Funding lit2 does not works"
         
 
@@ -276,7 +276,7 @@ def run_t(env, params):
         print('  = sum ', bal1sum)
 
         lit1_bal_after_accept = (lit_funding_amt - ourFundingAmount) - (126*feeperbyte)
-        assert bal1sum == lit1_bal_after_accept, "lit1 Balance after contract accept does not match"
+        
 
         bals2 = lit2.get_balance_info()
         print('new lit2 balance:', bals2['TxoTotal'], 'in txos,', bals2['ChanTotal'], 'in chans')
@@ -284,6 +284,9 @@ def run_t(env, params):
         print('  = sum ', bal2sum)   
 
         lit2_bal_after_accept = (lit_funding_amt - theirFundingAmount) - (126*feeperbyte)
+
+
+        assert bal1sum == lit1_bal_after_accept, "lit1 Balance after contract accept does not match"
         assert bal2sum == lit2_bal_after_accept, "lit2 Balance after contract accept does not match"        
 
         oracle1_val = ""
@@ -304,40 +307,6 @@ def run_t(env, params):
             except BaseException as e:
                 print(e)
                 next
-
-        print("ORACLE VALUE:", oracle1_val, "; oracle signature:", oracle1_sig)
-
-        if node_to_settle == 0: 
-
-            valueOurs = env.lits[node_to_settle].rpc.GetContractDivision(CIdx=contract["Contract"]["Idx"],OracleValue=oracle1_val)['ValueOurs']
-            valueTheirs = contract_funding_amt * 2 - valueOurs
-
-            print("valueOurs:", valueOurs, "; valueTheirs:", valueTheirs)
-
-
-        elif node_to_settle == 1: 
-
-            valueTheirs = env.lits[node_to_settle].rpc.GetContractDivision(CIdx=contract["Contract"]["Idx"],OracleValue=oracle1_val)['ValueOurs']
-            valueOurs = contract_funding_amt * 2 - valueOurs
-
-            print("valueOurs:", valueOurs, "; valueTheirs:", valueTheirs)
-
-        else:
-            assert False, "Unknown node index."
-
-
-        lit1_bal_after_settle = valueOurs - SetTxFeeOurs
-        lit2_bal_after_settle = valueTheirs - SetTxFeeTheirs
-        
-
-        lit1_bal_after_claim = lit1_bal_after_settle - ClaimTxFeeOurs
-        lit2_bal_after_claim = lit2_bal_after_settle - ClaimTxFeeTheirs
-
-        lit1_bal_result = lit1_bal_after_claim  + lit1_bal_after_accept
-        lit2_bal_result = lit2_bal_after_claim  + lit2_bal_after_accept
-
-        print("lit1_bal_result: ", lit1_bal_result)
-        print("lit2_bal_result: ", lit2_bal_result)
 
 
         b_OracleSig = decode_hex(oracle1_sig)[0]
@@ -410,23 +379,67 @@ def run_t(env, params):
         #------------------------------------------
         #------------------------------------------
         print("AFter Settle")
+
+        print("ORACLE VALUE:", oracle1_val, "; oracle signature:", oracle1_sig)
+
+        valueOurs = 0 
+        if node_to_settle == 0: 
+
+            valueOurs = env.lits[node_to_settle].rpc.GetContractDivision(CIdx=contract["Contract"]["Idx"],OracleValue=oracle1_val)['ValueOurs']
+            valueTheirs = contract_funding_amt * 2 - valueOurs
+
+            print("valueOurs:", valueOurs, "; valueTheirs:", valueTheirs)
+
+
+        elif node_to_settle == 1: 
+
+            valueTheirs = env.lits[node_to_settle].rpc.GetContractDivision(CIdx=contract["Contract"]["Idx"],OracleValue=oracle1_val)['ValueOurs']
+            valueOurs = contract_funding_amt * 2 - valueTheirs
+
+            print("valueOurs:", valueOurs, "; valueTheirs:", valueTheirs)
+
+        else:
+            assert False, "Unknown node index."
+
+
+        lit1_bal_after_settle = valueOurs - SetTxFeeOurs
+        lit2_bal_after_settle = valueTheirs - SetTxFeeTheirs
+        
+
+        lit1_bal_after_claim = lit1_bal_after_settle - ClaimTxFeeOurs
+        lit2_bal_after_claim = lit2_bal_after_settle - ClaimTxFeeTheirs
+
+        lit1_bal_result = lit1_bal_after_claim  + lit1_bal_after_accept
+        lit2_bal_result = lit2_bal_after_claim  + lit2_bal_after_accept
+
+        print("============== Fees Calc ===========================")
+        print("lit1_bal_after_settle", lit1_bal_after_settle)
+        print("lit2_bal_after_settle", lit2_bal_after_settle)
+
+        print("lit1_bal_after_claim",lit1_bal_after_claim)
+        print("lit2_bal_after_claim",lit2_bal_after_claim)
+
+        print("lit1_bal_result: ", lit1_bal_result)
+        print("lit2_bal_result: ", lit2_bal_result)
+        print("====================================================")
+
+
+
         bals1 = lit1.get_balance_info()  
         print('new lit1 balance:', bals1['TxoTotal'], 'in txos,', bals1['ChanTotal'], 'in chans')
         bal1sum = bals1['TxoTotal'] + bals1['ChanTotal']
-        print('  = sum ', bal1sum)
         print(bals1)
-
-        print("lit1_bal_result: ", lit1_bal_result)
-        assert bal1sum == bal1sum, "The resulting lit1 node balance does not match." 
-
+        print('  = sum ', bal1sum)
+        
 
         bals2 = lit2.get_balance_info()
         print('new lit2 balance:', bals2['TxoTotal'], 'in txos,', bals2['ChanTotal'], 'in chans')
         bal2sum = bals2['TxoTotal'] + bals2['ChanTotal']
-        print('  = sum ', bal2sum)
         print(bals2)
+        print('  = sum ', bal2sum)
+        
 
-        print("lit2_bal_result: ", lit2_bal_result)
+        assert bal1sum == lit1_bal_result, "The resulting lit1 node balance does not match." 
         assert bal2sum == lit2_bal_result, "The resulting lit2 node balance does not match." 
 
 
@@ -502,7 +515,7 @@ def t_11_0(env):
     # ::lit0:: SettlementTx()3: qln/dlclib.go: feeTheirs: 7200
     # ::lit0:: SettlementTx()3: qln/dlclib.go: valueOurs: 17992800
     # ::lit0:: SettlementTx()3: qln/dlclib.go: valueTheirs: 1992800
-    # ::lit0:: SettlementTx()3: qln/dlclib.go: vsize: 0   # But we have 14400/80 = 180
+    # ::lit0:: SettlementTx()3: qln/dlclib.go: vsize: 0   # Actually we have 14400/80 = 180
     # ::lit0:: SettlementTx()3: qln/dlclib.go: --------------------:     
 
 
@@ -530,6 +543,14 @@ def t_11_0(env):
 
     #-----------------------------
 
+    # 17992800 - (121 * 80) = 17983120
+    # 89989920 + 17983120 = 107973040
+
+    # 1992800 - (110*80) = 1984000
+    # 89989920 + 1984000 = 91973920
+
+    #-----------------------------
+
     # AFter Settle
     # new lit1 balance: 107973040 in txos, 0 in chans
     #   = sum  107973040
@@ -539,19 +560,17 @@ def t_11_0(env):
 
     #-----------------------------
 
-    oracle_value = 1300
+    oracle_value = 11
     node_to_settle = 0
 
-    valueFullyOurs=1000
-    valueFullyTheirs=2000
+    valueFullyOurs=10
+    valueFullyTheirs=20
 
     lit_funding_amt =      1     # 1 BTC
     contract_funding_amt = 10000000     # satoshi
 
     FundingTxVsize = 252
     SettlementTxVsize = 181
-    SettleContractClaimTxVsize = 121
-    PeerClaimTxVsize = 110
 
     SetTxFeeOurs = 7200
     SetTxFeeTheirs = 7200
@@ -563,7 +582,239 @@ def t_11_0(env):
     feeperbyte = 80
 
 
+    vsizes = [FundingTxVsize, SettlementTxVsize]
+
+    params = [lit_funding_amt, contract_funding_amt, oracle_value, node_to_settle, valueFullyOurs, valueFullyTheirs, vsizes, feeperbyte, SetTxFeeOurs, SetTxFeeTheirs, ClaimTxFeeOurs, ClaimTxFeeTheirs]
+
+    run_t(env, params)
+
+
+
+# ====================================================================================
+# ====================================================================================  
+
+
+def t_1300_1(env):
+    
+    #-----------------------------
+    # 1)Funding transaction.
+    # Here can be a situation when peers have different number of inputs.
+
+    # ::lit1:: BuildDlcFundingTransaction: qln/dlc.go: our_tx_vsize: 126
+    # ::lit1:: BuildDlcFundingTransaction: qln/dlc.go: their_tx_vsize: 126
+    # ::lit1:: BuildDlcFundingTransaction: qln/dlc.go: our_fee: 10080
+    # ::lit1:: BuildDlcFundingTransaction: qln/dlc.go: their_fee: 10080
+
+    # Vsize from Blockchain: 252
+
+    # So we expect lit1, and lit2 balances equal to 89989920 !!!
+    # 90000000 - 89989920 = 10080
+    # But this is only when peers have one input each. What we expect.
+
+    #-----------------------------
+    # 2) SettlementTx vsize will be printed
+
+    #::lit1:: SettlementTx()1: qln/dlclib.go: --------------------: 
+    #::lit1:: SettlementTx()1: qln/dlclib.go: valueOurs: 6000000
+    #::lit1:: SettlementTx()1: qln/dlclib.go: valueTheirs: 14000000
+    #::lit1:: SettlementTx()1: qln/dlclib.go: --------------------: 
+    #::lit1:: SettlementTx()2: qln/dlclib.go: --------------------: 
+    #::lit1:: SettlementTx()2: qln/dlclib.go: valueOurs: 6000000
+    #::lit1:: SettlementTx()2: qln/dlclib.go: valueTheirs: 14000000
+    #::lit1:: SettlementTx()2: qln/dlclib.go: --------------------: 
+    #::lit1:: SettlementTx()3: qln/dlclib.go: --------------------: 
+    #::lit1:: SettlementTx()3: qln/dlclib.go: totalFee: 14400 
+    #::lit1:: SettlementTx()3: qln/dlclib.go: feeEach: 7200
+    #::lit1:: SettlementTx()3: qln/dlclib.go: feeOurs: 7200
+    #::lit1:: SettlementTx()3: qln/dlclib.go: feeTheirs: 7200
+    #::lit1:: SettlementTx()3: qln/dlclib.go: valueOurs: 5992800
+    #::lit1:: SettlementTx()3: qln/dlclib.go: valueTheirs: 13992800
+    #::lit1:: SettlementTx()3: qln/dlclib.go: vsize: 0      # Actually we have 14400/80 = 180
+    #::lit1:: SettlementTx()3: qln/dlclib.go: --------------------:    
+
+
+    # Vsize from Blockchain: 181
+
+    # There fore we expect here
+    # valueOurs: 5992800 = 6000000 - 7200     !!!
+    # valueTheirs: 13992800 = 14000000 - 7200     !!!
+
+
+    #-----------------------------
+
+    # 3) Claim TX in SettleContract lit1
+    # Here the transaction vsize is always the same: 121
+
+
+    # Vsize from Blockchain: 121
+
+    #-----------------------------
+
+    # 4) Claim TX from another peer lit0
+    # Here the transaction vsize is always the same: 110
+
+    # Vsize from Blockchain: 110
+
+    #-----------------------------
+
+    # 5992800 - (121 * 80) = 5983120
+    # 89989920 + 5983120 = 95973040
+
+    # 13992800 - (110*80) = 13984000
+    # 89989920 + 13984000 = 103973920
+
+    #-----------------------------
+
+    # AFter Settle
+    # new lit1 balance: 103973920 in txos, 0 in chans
+    #   = sum  103973920
+
+
+    # new lit2 balance: 95973040 in txos, 0 in chans
+    #   = sum  95973040
+
+    #-----------------------------
+
+    oracle_value = 1300
+    node_to_settle = 1
+
+    valueFullyOurs=1000
+    valueFullyTheirs=2000
+
+    lit_funding_amt =      1     # 1 BTC
+    contract_funding_amt = 10000000     # satoshi
+
+    FundingTxVsize = 252
+    SettlementTxVsize = 181
+    SettleContractClaimTxVsize = 110
+    PeerClaimTxVsize = 121
+
+    SetTxFeeOurs = 7200
+    SetTxFeeTheirs = 7200
+
+    ClaimTxFeeOurs = 110 * 80
+    ClaimTxFeeTheirs = 121 * 80
+
+
+    feeperbyte = 80
+
+
     vsizes = [FundingTxVsize, SettlementTxVsize, SettleContractClaimTxVsize, PeerClaimTxVsize]
+
+    params = [lit_funding_amt, contract_funding_amt, oracle_value, node_to_settle, valueFullyOurs, valueFullyTheirs, vsizes, feeperbyte, SetTxFeeOurs, SetTxFeeTheirs, ClaimTxFeeOurs, ClaimTxFeeTheirs]
+
+    run_t(env, params)
+
+
+
+# ====================================================================================
+# ====================================================================================  
+
+
+
+def t_10_0(env):
+    
+    #-----------------------------
+    # 1)Funding transaction.
+    # Here can be a situation when peers have different number of inputs.
+
+    # ::lit1:: BuildDlcFundingTransaction: qln/dlc.go: our_tx_vsize: 126
+    # ::lit1:: BuildDlcFundingTransaction: qln/dlc.go: their_tx_vsize: 126
+    # ::lit1:: BuildDlcFundingTransaction: qln/dlc.go: our_fee: 10080
+    # ::lit1:: BuildDlcFundingTransaction: qln/dlc.go: their_fee: 10080
+
+    # Vsize from Blockchain: 252
+
+    # So we expect lit1, and lit2 balances equal to 89989920 !!!
+    # 90000000 - 89989920 = 10080
+    # But this is only when peers have one input each. What we expect.
+
+    #-----------------------------
+    # 2) SettlementTx vsize will be printed
+
+    # ::lit0:: SettlementTx()1: qln/dlclib.go: --------------------: 
+    # ::lit0:: SettlementTx()1: qln/dlclib.go: valueOurs: 20000000
+    # ::lit0:: SettlementTx()1: qln/dlclib.go: valueTheirs: 0
+    # ::lit0:: SettlementTx()1: qln/dlclib.go: --------------------: 
+    # ::lit0:: SettlementTx()2: qln/dlclib.go: --------------------: 
+    # ::lit0:: SettlementTx()2: qln/dlclib.go: valueOurs: 20000000
+    # ::lit0:: SettlementTx()2: qln/dlclib.go: valueTheirs: 0
+    # ::lit0:: SettlementTx()2: qln/dlclib.go: --------------------: 
+    # ::lit0:: SettlementTx()3: qln/dlclib.go: --------------------: 
+    # ::lit0:: SettlementTx()3: qln/dlclib.go: totalFee: 11920 
+    # ::lit0:: SettlementTx()3: qln/dlclib.go: feeEach: 5960
+    # ::lit0:: SettlementTx()3: qln/dlclib.go: feeOurs: 11920
+    # ::lit0:: SettlementTx()3: qln/dlclib.go: feeTheirs: 5960
+    # ::lit0:: SettlementTx()3: qln/dlclib.go: valueOurs: 19988080
+    # ::lit0:: SettlementTx()3: qln/dlclib.go: valueTheirs: -5960
+    # ::lit0:: SettlementTx()3: qln/dlclib.go: vsize: 149
+    # ::lit0:: SettlementTx()3: qln/dlclib.go: --------------------: 
+
+
+    # Vsize from Blockchain: 181
+
+    # There fore we expect here
+    # valueOurs: 19988080 = 20000000 - 7200     !!!
+    # valueTheirs: -5960 = 0 - 5960     !!!  This transaction will not run.
+
+
+    #-----------------------------
+
+    # 3) Claim TX in SettleContract 
+    # Here the transaction vsize is always the same: 121
+
+
+    # Vsize from Blockchain: 121
+
+    #-----------------------------
+
+    # 4) Claim TX from another peer
+    # Here the transaction vsize is always the same: 110
+
+    # Vsize from Blockchain: 110
+
+    #-----------------------------
+
+    # 17992800 - (121 * 80) = 17983120
+    # 89989920 + 17983120 = 107973040
+
+    # 1992800 - (110*80) = 1984000
+    # 89989920 + 1984000 = 91973920
+
+    #-----------------------------
+
+    # AFter Settle
+    # new lit1 balance: 107973040 in txos, 0 in chans
+    #   = sum  107973040
+    # {'CoinType': 257, 'SyncHeight': 514, 'ChanTotal': 0, 'TxoTotal': 107973040, 'MatureWitty': 107973040, 'FeeRate': 80}
+    # new lit2 balance: 91973920 in txos, 0 in chans
+    #   = sum  91973920
+
+    #-----------------------------
+
+    oracle_value = 10
+    node_to_settle = 0
+
+    valueFullyOurs=10
+    valueFullyTheirs=20
+
+    lit_funding_amt =      1     # 1 BTC
+    contract_funding_amt = 10000000     # satoshi
+
+    FundingTxVsize = 252
+    SettlementTxVsize = 181
+
+    SetTxFeeOurs = 7200
+    SetTxFeeTheirs = 7200
+
+    ClaimTxFeeOurs = 121 * 80
+    ClaimTxFeeTheirs = 110 * 80
+
+
+    feeperbyte = 80
+
+
+    vsizes = [FundingTxVsize, SettlementTxVsize]
 
     params = [lit_funding_amt, contract_funding_amt, oracle_value, node_to_settle, valueFullyOurs, valueFullyTheirs, vsizes, feeperbyte, SetTxFeeOurs, SetTxFeeTheirs, ClaimTxFeeOurs, ClaimTxFeeTheirs]
 
