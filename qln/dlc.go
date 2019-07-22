@@ -393,13 +393,6 @@ func (nd *LitNode) DlcFundingSigsHandler(msg lnutil.DlcContractFundingSigsMsg, p
 
 	wal.SignMyInputs(msg.SignedFundingTx)
 
-	// var buf bytes.Buffer
-	// wt := bufio.NewWriter(&buf)
-	// msg.SignedFundingTx.Serialize(wt)
-	// wt.Flush()
-
-	//fmt.Printf("::%s:: DlcFundingSigsHandler(): msg.SignedFundingTx: %x \n",os.Args[6][len(os.Args[6])-4:], buf.Bytes())	
-
 	wal.DirectSendTx(msg.SignedFundingTx)
 
 	err = wal.WatchThis(c.FundingOutpoint)
@@ -545,18 +538,6 @@ func (nd *LitNode) BuildDlcFundingTransaction(c *lnutil.DlcContract) (wire.MsgTx
 
 	our_fee := int64(our_tx_vsize * c.FeePerByte)
 	their_fee := int64(their_tx_vsize * c.FeePerByte)
-
-
-	fmt.Printf("::%s:: BuildDlcFundingTransaction: qln/dlc.go: --------------------: \n",os.Args[6][len(os.Args[6])-4:])
-
-	fmt.Printf("::%s:: BuildDlcFundingTransaction: qln/dlc.go: our_tx_vsize: %d\n",os.Args[6][len(os.Args[6])-4:], our_tx_vsize)
-	fmt.Printf("::%s:: BuildDlcFundingTransaction: qln/dlc.go: their_tx_vsize: %d\n",os.Args[6][len(os.Args[6])-4:], their_tx_vsize)
-
-	fmt.Printf("::%s:: BuildDlcFundingTransaction: qln/dlc.go: our_fee: %d\n",os.Args[6][len(os.Args[6])-4:], our_fee)
-	fmt.Printf("::%s:: BuildDlcFundingTransaction: qln/dlc.go: their_fee: %d\n",os.Args[6][len(os.Args[6])-4:], their_fee)
-
-	fmt.Printf("::%s:: BuildDlcFundingTransaction: qln/dlc.go: --------------------: \n",os.Args[6][len(os.Args[6])-4:])
-
 
 	// add change and sort
 

@@ -591,18 +591,6 @@ func (nd *LitNode) HandleContractOPEvent(c *lnutil.DlcContract,
 			vsize := uint32(110)
 			fee := vsize * c.FeePerByte			
 
-
-
-			fmt.Printf("::%s:: HandleContractOPEvent(): qln/msghandler.go: --------------------: \n",os.Args[6][len(os.Args[6])-4:])
-
-			fmt.Printf("::%s:: HandleContractOPEvent(): qln/msghandler.go: vsize %d\n",os.Args[6][len(os.Args[6])-4:], vsize)
-			fmt.Printf("::%s:: HandleContractOPEvent(): qln/msghandler.go: fee %d\n",os.Args[6][len(os.Args[6])-4:], fee)
-
-			fmt.Printf("::%s:: HandleContractOPEvent(): qln/msghandler.go: --------------------: \n",os.Args[6][len(os.Args[6])-4:])
-		
-		
-
-
 			txClaim.AddTxOut(wire.NewTxOut(value-int64(fee),
 				lnutil.DirectWPKHScriptFromPKH(addr))) 
 
