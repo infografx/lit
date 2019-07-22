@@ -714,83 +714,6 @@ def t_1300_1(env):
 
 def t_10_0(env):
     
-    #-----------------------------
-    # 1)Funding transaction.
-    # Here can be a situation when peers have different number of inputs.
-
-    # ::lit1:: BuildDlcFundingTransaction: qln/dlc.go: our_tx_vsize: 126
-    # ::lit1:: BuildDlcFundingTransaction: qln/dlc.go: their_tx_vsize: 126
-    # ::lit1:: BuildDlcFundingTransaction: qln/dlc.go: our_fee: 10080
-    # ::lit1:: BuildDlcFundingTransaction: qln/dlc.go: their_fee: 10080
-
-    # Vsize from Blockchain: 252
-
-    # So we expect lit1, and lit2 balances equal to 89989920 !!!
-    # 90000000 - 89989920 = 10080
-    # But this is only when peers have one input each. What we expect.
-
-    #-----------------------------
-    # 2) SettlementTx vsize will be printed
-
-    # ::lit0:: SettlementTx()1: qln/dlclib.go: --------------------: 
-    # ::lit0:: SettlementTx()1: qln/dlclib.go: valueOurs: 20000000
-    # ::lit0:: SettlementTx()1: qln/dlclib.go: valueTheirs: 0
-    # ::lit0:: SettlementTx()1: qln/dlclib.go: --------------------: 
-    # ::lit0:: SettlementTx()2: qln/dlclib.go: --------------------: 
-    # ::lit0:: SettlementTx()2: qln/dlclib.go: valueOurs: 20000000
-    # ::lit0:: SettlementTx()2: qln/dlclib.go: valueTheirs: 0
-    # ::lit0:: SettlementTx()2: qln/dlclib.go: --------------------: 
-    # ::lit0:: SettlementTx()3: qln/dlclib.go: --------------------: 
-    # ::lit0:: SettlementTx()3: qln/dlclib.go: totalFee: 11920 
-    # ::lit0:: SettlementTx()3: qln/dlclib.go: feeEach: 5960
-    # ::lit0:: SettlementTx()3: qln/dlclib.go: feeOurs: 11920
-    # ::lit0:: SettlementTx()3: qln/dlclib.go: feeTheirs: 5960
-    # ::lit0:: SettlementTx()3: qln/dlclib.go: valueOurs: 19988080
-    # ::lit0:: SettlementTx()3: qln/dlclib.go: valueTheirs: -5960
-    # ::lit0:: SettlementTx()3: qln/dlclib.go: vsize: 149
-    # ::lit0:: SettlementTx()3: qln/dlclib.go: --------------------: 
-
-
-    # Vsize from Blockchain: 181
-
-    # There fore we expect here
-    # valueOurs: 19988080 = 20000000 - 7200     !!!
-    # valueTheirs: -5960 = 0 - 5960     !!!  This transaction will not run.
-
-
-    #-----------------------------
-
-    # 3) Claim TX in SettleContract 
-    # Here the transaction vsize is always the same: 121
-
-
-    # Vsize from Blockchain: 121
-
-    #-----------------------------
-
-    # 4) Claim TX from another peer
-    # Here the transaction vsize is always the same: 110
-
-    # Vsize from Blockchain: 110
-
-
-    #-----------------------------
-
-    # ============== Fees Calc ===========================
-    # lit1_bal_after_settle 19988080
-    # lit2_bal_after_settle 0
-    # lit1_bal_after_claim 19978400
-    # lit2_bal_after_claim 0
-    # lit1_bal_result:  109968320
-    # lit2_bal_result:  89989920
-    # ====================================================
-    # new lit1 balance: 109968320 in txos, 0 in chans
-    # {'CoinType': 257, 'SyncHeight': 514, 'ChanTotal': 0, 'TxoTotal': 109968320, 'MatureWitty': 109968320, 'FeeRate': 80}
-    #   = sum  109968320
-    # new lit2 balance: 89989920 in txos, 0 in chans
-    # {'CoinType': 257, 'SyncHeight': 514, 'ChanTotal': 0, 'TxoTotal': 89989920, 'MatureWitty': 89989920, 'FeeRate': 80}
-    #   = sum  89989920
-
 
     oracle_value = 10
     node_to_settle = 0
@@ -822,3 +745,38 @@ def t_10_0(env):
 
 
 
+# ====================================================================================
+# ====================================================================================  
+
+
+
+def t_20_0(env):
+    
+
+    oracle_value = 20
+    node_to_settle = 0
+
+    valueFullyOurs=10
+    valueFullyTheirs=20
+
+    lit_funding_amt =      1     # 1 BTC
+    contract_funding_amt = 10000000     # satoshi
+
+    FundingTxVsize = 252
+    SettlementTxVsize = 181
+
+    SetTxFeeOurs = 0
+    SetTxFeeTheirs = 10960
+
+    ClaimTxFeeOurs = 0
+    ClaimTxFeeTheirs = 110 * 80
+
+
+    feeperbyte = 80
+
+
+    vsizes = [FundingTxVsize, SettlementTxVsize]
+
+    params = [lit_funding_amt, contract_funding_amt, oracle_value, node_to_settle, valueFullyOurs, valueFullyTheirs, vsizes, feeperbyte, SetTxFeeOurs, SetTxFeeTheirs, ClaimTxFeeOurs, ClaimTxFeeTheirs]
+
+    run_t(env, params)
