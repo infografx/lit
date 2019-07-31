@@ -17,8 +17,8 @@ from bitcoinrpc.authproxy import AuthServiceProxy, JSONRPCException
 
 
 # The dlcoracle binary must be accessible throught a PATH variable.
-
-LIT_BIN = "%s/../lit" % paths.abspath(paths.dirname(__file__))
+#LIT_BIN = "%s/../lit" % paths.abspath(paths.dirname(__file__))
+LIT_BIN = "/home/andriy/Documents/go_lit/dev/lit"
 
 REGTEST_COINTYPE = 257
 
