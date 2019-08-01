@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"time"
+	"os"
 
 	"github.com/mit-dci/lit/btcutil/chaincfg/chainhash"
 	"github.com/mit-dci/lit/btcutil/txscript"
@@ -136,6 +137,11 @@ func (nd *LitNode) CloseReqHandler(msg lnutil.CloseReqMsg) {
 		logging.Errorf("CloseReqHandler Sig err %s", err.Error())
 		return
 	}
+
+	for _, p := range parsed {
+		fmt.Printf("::%s:: CloseReqHandler(): qln/close.go: OpCode: %s \n",os.Args[6][len(os.Args[6])-4:], p.Print(false))
+	}
+
 	// always sighash all
 	hash := txscript.CalcWitnessSignatureHash(
 		parsed, hCache, txscript.SigHashAll, tx, 0, q.Value)

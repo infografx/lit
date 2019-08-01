@@ -20,7 +20,7 @@ def run_close_test(env, initiator, target, closer):
 
     # Send a bitcoin.
     bc.rpc.sendtoaddress(addr1, 1)
-    env.generate_block()
+    env.generate_block(1)
 
     # Log it to make sure we got it.
     bal1 = initiator.get_balance_info()['TxoTotal']
@@ -37,19 +37,19 @@ def run_close_test(env, initiator, target, closer):
     # Now we confirm the block.
     env.generate_block()
 
-    # # Now close the channel.
-    # print('Now closing...')
-    # res = closer.rpc.CloseChannel(ChanIdx=cid)
-    # print('Status:', res['Status'])
-    # env.generate_block()
+    # Now close the channel.
+    print('Now closing...')
+    res = closer.rpc.CloseChannel(ChanIdx=cid)
+    print('Status:', res['Status'])
+    env.generate_block()
 
-    # # Check balances.
-    # bals = initiator.get_balance_info()
-    # fbal = bals['TxoTotal']
-    # print('final balance:', fbal)
-    # expected = bal1 - initialsend - 3560
-    # print('expected:', expected)
-    # print('diff:', expected - fbal)
+    # Check balances.
+    bals = initiator.get_balance_info()
+    fbal = bals['TxoTotal']
+    print('final balance:', fbal)
+    expected = bal1 - initialsend - 3560
+    print('expected:', expected)
+    print('diff:', expected - fbal)
 
     best_block_hash = bc.rpc.getbestblockhash()
     bb = bc.rpc.getblock(best_block_hash)
@@ -92,6 +92,10 @@ def run_close_test(env, initiator, target, closer):
 def forward(env):
     lit1 = env.lits[0]
     lit2 = env.lits[1]
+
+    lit1.resync()
+    lit2.resync()
+
     run_close_test(env, lit1, lit2, lit1)
 
 def reverse(env):

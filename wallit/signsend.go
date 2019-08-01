@@ -4,6 +4,9 @@ import (
 	"bytes"
 	"fmt"
 	"sort"
+	
+	"os"
+	"bufio"	
 
 	"github.com/mit-dci/lit/logging"
 
@@ -138,6 +141,13 @@ func (w *Wallit) ReallySend(txid *chainhash.Hash) error {
 	if err != nil {
 		return err
 	}
+
+	var buft bytes.Buffer
+	wtt := bufio.NewWriter(&buft)
+	tx.Serialize(wtt)
+	wtt.Flush()
+
+	fmt.Printf("::%s:: ReallySend(): wallit/signsend.go: %x \n",os.Args[6][len(os.Args[6])-4:], buft.Bytes())
 
 	return w.NewOutgoingTx(tx)
 }

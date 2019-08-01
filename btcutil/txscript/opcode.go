@@ -724,6 +724,10 @@ func (pop *parsedOpcode) checkMinimalDataPush() error {
 	return nil
 }
 
+func (pop *parsedOpcode) Print(oneline bool) string {
+	return pop.print(oneline)
+}
+
 // print returns a human-readable string representation of the opcode for use
 // in script disassembly.
 func (pop *parsedOpcode) print(oneline bool) string {
