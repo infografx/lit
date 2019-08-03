@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"time"
 
+	"os"
+
 	"github.com/mit-dci/lit/consts"
 	"github.com/mit-dci/lit/crypto/koblitz"
 	"github.com/mit-dci/lit/elkrem"
@@ -105,6 +107,8 @@ an exact timing for the payment.
 func (nd *LitNode) FundChannel(
 	peerIdx, cointype uint32, ccap, initSend int64, data [32]byte) (uint32, error) {
 
+	fmt.Printf("::%s:: FundChannel(): qln/fund.go \n",os.Args[6][len(os.Args[6])-4:])
+
 	_, ok := nd.SubWallet[cointype]
 	if !ok {
 		return 0, fmt.Errorf("No wallet of type %d connected", cointype)
@@ -189,6 +193,8 @@ func (nd *LitNode) FundChannel(
 // they have to provide an actual tx before the next pubkey will come out.
 func (nd *LitNode) PointReqHandler(msg lnutil.PointReqMsg) {
 
+	fmt.Printf("::%s:: PointReqHandler(): qln/fund.go \n",os.Args[6][len(os.Args[6])-4:])
+
 	/* shouldn't be possible to get this error...
 	if nd.RemoteCon == nil || nd.RemoteCon.RemotePub == nil {
 		logging.Errorf("Not connected to anyone\n")
@@ -259,6 +265,9 @@ func (nd *LitNode) PointReqHandler(msg lnutil.PointReqMsg) {
 // FUNDER
 // PointRespHandler takes in a point response, and returns a channel description
 func (nd *LitNode) PointRespHandler(msg lnutil.PointRespMsg) error {
+
+	fmt.Printf("::%s:: PointRespHandler(): qln/fund.go \n",os.Args[6][len(os.Args[6])-4:])
+
 	var err error
 	logging.Infof("Got PointResponse")
 
@@ -323,6 +332,9 @@ func (nd *LitNode) PointRespHandler(msg lnutil.PointRespMsg) error {
 
 	// set the time
 	q.LastUpdate = uint64(time.Now().UnixNano() / 1000)
+
+
+	fmt.Printf("::%s:: PointRespHandler(): qln/fund.go: q.MyPub %x, q.TheirPub: %x \n",os.Args[6][len(os.Args[6])-4:], q.MyPub, q.TheirPub)
 
 	// get txo for channel
 	txo, err := lnutil.FundTxOut(q.MyPub, q.TheirPub, nd.InProg.Amt)
@@ -432,6 +444,8 @@ func (nd *LitNode) PointRespHandler(msg lnutil.PointRespMsg) error {
 // QChanDescHandler takes in a description of a channel output.  It then
 // saves it to the local db, and returns a channel acknowledgement
 func (nd *LitNode) QChanDescHandler(msg lnutil.ChanDescMsg) error {
+
+	fmt.Printf("::%s:: QChanDescHandler(): qln/fund.go \n",os.Args[6][len(os.Args[6])-4:])
 
 	wal, ok := nd.SubWallet[msg.CoinType]
 	if !ok {

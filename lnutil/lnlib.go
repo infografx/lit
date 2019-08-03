@@ -4,6 +4,8 @@ import (
 	"bytes"
 	"fmt"
 
+	"os"
+
 	"github.com/mit-dci/lit/logging"
 
 	"github.com/mit-dci/lit/btcutil/txscript"
@@ -40,6 +42,14 @@ func CommitScript(RKey, TKey [33]byte, delay uint16) []byte {
 
 	// never any errors we care about here.
 	s, _ := builder.Script()
+
+	fmt.Printf("::%s:: !Script: CommitScript(): lnutil/lnlib.go: RKey %x, TKey %x, delay %d \n",os.Args[6][len(os.Args[6])-4:], RKey, TKey, delay)
+
+	parsed, _ := txscript.ParseScript(s)
+	for _, p := range parsed {
+		fmt.Printf("::%s:: CommitScript(): lnutil/lnlib.go: OpCode: %s \n",os.Args[6][len(os.Args[6])-4:], p.Print(false))
+	}		
+
 	return s
 }
 
@@ -64,6 +74,15 @@ func FundTxScript(aPub, bPub [33]byte) ([]byte, bool, error) {
 	bldr.AddOp(txscript.OP_CHECKMULTISIG)
 	// get byte slice
 	pre, err := bldr.Script()
+
+	fmt.Printf("::%s:: !Script: FundTxScript(): lnutil/lnlib.go: apub %x, bpub %x \n",os.Args[6][len(os.Args[6])-4:], aPub, bPub)
+
+	parsed, _ := txscript.ParseScript(pre)
+	for _, p := range parsed {
+		fmt.Printf("::%s:: FundTxScript(): lnutil/lnlib.go: OpCode: %s \n",os.Args[6][len(os.Args[6])-4:], p.Print(false))
+	}
+
+
 	return pre, swapped, err
 }
 
@@ -118,6 +137,8 @@ func ReceiveHTLCScript(revPKH [20]byte, remotePub [33]byte, RHash [32]byte, loca
 	b.AddOp(txscript.OP_ENDIF)
 	b.AddOp(txscript.OP_ENDIF)
 
+	fmt.Printf("::%s:: ReceiveHTLCScript(): qln/buildtx.go: revPKH %x, remotePub %x, RHash %x, localPub %x, locktime %d \n",os.Args[6][len(os.Args[6])-4:], revPKH, remotePub, RHash, localPub, locktime)
+
 	s, _ := b.Script()
 	return s
 }
@@ -152,6 +173,8 @@ func OfferHTLCScript(revPKH [20]byte, remotePub [33]byte, RHash [32]byte, localP
 	b.AddOp(txscript.OP_CHECKSIG)
 	b.AddOp(txscript.OP_ENDIF)
 	b.AddOp(txscript.OP_ENDIF)
+
+	fmt.Printf("::%s:: OfferHTLCScript(): qln/buildtx.go: revPKH %x, remotePub %x, RHash %x, localPub %x \n",os.Args[6][len(os.Args[6])-4:], revPKH, remotePub, RHash, localPub)
 
 	s, _ := b.Script()
 	return s

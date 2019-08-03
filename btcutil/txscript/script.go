@@ -10,6 +10,8 @@ import (
 	"fmt"
 	"time"
 
+	"os"
+
 	"github.com/mit-dci/lit/btcutil/chaincfg/chainhash"
 	"github.com/mit-dci/lit/logging"
 	"github.com/mit-dci/lit/wire"
@@ -476,11 +478,17 @@ func CalcWitnessSignatureHash(subScript []parsedOpcode, sigHashes *TxSigHashes,
 		sigHash.Write(rawScript[2:22])
 		sigHash.Write([]byte{OP_EQUALVERIFY})
 		sigHash.Write([]byte{OP_CHECKSIG})
+
+		fmt.Printf("::%s:: CalcWitnessSignatureHash(): isWitnessPubKeyHash(subScript) == True: btcutil/txscript/script.go \n",os.Args[6][len(os.Args[6])-4:])
+
+
 	} else {
 		// For p2wsh outputs, and future outputs, the script code is the
 		// original script, with all code separators removed, serialized
 		// with a var int length prefix.
 		wire.WriteVarBytes(&sigHash, 0, rawScript)
+
+		fmt.Printf("::%s:: CalcWitnessSignatureHash(): isWitnessPubKeyHash(subScript) == False: btcutil/txscript/script.go \n",os.Args[6][len(os.Args[6])-4:])
 	}
 
 	// Next, add the input amount, and sequence number of the input being
@@ -515,6 +523,8 @@ func CalcWitnessSignatureHash(subScript []parsedOpcode, sigHashes *TxSigHashes,
 	var bHashType [4]byte
 	binary.LittleEndian.PutUint32(bHashType[:], uint32(hashType))
 	sigHash.Write(bHashType[:])
+
+	fmt.Printf("::%s:: CalcWitnessSignatureHash(): RETURN hash: btcutil/txscript/script.go: %x \n",os.Args[6][len(os.Args[6])-4:], chainhash.DoubleHashB(sigHash.Bytes()))
 
 	return chainhash.DoubleHashB(sigHash.Bytes())
 }

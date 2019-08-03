@@ -8,6 +8,8 @@ import (
 	"math/big"
 	"errors"
 
+	"os"
+
 	"github.com/mit-dci/lit/btcutil/chaincfg/chainhash"
 	"github.com/mit-dci/lit/crypto/koblitz"
 	"github.com/mit-dci/lit/logging"
@@ -362,10 +364,12 @@ func DlcOutput(pkPeer, pkOracleSig, pkOurs [33]byte, value int64) *wire.TxOut {
 // signature and their own private key to claim the funds from the output.
 // However, if they send the wrong one, they won't be able to claim the funds
 // and we can claim them once the time delay has passed.
-func DlcCommitScript(pubKeyPeer, pubKeyOracleSig, ourPubKey [33]byte,
-	delay uint16) []byte {
+func DlcCommitScript(pubKeyPeer, pubKeyOracleSig, ourPubKey [33]byte, delay uint16) []byte {
 	// Combine pubKey and Oracle Sig
 	combinedPubKey := CombinePubs(pubKeyPeer, pubKeyOracleSig)
+
+	fmt.Printf("::%s:: DlcCommitScript(): lnutil/dlclib.go: combinedPubKey %x < -pubKeyPeer %x + pubKeyOracleSig %x, ourPubKey %x, delay %d  \n",os.Args[6][len(os.Args[6])-4:], combinedPubKey, pubKeyPeer, pubKeyOracleSig, ourPubKey, delay)
+
 	return CommitScript(combinedPubKey, ourPubKey, delay)
 }
 

@@ -4,6 +4,8 @@ import (
 	"bytes"
 	"fmt"
 
+	"os"
+
 	"github.com/mit-dci/lit/logging"
 
 	"github.com/mit-dci/lit/btcutil"
@@ -141,6 +143,9 @@ func (q *Qchan) BuildStateTxs(mine bool) (*wire.MsgTx, []*wire.MsgTx, []*wire.Tx
 	var fancyAmt, pkhAmt, theirAmt int64 // output amounts
 
 	revPub, timePub, pkhPub, err := q.GetKeysFromState(mine)
+
+	fmt.Printf("::%s:: BuildStateTxs(): qln/buildtx.go: revPub %x, timePub %x, pkhPub %x, mine %t \n",os.Args[6][len(os.Args[6])-4:], revPub, timePub, pkhPub, mine)
+
 	if err != nil {
 		return nil, nil, nil, err
 	}
@@ -201,7 +206,13 @@ func (q *Qchan) BuildStateTxs(mine bool) (*wire.MsgTx, []*wire.MsgTx, []*wire.Tx
 	}
 
 	// now that everything is chosen, build fancy script and pkh script
+
+	fmt.Printf("::%s:: CommitScript(): BuildStateTxs: qln/buildtx.go: revPub %x, timePub %x, q.Delay %d \n",os.Args[6][len(os.Args[6])-4:], revPub, timePub, q.Delay)
+
 	fancyScript := lnutil.CommitScript(revPub, timePub, q.Delay)
+
+	fmt.Printf("::%s:: DirectWPKHScript(): BuildStateTxs: qln/buildtx.go: pkhPub %x \n",os.Args[6][len(os.Args[6])-4:], pkhPub)
+
 	pkhScript := lnutil.DirectWPKHScript(pkhPub) // p2wpkh-ify
 
 	logging.Infof("> made SH script, state %d\n", s.StateIdx)
@@ -300,6 +311,7 @@ func (q *Qchan) BuildStateTxs(mine bool) (*wire.MsgTx, []*wire.MsgTx, []*wire.Tx
 			}
 		}
 
+		fmt.Printf("::%s:: CommitScript(): BuildStateTxs: qln/buildtx.go: revPub %x, timePub %x, q.Delay %d \n",os.Args[6][len(os.Args[6])-4:], revPub, timePub, q.Delay)
 		spendHTLCScript := lnutil.CommitScript(revPub, timePub, q.Delay)
 
 		HTLCSpend := wire.NewMsgTx()
@@ -360,6 +372,8 @@ func (q *Qchan) BuildStateTxs(mine bool) (*wire.MsgTx, []*wire.MsgTx, []*wire.Tx
 func (q *Qchan) GenHTLCScriptWithElkPointsAndRevPub(h HTLC, mine bool, theirElkPoint, myElkPoint, revPub [33]byte) ([]byte, error) {
 	var remotePub, localPub [33]byte
 
+	fmt.Printf("::%s:: GenHTLCScriptWithElkPointsAndRevPub(): qln/buildtx.go: mine %t \n",os.Args[6][len(os.Args[6])-4:], mine)
+
 	revPKHSlice := btcutil.Hash160(revPub[:])
 	var revPKH [20]byte
 	copy(revPKH[:], revPKHSlice[:20])
@@ -371,6 +385,8 @@ func (q *Qchan) GenHTLCScriptWithElkPointsAndRevPub(h HTLC, mine bool, theirElkP
 		remotePub = lnutil.CombinePubs(h.MyHTLCBase, myElkPoint)
 		localPub = lnutil.CombinePubs(h.TheirHTLCBase, theirElkPoint)
 	}
+
+	fmt.Printf("::%s:: GenHTLCScriptWithElkPointsAndRevPub(): qln/buildtx.go: remotePub %x, localPub %x \n",os.Args[6][len(os.Args[6])-4:], remotePub, localPub)
 
 	var HTLCScript []byte
 
@@ -391,6 +407,10 @@ func (q *Qchan) GenHTLCScriptWithElkPointsAndRevPub(h HTLC, mine bool, theirElkP
 	logging.Infof("HTLC %d, script: %x, myBase: %x, theirBase: %x, Incoming: %t, Amt: %d, RHash: %x",
 		h.Idx, HTLCScript, h.MyHTLCBase, h.TheirHTLCBase, h.Incoming, h.Amt, h.RHash)
 
+
+	fmt.Printf("HTLC %d, script: %x, myBase: %x, theirBase: %x, Incoming: %t, Amt: %d, RHash: %x",
+		h.Idx, HTLCScript, h.MyHTLCBase, h.TheirHTLCBase, h.Incoming, h.Amt, h.RHash)	
+
 	return HTLCScript, nil
 
 }
@@ -402,10 +422,15 @@ func (q *Qchan) GenHTLCScript(h HTLC, mine bool) ([]byte, error) {
 		return nil, err
 	}
 
+	fmt.Printf("::%s:: GenHTLCScript(): qln/buildtx.go: revPub %x \n",os.Args[6][len(os.Args[6])-4:], revPub)
+
 	curElk, err := q.ElkPoint(false, q.State.StateIdx)
 	if err != nil {
 		return nil, err
 	}
+
+	fmt.Printf("::%s:: GenHTLCScript(): qln/buildtx.go: curElk %x \n",os.Args[6][len(os.Args[6])-4:], curElk)
+
 	return q.GenHTLCScriptWithElkPointsAndRevPub(h, mine, q.State.ElkPoint, curElk, revPub)
 }
 

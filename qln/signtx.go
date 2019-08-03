@@ -4,6 +4,8 @@ import (
 	"bytes"
 	"fmt"
 
+	"os"
+
 	"github.com/mit-dci/lit/btcutil/txscript"
 	"github.com/mit-dci/lit/crypto/koblitz"
 	"github.com/mit-dci/lit/lnutil"
@@ -24,11 +26,14 @@ func (nd *LitNode) SignBreakTx(q *Qchan) (*wire.MsgTx, error) {
 	// make hash cache for this tx
 	hCache := txscript.NewTxSigHashes(tx)
 
+
+	fmt.Printf("::%s:: FundTxScript(): SignBreakTx(): qln/signtx.go: q.MyPub %x, q.TheirPub %x \n",os.Args[6][len(os.Args[6])-4:], q.MyPub, q.TheirPub)	
+
 	// generate script preimage (keep track of key order)
 	pre, swap, err := lnutil.FundTxScript(q.MyPub, q.TheirPub)
 	if err != nil {
 		return nil, err
-	}
+	}		
 
 	// get private signing key
 	priv, err := nd.SubWallet[q.Coin()].GetPriv(q.KeyGen)
@@ -41,6 +46,8 @@ func (nd *LitNode) SignBreakTx(q *Qchan) (*wire.MsgTx, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	fmt.Printf("::%s:: SignBreakTx(): qln/signtx.go: txscript.RawTxInWitnessSignature sig %x \n",os.Args[6][len(os.Args[6])-4:], mySig)
 
 	theirSig := sig64.SigDecompress(q.State.Sig)
 	// put the sighash all byte on the end of their signature
@@ -75,11 +82,15 @@ func (nd *LitNode) SignSimpleClose(q *Qchan, tx *wire.MsgTx) ([64]byte, error) {
 	// make hash cache
 	hCache := txscript.NewTxSigHashes(tx)
 
+	fmt.Printf("::%s:: FundTxScript(): SignSimpleClose() qln/signtx.go q.MyPub %x, q.TheirPub %x \n",os.Args[6][len(os.Args[6])-4:], q.MyPub, q.TheirPub)
+
 	// generate script preimage for signing (ignore key order)
 	pre, _, err := lnutil.FundTxScript(q.MyPub, q.TheirPub)
 	if err != nil {
 		return sig, err
 	}
+
+
 	// get private signing key
 	priv, err := nd.SubWallet[q.Coin()].GetPriv(q.KeyGen)
 	if err != nil {
@@ -91,6 +102,9 @@ func (nd *LitNode) SignSimpleClose(q *Qchan, tx *wire.MsgTx) ([64]byte, error) {
 	if err != nil {
 		return sig, err
 	}
+
+	fmt.Printf("::%s:: SignSimpleClose(): qln/signtx.go: txscript.RawTxInWitnessSignature sig %x \n",os.Args[6][len(os.Args[6])-4:], mySig)
+	
 	// truncate sig (last byte is sighash type, always sighashAll)
 	mySig = mySig[:len(mySig)-1]
 	return sig64.SigCompress(mySig)
@@ -105,10 +119,13 @@ func (nd *LitNode) SignSettlementTx(c *lnutil.DlcContract, tx *wire.MsgTx,
 	// make hash cache
 	hCache := txscript.NewTxSigHashes(tx)
 
-	// generate script preimage for signing (ignore key order)
-	pre, _, err := lnutil.FundTxScript(c.OurFundMultisigPub,
-		c.TheirFundMultisigPub)
+	fmt.Printf("::%s:: FundTxScript(): SignSettlementTx: qln/signtx.go c.OurFundMultisigPub %x, c.TheirFundMultisigPub %x \n",os.Args[6][len(os.Args[6])-4:], c.OurFundMultisigPub, c.TheirFundMultisigPub)	
 
+	// generate script preimage for signing (ignore key order)
+	pre, _, err := lnutil.FundTxScript(c.OurFundMultisigPub, c.TheirFundMultisigPub)
+	
+
+		
 	if err != nil {
 		return sig, err
 	}
@@ -120,6 +137,9 @@ func (nd *LitNode) SignSettlementTx(c *lnutil.DlcContract, tx *wire.MsgTx,
 	if err != nil {
 		return sig, err
 	}
+
+	fmt.Printf("::%s:: SignSettlementTx(): qln/signtx.go: txscript.RawTxInWitnessSignature sig %x \n",os.Args[6][len(os.Args[6])-4:], mySig)
+
 	// truncate sig (last byte is sighash type, always sighashAll)
 	mySig = mySig[:len(mySig)-1]
 	return sig64.SigCompress(mySig)
@@ -142,6 +162,8 @@ func (nd *LitNode) SignClaimTx(claimTx *wire.MsgTx, value int64, pre []byte,
 	if err != nil {
 		return err
 	}
+
+	fmt.Printf("::%s:: SignState(): qln/signtx.go: txscript.RawTxInWitnessSignature sig %x \n",os.Args[6][len(os.Args[6])-4:], mySig)
 
 	witStash := make([][]byte, 3)
 	witStash[0] = mySig
@@ -178,11 +200,17 @@ func (nd *LitNode) SignState(q *Qchan) ([64]byte, [][64]byte, error) {
 	// make hash cache for this tx
 	hCache := txscript.NewTxSigHashes(commitmentTx)
 
+
+	fmt.Printf("::%s:: SignState(): qln/signtx.go: hCache %x \n",os.Args[6][len(os.Args[6])-4:], hCache)
+
+	fmt.Printf("::%s:: FundTxScript(): SignState: qln/signtx.go q.MyPub %x, q.TheirPub %x \n",os.Args[6][len(os.Args[6])-4:], q.MyPub, q.TheirPub)
+
 	// generate script preimage (ignore key order)
 	pre, _, err := lnutil.FundTxScript(q.MyPub, q.TheirPub)
 	if err != nil {
 		return sig, nil, err
 	}
+		
 
 	// get private signing key
 	priv, err := nd.SubWallet[q.Coin()].GetPriv(q.KeyGen)
@@ -197,6 +225,8 @@ func (nd *LitNode) SignState(q *Qchan) ([64]byte, [][64]byte, error) {
 		return sig, nil, err
 	}
 
+	fmt.Printf("::%s:: SignState(): qln/signtx.go: txscript.RawTxInWitnessSignature sig %x \n",os.Args[6][len(os.Args[6])-4:], bigSig)
+
 	// truncate sig (last byte is sighash type, always sighashAll)
 	bigSig = bigSig[:len(bigSig)-1]
 
@@ -204,6 +234,8 @@ func (nd *LitNode) SignState(q *Qchan) ([64]byte, [][64]byte, error) {
 	if err != nil {
 		return sig, nil, err
 	}
+
+	fmt.Printf("::%s:: SignState(): qln/signtx.go: sig %x \n",os.Args[6][len(os.Args[6])-4:], sig)
 
 	logging.Infof("____ sig creation for channel (%d,%d):\n", q.Peer(), q.Idx())
 	logging.Infof("\tinput %s\n", commitmentTx.TxIn[0].PreviousOutPoint.String())
@@ -268,10 +300,13 @@ func (nd *LitNode) SignState(q *Qchan) ([64]byte, [][64]byte, error) {
 		var HTLCScript []byte
 
 		if idx == len(q.State.HTLCs) {
+			fmt.Printf("::%s:: SignState(): qln/signtx.go: idx == len(q.State.HTLCs) \n",os.Args[6][len(os.Args[6])-4:])
 			HTLCScript, err = q.GenHTLCScript(*q.State.InProgHTLC, false)
 		} else if idx == len(q.State.HTLCs)+1 {
+			fmt.Printf("::%s:: SignState(): qln/signtx.go: idx == len(q.State.HTLCs)+1 \n",os.Args[6][len(os.Args[6])-4:])
 			HTLCScript, err = q.GenHTLCScript(*q.State.CollidingHTLC, false)
 		} else {
+			fmt.Printf("::%s:: SignState(): qln/signtx.go: else \n",os.Args[6][len(os.Args[6])-4:])
 			HTLCScript, err = q.GenHTLCScript(q.State.HTLCs[idx], false)
 		}
 		if err != nil {
@@ -283,10 +318,18 @@ func (nd *LitNode) SignState(q *Qchan) ([64]byte, [][64]byte, error) {
 			return sig, nil, err
 		}
 
+		fmt.Printf("::%s:: !Script SignState(): qln/signtx.go: HTLCparsed\n",os.Args[6][len(os.Args[6])-4:])
+
+		for _, p := range HTLCparsed {
+			fmt.Printf("::%s:: SignState(): qln/signtx.go: OpCode: %s \n",os.Args[6][len(os.Args[6])-4:], p.Print(false))
+		}		
+
 		spendHTLCHash := txscript.CalcWitnessSignatureHash(
 			HTLCparsed, hc, txscript.SigHashAll, spendTx, 0, h.Value)
 
 		logging.Infof("Signing HTLC hash: %x, with pubkey: %x", spendHTLCHash, HTLCPriv.PubKey().SerializeCompressed())
+
+		fmt.Printf("::%s:: SignState(): qln/signtx.go: spendHTLCHashe %x, pubkey %x \n",os.Args[6][len(os.Args[6])-4:], spendHTLCHash, HTLCPriv.PubKey().SerializeCompressed())
 
 		mySig, err := HTLCPriv.Sign(spendHTLCHash)
 		if err != nil {
@@ -310,6 +353,8 @@ func (nd *LitNode) SignState(q *Qchan) ([64]byte, [][64]byte, error) {
 		}
 	}
 
+	fmt.Printf("::%s:: SignState(): qln/signtx.go: RETURN: sig %x (from txscript.RawTxInWitnessSignature), spendHTLCSigsArr %x \n",os.Args[6][len(os.Args[6])-4:], sig, spendHTLCSigsArr)
+
 	return sig, spendHTLCSigsArr, err
 }
 
@@ -320,6 +365,8 @@ func (nd *LitNode) SignState(q *Qchan) ([64]byte, [][64]byte, error) {
 // this function.
 func (q *Qchan) VerifySigs(sig [64]byte, HTLCSigs [][64]byte) error {
 
+	fmt.Printf("::%s:: VerifySigs(): qln/signtx.go \n",os.Args[6][len(os.Args[6])-4:])
+
 	bigSig := sig64.SigDecompress(sig)
 	// my tx when I'm verifying.
 	commitmentTx, spendHTLCTxs, HTLCTxOuts, err := q.BuildStateTxs(true)
@@ -328,6 +375,8 @@ func (q *Qchan) VerifySigs(sig [64]byte, HTLCSigs [][64]byte) error {
 	}
 
 	logging.Infof("Verifying signatures with Elk [%x] NextElk [%x] N2Elk [%x]\n", q.State.ElkPoint, q.State.NextElkPoint, q.State.N2ElkPoint)
+
+	fmt.Printf("::%s:: FundTxScript(): VerifySigs: qln/signtx.go q.MyPub %x, q.TheirPub %x \n",os.Args[6][len(os.Args[6])-4:], q.MyPub, q.TheirPub)
 
 	// generate fund output script preimage (ignore key order)
 	pre, _, err := lnutil.FundTxScript(q.MyPub, q.TheirPub)
@@ -338,6 +387,9 @@ func (q *Qchan) VerifySigs(sig [64]byte, HTLCSigs [][64]byte) error {
 	hCache := txscript.NewTxSigHashes(commitmentTx)
 
 	parsed, err := txscript.ParseScript(pre)
+
+
+
 	if err != nil {
 		return err
 	}

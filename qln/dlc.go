@@ -3,6 +3,8 @@ package qln
 import (
 	"fmt"
 
+	"os"
+
 	"github.com/mit-dci/lit/btcutil"
 	"github.com/mit-dci/lit/btcutil/txscript"
 	"github.com/mit-dci/lit/btcutil/txsort"
@@ -649,11 +651,14 @@ func (nd *LitNode) SettleContract(cIdx uint64, oracleValue int64, oracleSig [32]
 	myBigSig = append(myBigSig, byte(txscript.SigHashAll))
 	theirBigSig = append(theirBigSig, byte(txscript.SigHashAll))
 
+	fmt.Printf("::%s:: FundTxScript(): SettleContract(): qln/dlc.go: c.OurFundMultisigPub %x, c.TheirFundMultisigPub %x \n",os.Args[6][len(os.Args[6])-4:], c.OurFundMultisigPub, c.TheirFundMultisigPub)
+
 	pre, swap, err := lnutil.FundTxScript(c.OurFundMultisigPub, c.TheirFundMultisigPub)
 	if err != nil {
 		logging.Errorf("SettleContract FundTxScript err %s", err.Error())
 		return [32]byte{}, [32]byte{}, err
 	}
+		
 
 	// swap if needed
 	if swap {

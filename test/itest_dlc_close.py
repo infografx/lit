@@ -14,13 +14,68 @@ def run_close_test(env, initiator, target, closer):
     # Connect the nodes.
     initiator.connect_to_peer(target)
 
+
+    #-------------------------------------------------------------------------
+
+    print("ADDRESSES BEFORE SEND TO ADDRESS")
+    print("LIT1 Addresses")
+    print(pp.pprint(initiator.rpc.GetAddresses()))
+
+    print("LIT2 Addresses")
+    print(pp.pprint(target.rpc.GetAddresses()))
+
+    print("bitcoind Addresses")
+    print(pp.pprint(bc.rpc.listaddressgroupings()))
+
+    bals1 = initiator.get_balance_info()  
+    print('new lit1 balance:', bals1['TxoTotal'], 'in txos,', bals1['ChanTotal'], 'in chans')
+    bal1sum = bals1['TxoTotal'] + bals1['ChanTotal']
+    print('  = sum ', bal1sum)
+
+    bals2 = target.get_balance_info()
+    print('new lit2 balance:', bals2['TxoTotal'], 'in txos,', bals2['ChanTotal'], 'in chans')
+    bal2sum = bals2['TxoTotal'] + bals2['ChanTotal']
+    print('  = sum ', bal2sum)   
+
+
+    #-------------------------------------------------------------------------
+
+
     # First figure out where we should send the money.
     addr1 = initiator.make_new_addr()
     print('Got initiator address:', addr1)
 
     # Send a bitcoin.
     bc.rpc.sendtoaddress(addr1, 1)
-    env.generate_block(1)
+    env.generate_block()
+
+
+    #-------------------------------------------------------------------------
+
+
+    print("ADDRESSES AFTER SEND TO ADDRESS")
+    print("LIT1 Addresses")
+    print(pp.pprint(initiator.rpc.GetAddresses()))
+
+    print("LIT2 Addresses")
+    print(pp.pprint(target.rpc.GetAddresses()))
+
+    print("bitcoind Addresses")
+    print(pp.pprint(bc.rpc.listaddressgroupings()))
+
+    bals1 = initiator.get_balance_info()  
+    print('new lit1 balance:', bals1['TxoTotal'], 'in txos,', bals1['ChanTotal'], 'in chans')
+    bal1sum = bals1['TxoTotal'] + bals1['ChanTotal']
+    print('  = sum ', bal1sum)
+
+    bals2 = target.get_balance_info()
+    print('new lit2 balance:', bals2['TxoTotal'], 'in txos,', bals2['ChanTotal'], 'in chans')
+    bal2sum = bals2['TxoTotal'] + bals2['ChanTotal']
+    print('  = sum ', bal2sum)  
+
+
+    #-------------------------------------------------------------------------    
+
 
     # Log it to make sure we got it.
     bal1 = initiator.get_balance_info()['TxoTotal']
@@ -37,19 +92,52 @@ def run_close_test(env, initiator, target, closer):
     # Now we confirm the block.
     env.generate_block()
 
-    # Now close the channel.
-    print('Now closing...')
-    res = closer.rpc.CloseChannel(ChanIdx=cid)
-    print('Status:', res['Status'])
-    env.generate_block()
 
-    # Check balances.
-    bals = initiator.get_balance_info()
-    fbal = bals['TxoTotal']
-    print('final balance:', fbal)
-    expected = bal1 - initialsend - 3560
-    print('expected:', expected)
-    print('diff:', expected - fbal)
+    #-------------------------------------------------------------------------
+
+
+    print("ADDRESSES AFTER OPEN CHANNEL")
+    print("LIT1 Addresses")
+    print(pp.pprint(initiator.rpc.GetAddresses()))
+
+    print("LIT2 Addresses")
+    print(pp.pprint(target.rpc.GetAddresses()))
+
+    print("bitcoind Addresses")
+    print(pp.pprint(bc.rpc.listaddressgroupings()))
+
+    bals1 = initiator.get_balance_info()  
+    print('new lit1 balance:', bals1['TxoTotal'], 'in txos,', bals1['ChanTotal'], 'in chans')
+    bal1sum = bals1['TxoTotal'] + bals1['ChanTotal']
+    print('  = sum ', bal1sum)
+
+    bals2 = target.get_balance_info()
+    print('new lit2 balance:', bals2['TxoTotal'], 'in txos,', bals2['ChanTotal'], 'in chans')
+    bal2sum = bals2['TxoTotal'] + bals2['ChanTotal']
+    print('  = sum ', bal2sum)  
+
+
+    #-------------------------------------------------------------------------
+
+
+
+
+    # # Now close the channel.
+    # print('Now closing...')
+    # res = closer.rpc.CloseChannel(ChanIdx=cid)
+    # print('Status:', res['Status'])
+    # env.generate_block()
+
+    # # Check balances.
+    # bals = initiator.get_balance_info()
+    # fbal = bals['TxoTotal']
+    # print('final balance:', fbal)
+    # expected = bal1 - initialsend - 3560
+    # print('expected:', expected)
+    # print('diff:', expected - fbal)
+
+
+    #=================================================================
 
     best_block_hash = bc.rpc.getbestblockhash()
     bb = bc.rpc.getblock(best_block_hash)

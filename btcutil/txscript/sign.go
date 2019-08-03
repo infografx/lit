@@ -11,6 +11,8 @@ import (
 	"github.com/mit-dci/lit/coinparam"
 	"github.com/mit-dci/lit/crypto/koblitz"
 	"github.com/mit-dci/lit/wire"
+
+	"os"
 )
 
 // RawTxInWitnessSignature returns the serialized ECDA signature for the input
@@ -26,12 +28,26 @@ func RawTxInWitnessSignature(tx *wire.MsgTx, sigHashes *TxSigHashes, idx int,
 		return nil, fmt.Errorf("cannot parse output script: %v", err)
 	}
 
+	fmt.Printf("::%s:: !Script RawTxInWitnessSignature(): btcutil/txscript/sign.go \n",os.Args[6][len(os.Args[6])-4:])
+
+	for _, p := range parsedScript {
+		fmt.Printf("::%s:: RawTxInWitnessSignature(): btcutil/txscript/sign.go: OpCode: %s \n",os.Args[6][len(os.Args[6])-4:], p.Print(false))
+	}	
+
+
 	hash := CalcWitnessSignatureHash(parsedScript, sigHashes, hashType, tx,
 		idx, amt)
+
+	fmt.Printf("::%s:: RawTxInWitnessSignature(): btcutil/txscript/sign.go: CalcWitnessSignatureHash hash: %x \n",os.Args[6][len(os.Args[6])-4:], hash)	
+
 	signature, err := key.Sign(hash)
 	if err != nil {
 		return nil, fmt.Errorf("cannot sign tx input: %s", err)
 	}
+
+	fmt.Printf("::%s:: RawTxInWitnessSignature(): btcutil/txscript/sign.go: signature: %x \n",os.Args[6][len(os.Args[6])-4:], signature.Serialize())
+
+	fmt.Printf("::%s:: RawTxInWitnessSignature(): btcutil/txscript/sign.go: ---------------- \n",os.Args[6][len(os.Args[6])-4:])
 
 	return append(signature.Serialize(), byte(hashType)), nil
 }
@@ -100,6 +116,8 @@ func WitnessScript(tx *wire.MsgTx, sigHashes *TxSigHashes, idx int, amt int64,
 		return nil, err
 	}
 
+	fmt.Printf("::%s:: WitnessScript(): txscript/sign.go txscript.RawTxInWitnessSignature sig: %x \n",os.Args[6][len(os.Args[6])-4:], sig)
+
 	pk := (*koblitz.PublicKey)(&privKey.PublicKey)
 	var pkData []byte
 	if compress {
@@ -107,6 +125,8 @@ func WitnessScript(tx *wire.MsgTx, sigHashes *TxSigHashes, idx int, amt int64,
 	} else {
 		pkData = pk.SerializeUncompressed()
 	}
+
+	fmt.Printf("::%s:: WitnessScript(): txscript/sign.go pkData: %x \n",os.Args[6][len(os.Args[6])-4:], pkData)
 
 	// A witness script is actually a stack, so we return an array of byte
 	// slices here, rather than a single byte slice.

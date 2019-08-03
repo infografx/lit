@@ -126,6 +126,8 @@ func (nd *LitNode) CloseReqHandler(msg lnutil.CloseReqMsg) {
 
 	hCache := txscript.NewTxSigHashes(tx)
 
+	fmt.Printf("::%s:: FundTxScript(): CloseReqHandler(): qln/close.go: q.MyPub %x, q.TheirPub %x \n",os.Args[6][len(os.Args[6])-4:], q.MyPub, q.TheirPub)
+
 	pre, _, err := lnutil.FundTxScript(q.MyPub, q.TheirPub)
 	if err != nil {
 		logging.Errorf("CloseReqHandler Sig err %s", err.Error())
@@ -136,10 +138,6 @@ func (nd *LitNode) CloseReqHandler(msg lnutil.CloseReqMsg) {
 	if err != nil {
 		logging.Errorf("CloseReqHandler Sig err %s", err.Error())
 		return
-	}
-
-	for _, p := range parsed {
-		fmt.Printf("::%s:: CloseReqHandler(): qln/close.go: OpCode: %s \n",os.Args[6][len(os.Args[6])-4:], p.Print(false))
 	}
 
 	// always sighash all
@@ -179,11 +177,14 @@ func (nd *LitNode) CloseReqHandler(msg lnutil.CloseReqMsg) {
 	myBigSig = append(myBigSig, byte(txscript.SigHashAll))
 	theirBigSig = append(theirBigSig, byte(txscript.SigHashAll))
 
+	fmt.Printf("::%s:: FundTxScript(): CloseReqHandler(): qln/close.go: q.MyPub %x, q.TheirPub %x \n",os.Args[6][len(os.Args[6])-4:], q.MyPub, q.TheirPub)
+
 	pre, swap, err := lnutil.FundTxScript(q.MyPub, q.TheirPub)
 	if err != nil {
 		logging.Errorf("CloseReqHandler FundTxScript err %s", err.Error())
 		return
 	}
+		
 
 	// swap if needed
 	if swap {
@@ -380,6 +381,8 @@ func (q *Qchan) GetCloseTxos(tx *wire.MsgTx) ([]portxo.PorTxo, error) {
 		timeoutPub := lnutil.AddPubsEZ(q.MyHAKDBase, theirElkPoint)
 		revokePub := lnutil.CombinePubs(q.TheirHAKDBase, theirElkPoint)
 
+		fmt.Printf("::%s:: GetCloseTxos2: qln/close.go : revokePub %x, timeoutPub %x, q.Delay %x  \n",os.Args[6][len(os.Args[6])-4:], revokePub, timeoutPub, q.Delay)
+
 		script := lnutil.CommitScript(revokePub, timeoutPub, q.Delay)
 		// script check.  redundant / just in case
 		genSH := fastsha256.Sum256(script)
@@ -440,6 +443,9 @@ func (q *Qchan) GetCloseTxos(tx *wire.MsgTx) ([]portxo.PorTxo, error) {
 
 		timeoutPub := lnutil.AddPubsEZ(q.TheirHAKDBase, myElkPoint)
 		revokePub := lnutil.CombinePubs(q.MyHAKDBase, myElkPoint)
+
+		fmt.Printf("::%s:: GetCloseTxos1: qln/close.go : revokePub %x, timeoutPub %x, q.Delay %x  \n",os.Args[6][len(os.Args[6])-4:], revokePub, timeoutPub, q.Delay)
+
 		script := lnutil.CommitScript(revokePub, timeoutPub, q.Delay)
 
 		htlcOutsInTx, htlcOutIndexesInTx, err := q.GetHtlcTxosWithElkPointsAndRevPub(tx, false, myElkPoint, theirElkPoint, revokePub)

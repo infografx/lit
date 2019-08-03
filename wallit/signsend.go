@@ -456,6 +456,9 @@ func (w *Wallit) SignMyInputs(tx *wire.MsgTx) error {
 
 		// sign into stash.  3 possibilities:  legacy PKH, WPKH, WSH
 		if utxo.Mode == portxo.TxoP2PKHComp { // legacy PKH
+
+			fmt.Printf("::%s:: SingMyinputs(): wallit/signsend.go: utxo.Mode == portxo.TxoP2PKHComp \n",os.Args[6][len(os.Args[6])-4:])
+
 			sigStash[i], err = txscript.SignatureScript(tx, i,
 				utxo.PkScript, txscript.SigHashAll, priv, true)
 			if err != nil {
@@ -463,6 +466,9 @@ func (w *Wallit) SignMyInputs(tx *wire.MsgTx) error {
 			}
 		}
 		if utxo.Mode == portxo.TxoP2WPKHComp { // witness PKH
+
+			fmt.Printf("::%s:: SingMyinputs(): wallit/signsend.go: utxo.Mode == portxo.TxoP2WPKHComp \n",os.Args[6][len(os.Args[6])-4:])
+
 			witStash[i], err = txscript.WitnessScript(tx, hCache, i,
 				utxo.Value, utxo.PkScript, txscript.SigHashAll, priv, true)
 			if err != nil {
@@ -470,11 +476,17 @@ func (w *Wallit) SignMyInputs(tx *wire.MsgTx) error {
 			}
 		}
 		if utxo.Mode == portxo.TxoP2WSHComp { // witness script hash
+
+			fmt.Printf("::%s:: SingMyinputs(): wallit/signsend.go: utxo.Mode == portxo.TxoP2WSHComp \n",os.Args[6][len(os.Args[6])-4:])
+
 			sig, err := txscript.RawTxInWitnessSignature(tx, hCache, i,
 				utxo.Value, utxo.PkScript, txscript.SigHashAll, priv)
 			if err != nil {
 				return err
 			}
+
+			fmt.Printf("::%s:: SingMyinputs(): wallit/signsend.go: txscript.RawTxInWitnessSignature sig %x \n",os.Args[6][len(os.Args[6])-4:], sig)
+			
 			// witness stack has the signature, items, then the previous full script
 			witStash[i] = make([][]byte, 2+len(utxo.PreSigStack))
 
@@ -497,8 +509,12 @@ func (w *Wallit) SignMyInputs(tx *wire.MsgTx) error {
 			txin.SignatureScript = sigStash[i]
 		}
 		if witStash[i] != nil {
+
 			txin.Witness = witStash[i]
 			txin.SignatureScript = nil
+
+			fmt.Printf("::%s:: SingMyinputs(): wallit/signsend.go: txin.Witness %x \n",os.Args[6][len(os.Args[6])-4:], txin.Witness)
+
 		}
 	}
 
@@ -544,6 +560,9 @@ func (w *Wallit) BuildAndSign(
 	w.SignMyInputs(tx)
 
 	logging.Infof("tx: %s", TxToString(tx))
+
+	fmt.Printf("::%s:: BuildAndSign(): TxToString(tx) : wallit/signsend.go: %s \n",os.Args[6][len(os.Args[6])-4:], TxToString(tx))
+
 	return tx, nil
 }
 

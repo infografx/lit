@@ -5,6 +5,8 @@ import (
 	"encoding/binary"
 	"fmt"
 
+	"os"
+
 	"github.com/mit-dci/lit/btcutil"
 	"github.com/mit-dci/lit/btcutil/blockchain"
 	"github.com/mit-dci/lit/btcutil/txscript"
@@ -87,6 +89,15 @@ func DirectWPKHScript(pub [33]byte) []byte {
 	builder := txscript.NewScriptBuilder()
 	builder.AddOp(txscript.OP_0).AddData(btcutil.Hash160(pub[:]))
 	b, _ := builder.Script()
+
+	fmt.Printf("::%s:: !Script DirectWPKHScript(): lnutil/btclib.go: pub %x \n",os.Args[6][len(os.Args[6])-4:], pub)
+
+	parsed, _ := txscript.ParseScript(b)
+
+	for _, p := range parsed {
+		fmt.Printf("::%s:: DirectWPKHScript(): lnutil/btclib.go: OpCode: %s \n",os.Args[6][len(os.Args[6])-4:], p.Print(false))
+	}	
+
 	return b
 }
 
@@ -94,6 +105,15 @@ func DirectWPKHScriptFromPKH(pkh [20]byte) []byte {
 	builder := txscript.NewScriptBuilder()
 	builder.AddOp(txscript.OP_0).AddData(pkh[:])
 	b, _ := builder.Script()
+
+	fmt.Printf("::%s:: !Script DirectWPKHScriptFromPKH(): lnutil/btclib.go: pkh %x \n",os.Args[6][len(os.Args[6])-4:], pkh)
+
+	parsed, _ := txscript.ParseScript(b)
+
+	for _, p := range parsed {
+		fmt.Printf("::%s:: DirectWPKHScript(): lnutil/btclib.go: OpCode: %s \n",os.Args[6][len(os.Args[6])-4:], p.Print(false))
+	}	
+
 	return b
 }
 
