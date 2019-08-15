@@ -596,12 +596,16 @@ func (nd *LitNode) QChanDescHandler(msg lnutil.ChanDescMsg) error {
 		return err
 	}
 
-	sig, _, err := nd.SignState(qc)
-	if err != nil {
-		nd.FailChannel(qc)
-		logging.Errorf("QChanDescHandler SignState err %s", err.Error())
-		return err
-	}
+	// sig, _, err := nd.SignState(qc)
+	// if err != nil {
+	// 	nd.FailChannel(qc)
+	// 	logging.Errorf("QChanDescHandler SignState err %s", err.Error())
+	// 	return err
+	// }
+
+	var sig [64]byte = [...]byte { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }
+
+
 
 	outMsg := lnutil.NewChanAckMsg(
 		msg.Peer(), op,
@@ -621,7 +625,7 @@ func (nd *LitNode) QChanDescHandler(msg lnutil.ChanDescMsg) error {
 // when a multisig outpoint is ackd, that causes the funder to sign and broadcast.
 func (nd *LitNode) QChanAckHandler(msg lnutil.ChanAckMsg, peer *RemotePeer) {
 	opArr := lnutil.OutPointToBytes(msg.Outpoint)
-	sig := msg.Signature
+	//sig := msg.Signature
 
 	fmt.Printf("::%s:: QChanAckHandler() ----START----: qln/fund.go \n",os.Args[6][len(os.Args[6])-4:])
 
@@ -644,12 +648,12 @@ func (nd *LitNode) QChanAckHandler(msg lnutil.ChanAckMsg, peer *RemotePeer) {
 	qc.State.NextElkPoint = msg.ElkOne
 	qc.State.N2ElkPoint = msg.ElkTwo
 
-	err = qc.VerifySigs(sig, nil)
-	if err != nil {
-		nd.FailChannel(qc)
-		logging.Errorf("QChanAckHandler VerifySig err %s", err.Error())
-		return
-	}
+	// err = qc.VerifySigs(sig, nil)
+	// if err != nil {
+	// 	nd.FailChannel(qc)
+	// 	logging.Errorf("QChanAckHandler VerifySig err %s", err.Error())
+	// 	return
+	// }
 
 	// verify worked; Save state 1 to DB
 	err = nd.SaveQchanState(qc)
@@ -662,12 +666,16 @@ func (nd *LitNode) QChanAckHandler(msg lnutil.ChanAckMsg, peer *RemotePeer) {
 	// Make sure everything works & is saved, then clear InProg.
 
 	// sign their com tx to send
-	sig, _, err = nd.SignState(qc)
-	if err != nil {
-		nd.FailChannel(qc)
-		logging.Errorf("QChanAckHandler SignState err %s", err.Error())
-		return
-	}
+	// sig, _, err = nd.SignState(qc)
+	// if err != nil {
+	// 	nd.FailChannel(qc)
+	// 	logging.Errorf("QChanAckHandler SignState err %s", err.Error())
+	// 	return
+	// }
+
+
+	var sig [64]byte = [...]byte { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }
+
 
 	// OK to fund.
 	err = nd.SubWallet[qc.Coin()].ReallySend(&qc.Op.Hash)
@@ -740,12 +748,12 @@ func (nd *LitNode) SigProofHandler(msg lnutil.SigProofMsg, peer *RemotePeer) {
 		return
 	}
 
-	err = qc.VerifySigs(msg.Signature, nil)
-	if err != nil {
-		nd.FailChannel(qc)
-		logging.Errorf("SigProofHandler err %s", err.Error())
-		return
-	}
+	// err = qc.VerifySigs(msg.Signature, nil)
+	// if err != nil {
+	// 	nd.FailChannel(qc)
+	// 	logging.Errorf("SigProofHandler err %s", err.Error())
+	// 	return
+	// }
 
 	// sig OK, save
 	err = nd.SaveQchanState(qc)
