@@ -31,6 +31,8 @@ func (w *Wallit) MaybeSend(txos []*wire.TxOut, ow bool) ([]*wire.OutPoint, error
 	var totalSend int64
 	dustCutoff := consts.DustCutoff // below this amount, just give to miners
 
+	fmt.Printf("::%s:: MaybeSend(): wallit/signsend.go: len(txos) %d \n",os.Args[6][len(os.Args[6])-4:], len(txos))
+
 	feePerByte := w.FeeRate
 
 	// make an initial txo copy so we can find where the outputs end up in final tx
@@ -48,7 +50,17 @@ func (w *Wallit) MaybeSend(txos []*wire.TxOut, ow bool) ([]*wire.OutPoint, error
 	for _, txo := range txos {
 		totalSend += txo.Value
 		outputByteSize += 8 + int64(len(txo.PkScript))
+
+		fmt.Printf("::%s:: MaybeSend(): wallit/signsend.go: totalSend %d, txo.PkScript %x, outputByteSize %d  \n",os.Args[6][len(os.Args[6])-4:], totalSend, txo.PkScript, outputByteSize)
+
+		parsed, _ := txscript.ParseScript(txo.PkScript)
+		for _, p := range parsed {
+			fmt.Printf("::%s:: MaybeSend():txo.PkScript: OpCode: %s \n",os.Args[6][len(os.Args[6])-4:], p.Print(false))
+		}
+
 	}
+
+	fmt.Printf("::%s:: MaybeSend()2: wallit/signsend.go \n",os.Args[6][len(os.Args[6])-4:])
 
 	// start access to utxos
 	w.FreezeMutex.Lock()
@@ -61,6 +73,8 @@ func (w *Wallit) MaybeSend(txos []*wire.TxOut, ow bool) ([]*wire.OutPoint, error
 		return nil, err
 	}
 
+	fmt.Printf("::%s:: MaybeSend()3: wallit/signsend.go \n",os.Args[6][len(os.Args[6])-4:])
+
 	logging.Infof("MaybeSend has overshoot %d, %d inputs\n", overshoot, len(utxos))
 
 	// changeOutSize is the extra vsize that a change output would add
@@ -68,11 +82,14 @@ func (w *Wallit) MaybeSend(txos []*wire.TxOut, ow bool) ([]*wire.OutPoint, error
 
 	// add a change output if we have enough extra to do so
 	if overshoot > dustCutoff+changeOutFee {
+		fmt.Printf("::%s:: MaybeSend(): w.NewChangeOut \n",os.Args[6][len(os.Args[6])-4:])
 		changeOut, err = w.NewChangeOut(overshoot - changeOutFee)
 		if err != nil {
 			return nil, err
 		}
 	}
+
+	fmt.Printf("::%s:: MaybeSend()4: wallit/signsend.go \n",os.Args[6][len(os.Args[6])-4:])
 
 	// build frozen tx for later broadcast
 	fTx := new(FrozenTx)
@@ -89,6 +106,8 @@ func (w *Wallit) MaybeSend(txos []*wire.TxOut, ow bool) ([]*wire.OutPoint, error
 	if err != nil {
 		return nil, err
 	}
+
+	fmt.Printf("::%s:: MaybeSend()5: wallit/signsend.go \n",os.Args[6][len(os.Args[6])-4:])
 
 	// after building, store the locktime and txid
 	fTx.Nlock = tx.LockTime
@@ -109,6 +128,8 @@ func (w *Wallit) MaybeSend(txos []*wire.TxOut, ow bool) ([]*wire.OutPoint, error
 			}
 		}
 	}
+
+	fmt.Printf("::%s:: MaybeSend()6: wallit/signsend.go \n",os.Args[6][len(os.Args[6])-4:])
 
 	return finalOutPoints, nil
 }

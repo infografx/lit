@@ -75,7 +75,7 @@ func FundTxScript(aPub, bPub [33]byte) ([]byte, bool, error) {
 	// get byte slice
 	pre, err := bldr.Script()
 
-	fmt.Printf("::%s:: !Script: FundTxScript(): lnutil/lnlib.go: apub %x, bpub %x \n",os.Args[6][len(os.Args[6])-4:], aPub, bPub)
+	fmt.Printf("::%s:: !Script: FundTxScript(): lnutil/lnlib.go: swapped %t, apub %x, bpub %x \n",os.Args[6][len(os.Args[6])-4:], swapped, aPub, bPub)
 
 	parsed, _ := txscript.ParseScript(pre)
 	for _, p := range parsed {
@@ -91,6 +91,11 @@ func FundTxScript(aPub, bPub [33]byte) ([]byte, bool, error) {
 // You don't have to remember the p2sh preimage, as long as you remember the
 // pubkeys involved.
 func FundTxOut(pubA, pubB [33]byte, amt int64) (*wire.TxOut, error) {
+
+	fmt.Printf("::%s:: FundTxOut(): lnutil/lnlib.go \n",os.Args[6][len(os.Args[6])-4:])
+
+	fmt.Printf("::%s:: FundTxScript(): lnutil/lnlib.go pubA %x, pubB %x \n",os.Args[6][len(os.Args[6])-4:], pubA, pubB)
+
 	if amt < 0 {
 		return nil, fmt.Errorf("Can't create FundTx script with negative coins")
 	}
@@ -137,9 +142,15 @@ func ReceiveHTLCScript(revPKH [20]byte, remotePub [33]byte, RHash [32]byte, loca
 	b.AddOp(txscript.OP_ENDIF)
 	b.AddOp(txscript.OP_ENDIF)
 
-	fmt.Printf("::%s:: ReceiveHTLCScript(): qln/buildtx.go: revPKH %x, remotePub %x, RHash %x, localPub %x, locktime %d \n",os.Args[6][len(os.Args[6])-4:], revPKH, remotePub, RHash, localPub, locktime)
+	fmt.Printf("::%s:: !Script: ReceiveHTLCScript(): lnutil/lnlib.go: revPKH %x, remotePub %x, RHash %x, localPub %x, locktime %d \n",os.Args[6][len(os.Args[6])-4:], revPKH, remotePub, RHash, localPub, locktime)
 
 	s, _ := b.Script()
+
+	parsed, _ := txscript.ParseScript(s)
+	for _, p := range parsed {
+		fmt.Printf("::%s:: ReceiveHTLCScript(): lnutil/lnlib.go: OpCode: %s \n",os.Args[6][len(os.Args[6])-4:], p.Print(false))
+	}
+
 	return s
 }
 
@@ -174,8 +185,14 @@ func OfferHTLCScript(revPKH [20]byte, remotePub [33]byte, RHash [32]byte, localP
 	b.AddOp(txscript.OP_ENDIF)
 	b.AddOp(txscript.OP_ENDIF)
 
-	fmt.Printf("::%s:: OfferHTLCScript(): qln/buildtx.go: revPKH %x, remotePub %x, RHash %x, localPub %x \n",os.Args[6][len(os.Args[6])-4:], revPKH, remotePub, RHash, localPub)
+	fmt.Printf("::%s:: !Script: OfferHTLCScript(): lnutil/lnlib.go: revPKH %x, remotePub %x, RHash %x, localPub %x \n",os.Args[6][len(os.Args[6])-4:], revPKH, remotePub, RHash, localPub)
 
 	s, _ := b.Script()
+
+	parsed, _ := txscript.ParseScript(s)
+	for _, p := range parsed {
+		fmt.Printf("::%s:: OfferHTLCScript(): lnutil/lnlib.go: OpCode: %s \n",os.Args[6][len(os.Args[6])-4:], p.Print(false))
+	}
+
 	return s
 }

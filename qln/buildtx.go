@@ -75,6 +75,10 @@ func SetStateIdxBits(tx *wire.MsgTx, idx, x uint64) error {
 // their refund base with my r-elkrem point.  "Their" point means they have
 // the point but not the scalar.
 func (q *Qchan) SimpleCloseTx() (*wire.MsgTx, error) {
+
+
+	fmt.Printf("::%s:: SimpleCloseTx(): qln/dlc.go: q.MyRefundPub %x, q.TheirRefundPub %x,  \n",os.Args[6][len(os.Args[6])-4:], q.MyRefundPub, q.TheirRefundPub)
+
 	// sanity checks
 	if q == nil || q.State == nil {
 		return nil, fmt.Errorf("SimpleCloseTx: nil chan / state")
@@ -84,6 +88,9 @@ func (q *Qchan) SimpleCloseTx() (*wire.MsgTx, error) {
 
 	// make my output
 	myScript := lnutil.DirectWPKHScript(q.MyRefundPub)
+
+	fmt.Printf("::%s:: SimpleCloseTx(): qln/dlc.go: DirectWPKHScript: myScript: %x \n",os.Args[6][len(os.Args[6])-4:], myScript)
+
 	var myAmt int64
 	var myOutput *wire.TxOut
 	if q.State.MyAmt != 0 {
@@ -92,6 +99,9 @@ func (q *Qchan) SimpleCloseTx() (*wire.MsgTx, error) {
 	}
 	// make their output
 	theirScript := lnutil.DirectWPKHScript(q.TheirRefundPub)
+
+	fmt.Printf("::%s:: SimpleCloseTx(): qln/dlc.go: DirectWPKHScript: theirScript: %x \n",os.Args[6][len(os.Args[6])-4:], theirScript)
+
 	var theirAmt int64
 	var theirOutput *wire.TxOut
 	if q.Value-q.State.MyAmt != 0 {
@@ -120,6 +130,10 @@ func (q *Qchan) SimpleCloseTx() (*wire.MsgTx, error) {
 	if theirAmt != 0 {
 		tx.AddTxOut(theirOutput)
 	}
+
+
+	fmt.Printf("::%s:: SimpleCloseTx(): qln/dlc.go: q.Op for TxIn %+v \n",os.Args[6][len(os.Args[6])-4:], q.Op)
+
 	// add channel outpoint as txin
 	tx.AddTxIn(wire.NewTxIn(&q.Op, nil, nil))
 	// sort and return
@@ -496,6 +510,8 @@ func (q *Qchan) GetKeysFromState(mine bool) (revPub, timePub, pkhPub [33]byte, e
 
 // the scriptsig to put on a P2SH input.  Sigs need to be in order!
 func SpendMultiSigWitStack(pre, sigA, sigB []byte) [][]byte {
+
+	fmt.Printf("::%s:: SpendMultiSigWitStack(): qln/buildtx.go, sigA %x, sigB %x, pre %x \n",os.Args[6][len(os.Args[6])-4:], sigA, sigB, pre)
 
 	witStack := make([][]byte, 4)
 

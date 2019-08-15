@@ -81,7 +81,7 @@ class LitNode():
             s = privkeys[self.id]
             # for _ in range(64):
             #     s += hexchars[random.randint(0, len(hexchars) - 1)]
-            # print('Using key:', s)
+            print('Using key:', s)
             f.write(s + "\n")
 
         # Go and do the initial startup and sync.

@@ -2,6 +2,7 @@ package qln
 
 import (
 	"bytes"
+	"bufio"
 	"fmt"
 	"time"
 	"os"
@@ -30,6 +31,8 @@ doesn't reply, as the channel is closed.
 
 // CoopClose requests a cooperative close of the channel
 func (nd *LitNode) CoopClose(q *Qchan) error {
+
+	fmt.Printf("::%s:: CoopClose() ----START----: qln/close.go \n",os.Args[6][len(os.Args[6])-4:])
 
 	nd.RemoteMtx.Lock()
 	_, ok := nd.RemoteCons[q.Peer()]
@@ -85,6 +88,8 @@ func (nd *LitNode) CoopClose(q *Qchan) error {
 	outMsg := lnutil.NewCloseReqMsg(q.Peer(), q.Op, signature)
 	nd.tmpSendLitMsg(outMsg)
 
+	fmt.Printf("::%s:: CoopClose() ----END----: qln/close.go \n",os.Args[6][len(os.Args[6])-4:])
+
 	return nil
 }
 
@@ -94,6 +99,8 @@ func (nd *LitNode) CoopClose(q *Qchan) error {
 
 func (nd *LitNode) CloseReqHandler(msg lnutil.CloseReqMsg) {
 	opArr := lnutil.OutPointToBytes(msg.Outpoint)
+
+	fmt.Printf("::%s:: CloseReqHandler() ----START----: qln/close.go \n",os.Args[6][len(os.Args[6])-4:])
 
 	// get channel
 	q, err := nd.GetQchan(opArr)
@@ -188,8 +195,10 @@ func (nd *LitNode) CloseReqHandler(msg lnutil.CloseReqMsg) {
 
 	// swap if needed
 	if swap {
+		fmt.Printf("::%s:: CloseReqHandler(): qln/close.go: SpendMultiSigWitStack: swap: %t, cap(theirBigSig) %d, cap(myBigSig) %d \n",os.Args[6][len(os.Args[6])-4:], swap, cap(theirBigSig), cap(myBigSig))
 		tx.TxIn[0].Witness = SpendMultiSigWitStack(pre, theirBigSig, myBigSig)
 	} else {
+		fmt.Printf("::%s:: CloseReqHandler(): qln/close.go: SpendMultiSigWitStack: swap: %t, cap(myBigSig) %d, cap(theirBigSig) %d \n",os.Args[6][len(os.Args[6])-4:], swap, cap(myBigSig), cap(theirBigSig))
 		tx.TxIn[0].Witness = SpendMultiSigWitStack(pre, myBigSig, theirBigSig)
 	}
 	logging.Info(lnutil.TxToString(tx))
@@ -205,6 +214,17 @@ func (nd *LitNode) CloseReqHandler(msg lnutil.CloseReqMsg) {
 		logging.Errorf("CloseReqHandler SaveQchanUtxoData err %s", err.Error())
 		return
 	}
+
+	fmt.Printf("::%s:: CloseReqHandler(): qln/close.go: lnutil.TxToString(tx) %s \n",os.Args[6][len(os.Args[6])-4:], lnutil.TxToString(tx))
+
+
+	var buft bytes.Buffer
+	wtt := bufio.NewWriter(&buft)
+	tx.Serialize(wtt)
+	wtt.Flush()
+
+
+	fmt.Printf("::%s:: CloseReqHandler(): qln/close.go: tx %x \n",os.Args[6][len(os.Args[6])-4:], buft.Bytes())
 
 	// broadcast
 	err = nd.SubWallet[q.Coin()].PushTx(tx)
@@ -233,10 +253,15 @@ func (nd *LitNode) CloseReqHandler(msg lnutil.CloseReqMsg) {
 		return
 	}
 
+	fmt.Printf("::%s:: CloseReqHandler() ----END----: qln/close.go \n",os.Args[6][len(os.Args[6])-4:])
+
 	return
 }
 
 func (q *Qchan) GetHtlcTxosWithElkPointsAndRevPub(tx *wire.MsgTx, mine bool, theirElkPoint, myElkPoint, revPub [33]byte) ([]*wire.TxOut, []uint32, error) {
+	
+	fmt.Printf("::%s:: GetHtlcTxosWithElkPointsAndRevPub() ----START----: qln/close.go \n",os.Args[6][len(os.Args[6])-4:])
+	
 	htlcOutsInTx := make([]*wire.TxOut, 0)
 	htlcOutIndexesInTx := make([]uint32, 0)
 	htlcOuts := make([]*wire.TxOut, 0)
@@ -264,11 +289,16 @@ func (q *Qchan) GetHtlcTxosWithElkPointsAndRevPub(tx *wire.MsgTx, mine bool, the
 		}
 	}
 
+	fmt.Printf("::%s:: GetHtlcTxosWithElkPointsAndRevPub() ----END----: qln/close.go \n",os.Args[6][len(os.Args[6])-4:])
+
 	return htlcOutsInTx, htlcOutIndexesInTx, nil
 }
 
 func (q *Qchan) GetHtlcTxos(tx *wire.MsgTx, mine bool) ([]*wire.TxOut, []uint32, error) {
 	revPub, _, _, err := q.GetKeysFromState(mine)
+
+	fmt.Printf("::%s:: GetHtlcTxos() ----START----: qln/close.go: revPub %x \n",os.Args[6][len(os.Args[6])-4:], revPub)
+
 	if err != nil {
 		return nil, nil, err
 	}
@@ -277,6 +307,8 @@ func (q *Qchan) GetHtlcTxos(tx *wire.MsgTx, mine bool) ([]*wire.TxOut, []uint32,
 	if err != nil {
 		return nil, nil, err
 	}
+
+	fmt.Printf("::%s:: GetHtlcTxos() ----END----: qln/close.go: \n",os.Args[6][len(os.Args[6])-4:])
 
 	return q.GetHtlcTxosWithElkPointsAndRevPub(tx, mine, q.State.ElkPoint, curElk, revPub)
 }
@@ -290,6 +322,11 @@ func (q *Qchan) GetCloseTxos(tx *wire.MsgTx) ([]portxo.PorTxo, error) {
 		return nil, fmt.Errorf("IngesGetCloseTxostCloseTx: nil tx")
 	}
 	txid := tx.TxHash()
+
+	fmt.Printf("::%s:: GetCloseTxos() ----START----: qln/close.go: txid %s \n",os.Args[6][len(os.Args[6])-4:], txid.String())
+
+	fmt.Printf("::%s:: GetCloseTxos(): qln/close.go:  q.MyRefundPub %x \n",os.Args[6][len(os.Args[6])-4:], q.MyRefundPub )
+
 	// double check -- does this tx actually close the channel?
 	if !(len(tx.TxIn) == 1 && lnutil.OutPointsEqual(tx.TxIn[0].PreviousOutPoint, q.Op)) {
 		return nil, fmt.Errorf("tx %s doesn't spend channel outpoint %s",
@@ -381,9 +418,10 @@ func (q *Qchan) GetCloseTxos(tx *wire.MsgTx) ([]portxo.PorTxo, error) {
 		timeoutPub := lnutil.AddPubsEZ(q.MyHAKDBase, theirElkPoint)
 		revokePub := lnutil.CombinePubs(q.TheirHAKDBase, theirElkPoint)
 
-		fmt.Printf("::%s:: GetCloseTxos2: qln/close.go : revokePub %x, timeoutPub %x, q.Delay %x  \n",os.Args[6][len(os.Args[6])-4:], revokePub, timeoutPub, q.Delay)
-
 		script := lnutil.CommitScript(revokePub, timeoutPub, q.Delay)
+
+		fmt.Printf("::%s:: GetCloseTxos1: qln/close.go : revokePub %x, timeoutPub %x, q.Delay %x, script %x  \n",os.Args[6][len(os.Args[6])-4:], revokePub, timeoutPub, q.Delay, script)
+
 		// script check.  redundant / just in case
 		genSH := fastsha256.Sum256(script)
 		if !bytes.Equal(genSH[:], tx.TxOut[shIdx].PkScript[2:34]) {
@@ -444,9 +482,9 @@ func (q *Qchan) GetCloseTxos(tx *wire.MsgTx) ([]portxo.PorTxo, error) {
 		timeoutPub := lnutil.AddPubsEZ(q.TheirHAKDBase, myElkPoint)
 		revokePub := lnutil.CombinePubs(q.MyHAKDBase, myElkPoint)
 
-		fmt.Printf("::%s:: GetCloseTxos1: qln/close.go : revokePub %x, timeoutPub %x, q.Delay %x  \n",os.Args[6][len(os.Args[6])-4:], revokePub, timeoutPub, q.Delay)
-
 		script := lnutil.CommitScript(revokePub, timeoutPub, q.Delay)
+
+		fmt.Printf("::%s:: GetCloseTxos2: qln/close.go : revokePub %x, timeoutPub %x, q.Delay %x, script %x  \n",os.Args[6][len(os.Args[6])-4:], revokePub, timeoutPub, q.Delay, script)
 
 		htlcOutsInTx, htlcOutIndexesInTx, err := q.GetHtlcTxosWithElkPointsAndRevPub(tx, false, myElkPoint, theirElkPoint, revokePub)
 		if err != nil {
@@ -487,6 +525,8 @@ func (q *Qchan) GetCloseTxos(tx *wire.MsgTx) ([]portxo.PorTxo, error) {
 			logging.Warnf("generated %x \n", wshScript)
 			logging.Warnf("revokable pub %x\ntimeout pub %x\n", revokePub, timeoutPub)
 		}
+
+		fmt.Printf("::%s:: GetCloseTxos: qln/close.go : wshScript %x \n",os.Args[6][len(os.Args[6])-4:], wshScript)
 
 		// myElkHashR added to HAKD private key
 		elk, err := q.ElkRcv.AtIndex(comNum)
@@ -557,5 +597,8 @@ func (q *Qchan) GetCloseTxos(tx *wire.MsgTx) ([]portxo.PorTxo, error) {
 		}
 	}
 	logging.Info("Returning [%d] cTxos", len(cTxos))
+
+	fmt.Printf("::%s:: GetCloseTxos() ----END----: qln/close.go \n",os.Args[6][len(os.Args[6])-4:])
+
 	return cTxos, nil
 }

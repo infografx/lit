@@ -1,4 +1,5 @@
 import testlib
+import time
 
 import pprint
 pp = pprint.PrettyPrinter(indent=4)
@@ -118,26 +119,63 @@ def run_close_test(env, initiator, target, closer):
 
 
     #-------------------------------------------------------------------------
+    time.sleep(2)
+
+    print("==========================================================")
+    print('Now closing...')
+    print("==========================================================")
 
 
+    # Now close the channel.
+    
+    res = closer.rpc.CloseChannel(ChanIdx=cid)
+    print('Status:', res['Status'])
+    env.generate_block()
+    time.sleep(1)
+    env.generate_block()
+    time.sleep(1)
+    env.generate_block()
+    time.sleep(5)
+
+    # Check balances.
+    bals = initiator.get_balance_info()
+    fbal = bals['TxoTotal']
+    print('final balance:', fbal)
+    expected = bal1 - initialsend - 3560
+    print('expected:', expected)
+    print('diff:', expected - fbal)
 
 
-    # # Now close the channel.
-    # print('Now closing...')
-    # res = closer.rpc.CloseChannel(ChanIdx=cid)
-    # print('Status:', res['Status'])
-    # env.generate_block()
+    print("ADDRESSES AFTER CLOSE CHANNEL")
+    print("LIT1 Addresses")
+    print(pp.pprint(initiator.rpc.GetAddresses()))
 
-    # # Check balances.
-    # bals = initiator.get_balance_info()
-    # fbal = bals['TxoTotal']
-    # print('final balance:', fbal)
-    # expected = bal1 - initialsend - 3560
-    # print('expected:', expected)
-    # print('diff:', expected - fbal)
+    print("LIT2 Addresses")
+    print(pp.pprint(target.rpc.GetAddresses()))
+
+    print("bitcoind Addresses")
+    print(pp.pprint(bc.rpc.listaddressgroupings()))
+
+    bals1 = initiator.get_balance_info()  
+    print('new lit1 balance:', bals1['TxoTotal'], 'in txos,', bals1['ChanTotal'], 'in chans')
+    bal1sum = bals1['TxoTotal'] + bals1['ChanTotal']
+    print('  = sum ', bal1sum)
+
+    bals2 = target.get_balance_info()
+    print('new lit2 balance:', bals2['TxoTotal'], 'in txos,', bals2['ChanTotal'], 'in chans')
+    bal2sum = bals2['TxoTotal'] + bals2['ChanTotal']
+    print('  = sum ', bal2sum)  
 
 
     #=================================================================
+    time.sleep(2)
+
+    print("==========================================================")
+    print('Print Blockchain Info')
+    print("==========================================================")
+
+
+    
 
     best_block_hash = bc.rpc.getbestblockhash()
     bb = bc.rpc.getblock(best_block_hash)

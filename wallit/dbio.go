@@ -5,6 +5,8 @@ import (
 	"encoding/binary"
 	"fmt"
 
+	"os"
+
 	"github.com/mit-dci/lit/logging"
 
 	"github.com/boltdb/bolt"
@@ -42,6 +44,8 @@ func (w *Wallit) NewChangeOut(amt int64) (*wire.TxOut, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	fmt.Printf("::%s:: NewChangeOut(): DirectWPKHScriptFromPKH: wallit/dbio.go: change160 %x \n",os.Args[6][len(os.Args[6])-4:], change160)
 
 	changeScript := lnutil.DirectWPKHScriptFromPKH(change160)
 

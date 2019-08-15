@@ -111,7 +111,7 @@ func DirectWPKHScriptFromPKH(pkh [20]byte) []byte {
 	parsed, _ := txscript.ParseScript(b)
 
 	for _, p := range parsed {
-		fmt.Printf("::%s:: DirectWPKHScript(): lnutil/btclib.go: OpCode: %s \n",os.Args[6][len(os.Args[6])-4:], p.Print(false))
+		fmt.Printf("::%s:: DirectWPKHScriptFromPKH(): lnutil/btclib.go: OpCode: %s \n",os.Args[6][len(os.Args[6])-4:], p.Print(false))
 	}	
 
 	return b

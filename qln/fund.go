@@ -107,7 +107,7 @@ an exact timing for the payment.
 func (nd *LitNode) FundChannel(
 	peerIdx, cointype uint32, ccap, initSend int64, data [32]byte) (uint32, error) {
 
-	fmt.Printf("::%s:: FundChannel(): qln/fund.go \n",os.Args[6][len(os.Args[6])-4:])
+	fmt.Printf("::%s:: FundChannel() ----START----: qln/fund.go \n",os.Args[6][len(os.Args[6])-4:])
 
 	_, ok := nd.SubWallet[cointype]
 	if !ok {
@@ -183,6 +183,8 @@ func (nd *LitNode) FundChannel(
 	// wait until it's done!
 	idx := <-nd.InProg.done
 
+	fmt.Printf("::%s:: FundChannel() ----END----: qln/fund.go \n",os.Args[6][len(os.Args[6])-4:])
+
 	return idx, nil
 }
 
@@ -193,7 +195,7 @@ func (nd *LitNode) FundChannel(
 // they have to provide an actual tx before the next pubkey will come out.
 func (nd *LitNode) PointReqHandler(msg lnutil.PointReqMsg) {
 
-	fmt.Printf("::%s:: PointReqHandler(): qln/fund.go \n",os.Args[6][len(os.Args[6])-4:])
+	fmt.Printf("::%s:: PointReqHandler() ----START----: qln/fund.go \n",os.Args[6][len(os.Args[6])-4:])
 
 	/* shouldn't be possible to get this error...
 	if nd.RemoteCon == nil || nd.RemoteCon.RemotePub == nil {
@@ -259,6 +261,8 @@ func (nd *LitNode) PointReqHandler(msg lnutil.PointReqMsg) {
 		myNextHTLCBase, myN2HTLCBase)
 	nd.tmpSendLitMsg(outMsg)
 
+	fmt.Printf("::%s:: PointReqHandler() ----END----: qln/fund.go \n",os.Args[6][len(os.Args[6])-4:])
+
 	return
 }
 
@@ -266,7 +270,7 @@ func (nd *LitNode) PointReqHandler(msg lnutil.PointReqMsg) {
 // PointRespHandler takes in a point response, and returns a channel description
 func (nd *LitNode) PointRespHandler(msg lnutil.PointRespMsg) error {
 
-	fmt.Printf("::%s:: PointRespHandler(): qln/fund.go \n",os.Args[6][len(os.Args[6])-4:])
+	fmt.Printf("::%s:: PointRespHandler() ----START----: qln/fund.go \n",os.Args[6][len(os.Args[6])-4:])
 
 	var err error
 	logging.Infof("Got PointResponse")
@@ -334,7 +338,7 @@ func (nd *LitNode) PointRespHandler(msg lnutil.PointRespMsg) error {
 	q.LastUpdate = uint64(time.Now().UnixNano() / 1000)
 
 
-	fmt.Printf("::%s:: PointRespHandler(): qln/fund.go: q.MyPub %x, q.TheirPub: %x \n",os.Args[6][len(os.Args[6])-4:], q.MyPub, q.TheirPub)
+	fmt.Printf("::%s:: PointRespHandler(): FundTxOut() qln/fund.go: q.MyPub %x, q.TheirPub: %x \n",os.Args[6][len(os.Args[6])-4:], q.MyPub, q.TheirPub)
 
 	// get txo for channel
 	txo, err := lnutil.FundTxOut(q.MyPub, q.TheirPub, nd.InProg.Amt)
@@ -342,12 +346,16 @@ func (nd *LitNode) PointRespHandler(msg lnutil.PointRespMsg) error {
 		return err
 	}
 
+	fmt.Printf("::%s:: PointRespHandler()1: FundTxOut() qln/fund.go \n",os.Args[6][len(os.Args[6])-4:])
+
 	// call MaybeSend, freezing inputs and learning the txid of the channel
 	// here, we require only witness inputs
 	outPoints, err := nd.SubWallet[q.Coin()].MaybeSend([]*wire.TxOut{txo}, true)
 	if err != nil {
 		return err
 	}
+
+	fmt.Printf("::%s:: PointRespHandler()2: FundTxOut() qln/fund.go \n",os.Args[6][len(os.Args[6])-4:])
 
 	// should only have 1 txout index from MaybeSend, which we use
 	if len(outPoints) != 1 {
@@ -358,6 +366,8 @@ func (nd *LitNode) PointRespHandler(msg lnutil.PointRespMsg) error {
 	nd.InProg.op = outPoints[0]
 	// also set outpoint in channel
 	q.Op = *nd.InProg.op
+
+	fmt.Printf("::%s:: opz PointRespHandler(): q.Op %+v \n",os.Args[6][len(os.Args[6])-4:], q.Op)
 
 	// create initial state for elkrem points
 	q.State = new(StatCom)
@@ -397,6 +407,8 @@ func (nd *LitNode) PointRespHandler(msg lnutil.PointRespMsg) error {
 		return fmt.Errorf("error generating N2HTLCBase %v", err)
 	}
 
+	fmt.Printf("::%s:: PointRespHandler()3: FundTxOut() qln/fund.go \n",os.Args[6][len(os.Args[6])-4:])
+
 	q.State.NextHTLCBase = msg.NextHTLCBase
 	q.State.N2HTLCBase = msg.N2HTLCBase
 
@@ -406,6 +418,8 @@ func (nd *LitNode) PointRespHandler(msg lnutil.PointRespMsg) error {
 		nd.FailChannel(q)
 		return fmt.Errorf("PointRespHandler SaveQchanState err %s", err.Error())
 	}
+
+	fmt.Printf("::%s:: PointRespHandler()4: FundTxOut() qln/fund.go \n",os.Args[6][len(os.Args[6])-4:])
 
 	// when funding a channel, give them the first *3* elkpoints.
 	elkPointZero, err := q.ElkPoint(false, 0)
@@ -425,6 +439,8 @@ func (nd *LitNode) PointRespHandler(msg lnutil.PointRespMsg) error {
 		return err
 	}
 
+	fmt.Printf("::%s:: PointRespHandler()5: FundTxOut() qln/fund.go \n",os.Args[6][len(os.Args[6])-4:])
+
 	// description is outpoint (36), mypub(33), myrefund(33),
 	// myHAKDbase(33), capacity (8),
 	// initial payment (8), ElkPoint0,1,2 (99)
@@ -437,6 +453,8 @@ func (nd *LitNode) PointRespHandler(msg lnutil.PointRespMsg) error {
 
 	nd.tmpSendLitMsg(outMsg)
 
+	fmt.Printf("::%s:: PointRespHandler() ----END----: qln/fund.go \n",os.Args[6][len(os.Args[6])-4:])
+
 	return nil
 }
 
@@ -445,12 +463,14 @@ func (nd *LitNode) PointRespHandler(msg lnutil.PointRespMsg) error {
 // saves it to the local db, and returns a channel acknowledgement
 func (nd *LitNode) QChanDescHandler(msg lnutil.ChanDescMsg) error {
 
-	fmt.Printf("::%s:: QChanDescHandler(): qln/fund.go \n",os.Args[6][len(os.Args[6])-4:])
+	fmt.Printf("::%s:: QChanDescHandler() ----START----: qln/fund.go \n",os.Args[6][len(os.Args[6])-4:])
 
 	wal, ok := nd.SubWallet[msg.CoinType]
 	if !ok {
 		return fmt.Errorf("QChanDescHandler err no wallet for type %d", msg.CoinType)
 	}
+
+	fmt.Printf("::%s:: opz QChanDescHandler(): msg.Outpoint %+v \n",os.Args[6][len(os.Args[6])-4:], msg.Outpoint)
 
 	// deserialize desc
 	op := msg.Outpoint
@@ -591,6 +611,8 @@ func (nd *LitNode) QChanDescHandler(msg lnutil.ChanDescMsg) error {
 
 	nd.tmpSendLitMsg(outMsg)
 
+	fmt.Printf("::%s:: QChanDescHandler() ----END----: qln/fund.go \n",os.Args[6][len(os.Args[6])-4:])
+
 	return nil
 }
 
@@ -600,6 +622,10 @@ func (nd *LitNode) QChanDescHandler(msg lnutil.ChanDescMsg) error {
 func (nd *LitNode) QChanAckHandler(msg lnutil.ChanAckMsg, peer *RemotePeer) {
 	opArr := lnutil.OutPointToBytes(msg.Outpoint)
 	sig := msg.Signature
+
+	fmt.Printf("::%s:: QChanAckHandler() ----START----: qln/fund.go \n",os.Args[6][len(os.Args[6])-4:])
+
+	fmt.Printf("::%s:: opz QChanAckHandler() msg.Outpoint %+v \n",os.Args[6][len(os.Args[6])-4:], msg.Outpoint)
 
 	// load channel to save their refund address
 	qc, err := nd.GetQchan(opArr)
@@ -685,6 +711,8 @@ func (nd *LitNode) QChanAckHandler(msg lnutil.ChanAckMsg, peer *RemotePeer) {
 
 	nd.tmpSendLitMsg(outMsg)
 
+	fmt.Printf("::%s:: QChanAckHandler() ----END----: qln/fund.go \n",os.Args[6][len(os.Args[6])-4:])
+
 	return
 }
 
@@ -692,6 +720,8 @@ func (nd *LitNode) QChanAckHandler(msg lnutil.ChanAckMsg, peer *RemotePeer) {
 // SigProofHandler saves the signature the recipient stores.
 // In some cases you don't need this message.
 func (nd *LitNode) SigProofHandler(msg lnutil.SigProofMsg, peer *RemotePeer) {
+
+	fmt.Printf("::%s:: SigProofHandler() ----START----: qln/fund.go \n",os.Args[6][len(os.Args[6])-4:])
 
 	op := msg.Outpoint
 	opArr := lnutil.OutPointToBytes(op)
@@ -764,6 +794,8 @@ func (nd *LitNode) SigProofHandler(msg lnutil.SigProofMsg, peer *RemotePeer) {
 		logging.Errorf("SigProofHandler publish did not succeed")
 		return
 	}
+
+	fmt.Printf("::%s:: SigProofHandler() ----END----: qln/fund.go \n",os.Args[6][len(os.Args[6])-4:])
 
 	return
 }

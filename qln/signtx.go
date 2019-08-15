@@ -181,6 +181,8 @@ func (nd *LitNode) SignClaimTx(claimTx *wire.MsgTx, value int64, pre []byte,
 func (nd *LitNode) SignState(q *Qchan) ([64]byte, [][64]byte, error) {
 	var sig [64]byte
 
+	fmt.Printf("::%s:: SignState(): qln/signtx.go \n",os.Args[6][len(os.Args[6])-4:])
+
 	// make sure channel exists, and wallet is present on node
 	if q == nil {
 		return sig, nil, fmt.Errorf("SignState nil channel")
@@ -201,7 +203,7 @@ func (nd *LitNode) SignState(q *Qchan) ([64]byte, [][64]byte, error) {
 	hCache := txscript.NewTxSigHashes(commitmentTx)
 
 
-	fmt.Printf("::%s:: SignState(): qln/signtx.go: hCache %x \n",os.Args[6][len(os.Args[6])-4:], hCache)
+	fmt.Printf("::%s:: SignState()2: qln/signtx.go: hCache %+v \n",os.Args[6][len(os.Args[6])-4:], hCache)
 
 	fmt.Printf("::%s:: FundTxScript(): SignState: qln/signtx.go q.MyPub %x, q.TheirPub %x \n",os.Args[6][len(os.Args[6])-4:], q.MyPub, q.TheirPub)
 
