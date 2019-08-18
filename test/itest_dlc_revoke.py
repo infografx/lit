@@ -317,6 +317,8 @@ def run_t(env, params):
         print("Before Revoke Contract")
         time.sleep(8)
 
+        res = lit1.rpc.RevoceContract(CIdx=1)
+
 
     except BaseException as be:
         raise be

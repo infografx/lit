@@ -748,3 +748,31 @@ func (nd *LitNode) SettleContract(cIdx uint64, oracleValue int64, oracleSig [32]
 	}
 
 }
+
+
+
+//======================================================================
+
+
+func (nd *LitNode) RevoceContract(cIdx uint64) (bool, error) {
+	
+	fmt.Printf("::%s:: RevoceContract() ----START----: qln/dlc.go \n",os.Args[6][len(os.Args[6])-4:])
+
+
+	c, err := nd.DlcManager.LoadContract(cIdx)
+	if err != nil {
+		logging.Errorf("SettleContract FindContract err %s\n", err.Error())
+		return false, err
+	}
+
+
+	fmt.Printf("::%s:: RevoceContract(): qln/dlc.go: c: %+v \n", os.Args[6][len(os.Args[6])-4:], c)
+
+
+	fmt.Printf("::%s:: RevoceContract() ----END----: qln/dlc.go \n",os.Args[6][len(os.Args[6])-4:])
+
+
+
+	return true, nil
+
+}

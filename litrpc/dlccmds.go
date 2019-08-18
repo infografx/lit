@@ -457,3 +457,29 @@ func (r *LitRPC) SettleContract(args SettleContractArgs,
 	reply.Success = true
 	return nil
 }
+
+
+//======================================================================
+
+
+type RevoceContractArgs struct {
+	CIdx        uint64
+}
+
+type RevoceContractReply struct {
+	Success      bool
+}
+
+// RevoceContract
+
+func (r *LitRPC) RevoceContract(args RevoceContractArgs,reply *RevoceContractReply) error {
+	var err error
+
+	reply.Success, err = r.Node.RevoceContract(args.CIdx)
+	if err != nil {
+		return err
+	}
+
+	reply.Success = true
+	return nil
+}
