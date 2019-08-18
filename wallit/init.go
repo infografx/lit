@@ -20,6 +20,8 @@ func NewWallit(
 	rootkey *hdkeychain.ExtendedKey, birthHeight int32, resync bool,
 	spvhost, path string, proxyURL string, p *coinparam.Params) (*Wallit, int, error) {
 
+	fmt.Printf("::%s:: NewWallit(): wallit/init.go \n",os.Args[6][len(os.Args[6])-4:])
+
 	var w Wallit
 	w.rootPrivKey = rootkey
 	w.Param = p

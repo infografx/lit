@@ -5,6 +5,8 @@ import (
 	"path/filepath"
 	"sync"
 
+	"os"
+
 	"github.com/boltdb/bolt"
 	"github.com/mit-dci/lit/btcutil"
 	"github.com/mit-dci/lit/btcutil/hdkeychain"
@@ -143,6 +145,9 @@ func NewLitNode(privKey *[32]byte, path string, trackerURL string, proxyURL stri
 func (nd *LitNode) LinkBaseWallet(
 	privKey *[32]byte, birthHeight int32, resync bool, tower bool,
 	host string, proxy string, param *coinparam.Params) error {
+
+
+	fmt.Printf("::%s:: LinkBaseWallet(): qln/init.go: privKey %x \n",os.Args[6][len(os.Args[6])-4:], *privKey)	
 
 	rootpriv, err := hdkeychain.NewMaster(privKey[:], param)
 	if err != nil {

@@ -765,6 +765,17 @@ func (nd *LitNode) RevoceContract(cIdx uint64) (bool, error) {
 		return false, err
 	}
 
+	tx := wire.NewMsgTx()
+	// set version 2, for op_csv
+	tx.Version = 2
+
+	tx.AddTxIn(wire.NewTxIn(&c.FundingOutpoint, nil, nil))	
+
+
+	myScript := lnutil.DirectWPKHScript()
+
+	myOutput = wire.NewTxOut(myAmt, myScript)
+
 
 	fmt.Printf("::%s:: RevoceContract(): qln/dlc.go: c: %+v \n", os.Args[6][len(os.Args[6])-4:], c)
 

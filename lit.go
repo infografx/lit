@@ -6,6 +6,7 @@ import (
 	"runtime"
 	"syscall"
 	"time"
+	"fmt"
 
 	"github.com/mit-dci/lit/logging"
 
@@ -279,6 +280,8 @@ func main() {
 			logging.Warnf("=== received SIGQUIT ===\n*** goroutine dump...\n%s\n*** end\n", buf[:stacklen])
 		}
 	}()
+
+	fmt.Printf("::%s:: main(): lit/lit.go: key %x \n",os.Args[6][len(os.Args[6])-4:], *key)
 
 	// Setup LN node.  Activate Tower if in hard mode.
 	// give node and below file pathof lit home directory
