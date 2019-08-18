@@ -1744,6 +1744,9 @@ type DlcOfferAcceptMsg struct {
 	OurFundMultisigPub [33]byte
 	// The Pubkey to be used to in the contract settlement
 	OurPayoutBase [33]byte
+
+	OurRevokePub [33]byte
+
 	// The PKH to be paid to in the contract settlement
 	OurPayoutPKH [20]byte
 	// The UTXOs we are using to fund the contract
@@ -1766,6 +1769,9 @@ func NewDlcOfferAcceptMsg(contract *DlcContract,
 	msg.OurFundMultisigPub = contract.OurFundMultisigPub
 	msg.OurPayoutBase = contract.OurPayoutBase
 	msg.OurPayoutPKH = contract.OurPayoutPKH
+
+	msg.OurRevokePub = contract.OurRevokePub
+
 	msg.SettlementSignatures = signatures
 	return *msg
 }

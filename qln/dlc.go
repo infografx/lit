@@ -107,6 +107,10 @@ func (nd *LitNode) OfferDlc(peerIdx uint32, cIdx uint64) error {
 		return err
 	}
 
+
+	c.OurRevokePub, err = nd.GetUsePub(kg, UseContractRevoke)
+
+
 	msg := lnutil.NewDlcOfferMsg(peerIdx, c)
 
 	c.Status = lnutil.ContractStatusOfferedByMe
@@ -208,6 +212,8 @@ func (nd *LitNode) AcceptDlc(cIdx uint64) error {
 		}
 		copy(c.OurPayoutPKH[:], btcutil.Hash160(ourPayoutPKHKey[:]))
 
+		c.OurRevokePub, err = nd.GetUsePub(kg, UseContractRevoke)	
+
 		// Now we can sign the division
 		sigs, err := nd.SignSettlementDivisions(c)
 		if err != nil {
@@ -244,6 +250,8 @@ func (nd *LitNode) DlcOfferHandler(msg lnutil.DlcOfferMsg, peer *RemotePeer) {
 	c.TheirChangePKH = msg.Contract.OurChangePKH
 	c.TheirIdx = msg.Contract.Idx
 	c.TheirPayoutPKH = msg.Contract.OurPayoutPKH
+
+	c.TheirRevokePub = msg.Contract.OurRevokePub
 
 	c.Division = make([]lnutil.DlcContractDivision, len(msg.Contract.Division))
 	for i := 0; i < len(msg.Contract.Division); i++ {
@@ -303,6 +311,8 @@ func (nd *LitNode) DlcAcceptHandler(msg lnutil.DlcOfferAcceptMsg, peer *RemotePe
 	c.TheirPayoutBase = msg.OurPayoutBase
 	c.TheirPayoutPKH = msg.OurPayoutPKH
 	c.TheirIdx = msg.OurIdx
+
+	c.TheirRevokePub = msg.OurRevokePub
 
 	c.Status = lnutil.ContractStatusAccepted
 	err = nd.DlcManager.SaveContract(c)
@@ -772,9 +782,18 @@ func (nd *LitNode) RevoceContract(cIdx uint64) (bool, error) {
 	tx.AddTxIn(wire.NewTxIn(&c.FundingOutpoint, nil, nil))	
 
 
-	myScript := lnutil.DirectWPKHScript()
+	myScript := lnutil.DirectWPKHScript(c.OurRevokePub)
 
-	myOutput = wire.NewTxOut(myAmt, myScript)
+	myOutput := wire.NewTxOut(80, myScript)
+
+	tx.AddTxOut(myOutput)
+
+
+	theirScript := lnutil.DirectWPKHScript(c.TheirRevokePub)
+
+	theirOutput := wire.NewTxOut(80, theirScript)
+
+	tx.AddTxOut(theirOutput)
 
 
 	fmt.Printf("::%s:: RevoceContract(): qln/dlc.go: c: %+v \n", os.Args[6][len(os.Args[6])-4:], c)
