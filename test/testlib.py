@@ -66,6 +66,7 @@ privkeys = [
 '1c224161af22b5ecd39d97a5ba62305d0552df8b6ac2d1f6a26b926f03691dca'
 ]
 
+
 class LitNode():
     def __init__(self, bcnode):
         self.bcnode = bcnode

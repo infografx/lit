@@ -78,6 +78,8 @@ func (nd *LitNode) SignBreakTx(q *Qchan) (*wire.MsgTx, error) {
 // Tx is modified in place.
 func (nd *LitNode) SignSimpleClose(q *Qchan, tx *wire.MsgTx) ([64]byte, error) {
 
+	fmt.Printf("::%s:: SignSimpleClose() lnutil.TxToString(tx) %x \n",os.Args[6][len(os.Args[6])-4:], lnutil.TxToString(tx))
+
 	var sig [64]byte
 	// make hash cache
 	hCache := txscript.NewTxSigHashes(tx)

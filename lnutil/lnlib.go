@@ -75,7 +75,7 @@ func FundTxScript(aPub, bPub [33]byte) ([]byte, bool, error) {
 	// get byte slice
 	pre, err := bldr.Script()
 
-	fmt.Printf("::%s:: !Script: FundTxScript(): lnutil/lnlib.go: swapped %t, apub %x, bpub %x \n",os.Args[6][len(os.Args[6])-4:], swapped, aPub, bPub)
+	fmt.Printf("::%s:: !Script: FundTxScript(): lnutil/lnlib.go: swapped %t, apub %x, bpub %x, pre %x \n",os.Args[6][len(os.Args[6])-4:], swapped, aPub, bPub, pre)
 
 	parsed, _ := txscript.ParseScript(pre)
 	for _, p := range parsed {
@@ -92,9 +92,7 @@ func FundTxScript(aPub, bPub [33]byte) ([]byte, bool, error) {
 // pubkeys involved.
 func FundTxOut(pubA, pubB [33]byte, amt int64) (*wire.TxOut, error) {
 
-	fmt.Printf("::%s:: FundTxOut(): lnutil/lnlib.go \n",os.Args[6][len(os.Args[6])-4:])
-
-	fmt.Printf("::%s:: FundTxScript(): lnutil/lnlib.go pubA %x, pubB %x \n",os.Args[6][len(os.Args[6])-4:], pubA, pubB)
+	fmt.Printf("::%s:: FundTxOut(): lnutil/lnlib.go pubA %x, pubB %x \n",os.Args[6][len(os.Args[6])-4:], pubA, pubB)
 
 	if amt < 0 {
 		return nil, fmt.Errorf("Can't create FundTx script with negative coins")
@@ -104,6 +102,8 @@ func FundTxOut(pubA, pubB [33]byte, amt int64) (*wire.TxOut, error) {
 		return nil, err
 	}
 	scriptBytes = P2WSHify(scriptBytes)
+
+	fmt.Printf("::%s:: FundTxOut(): lnutil/lnlib.go scriptBytes %x \n",os.Args[6][len(os.Args[6])-4:], scriptBytes)
 
 	return wire.NewTxOut(amt, scriptBytes), nil
 }

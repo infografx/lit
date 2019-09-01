@@ -310,14 +310,59 @@ def run_t(env, params):
                 next
 
 
-        b_OracleSig = decode_hex(oracle1_sig)[0]
-        OracleSig = [elem for elem in b_OracleSig]
-
-
         print("Before Revoke Contract")
-        time.sleep(8)
+        time.sleep(3)
 
-        res = lit1.rpc.RevoceContract(CIdx=1)
+        res = lit1.rpc.RevokeContract(CIdx=1)
+
+        time.sleep(2)
+
+        env.generate_block()
+        time.sleep(2)
+        env.generate_block()
+        time.sleep(3)
+
+
+        print("==========================================================")
+        print('Print Blockchain Info')
+        print("==========================================================")
+
+
+        best_block_hash = bc.rpc.getbestblockhash()
+        bb = bc.rpc.getblock(best_block_hash)
+        print(bb)
+        print("bb['height']: " + str(bb['height']))
+
+        print("Balance from RPC: " + str(bc.rpc.getbalance()))
+
+        # batch support : print timestamps of blocks 0 to 99 in 2 RPC round-trips:
+        commands = [ [ "getblockhash", height] for height in range(bb['height'] + 1) ]
+        block_hashes = bc.rpc.batch_(commands)
+        blocks = bc.rpc.batch_([ [ "getblock", h ] for h in block_hashes ])
+        block_times = [ block["time"] for block in blocks ]
+        print(block_times)
+
+        print('--------------------')
+
+        for b in blocks:
+            print("--------BLOCK--------")
+            print(b)
+            tx = b["tx"]
+            #print(tx)
+            try:
+
+                for i in range(len(tx)):
+                    print("--------TRANSACTION--------")
+                    rtx = bc.rpc.getrawtransaction(tx[i])
+                    print(rtx)
+                    decoded = bc.rpc.decoderawtransaction(rtx)
+                    pp.pprint(decoded)
+            except BaseException as be:
+                print(be)
+            # print(type(rtx))
+            print('--------')    
+
+        #assert bals['ChanTotal'] == 0, "channel balance isn't zero!"
 
 
     except BaseException as be:

@@ -462,20 +462,20 @@ func (r *LitRPC) SettleContract(args SettleContractArgs,
 //======================================================================
 
 
-type RevoceContractArgs struct {
+type RevokeContractArgs struct {
 	CIdx        uint64
 }
 
-type RevoceContractReply struct {
+type RevokeContractReply struct {
 	Success      bool
 }
 
-// RevoceContract
+// RevokeContract
 
-func (r *LitRPC) RevoceContract(args RevoceContractArgs,reply *RevoceContractReply) error {
+func (r *LitRPC) RevokeContract(args RevokeContractArgs,reply *RevokeContractReply) error {
 	var err error
 
-	reply.Success, err = r.Node.RevoceContract(args.CIdx)
+	reply.Success, err = r.Node.RevokeContract(args.CIdx)
 	if err != nil {
 		return err
 	}

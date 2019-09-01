@@ -83,6 +83,9 @@ func ParsePubKey(pubKeyStr []byte, curve *KoblitzCurve) (key *PublicKey, err err
 			return nil, fmt.Errorf("ybit doesn't match oddness")
 		}
 	case PubKeyBytesLenCompressed:
+
+		fmt.Println("koblitz/pubkey.go: PubKeyBytesLenCompressed")
+
 		// format is 0x2 | solution, <X coordinate>
 		// solution determines which solution of the curve we use.
 		/// y^2 = x^3 + Curve.B

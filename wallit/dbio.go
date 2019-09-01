@@ -49,6 +49,8 @@ func (w *Wallit) NewChangeOut(amt int64) (*wire.TxOut, error) {
 
 	changeScript := lnutil.DirectWPKHScriptFromPKH(change160)
 
+	fmt.Printf("::%s:: NewChangeOut(): DirectWPKHScriptFromPKH: wallit/dbio.go: changeScript %x \n",os.Args[6][len(os.Args[6])-4:], changeScript)
+
 	changeOut := wire.NewTxOut(amt, changeScript)
 	return changeOut, nil
 }

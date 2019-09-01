@@ -5,6 +5,9 @@ import (
 
 	"os"
 
+	"bytes"
+	"bufio"
+
 	"github.com/mit-dci/lit/btcutil"
 	"github.com/mit-dci/lit/btcutil/txscript"
 	"github.com/mit-dci/lit/btcutil/txsort"
@@ -109,6 +112,8 @@ func (nd *LitNode) OfferDlc(peerIdx uint32, cIdx uint64) error {
 
 
 	c.OurRevokePub, err = nd.GetUsePub(kg, UseContractRevoke)
+
+	fmt.Printf("::%s:: OfferDlc(): qln/dlc.go: c.OurRevokePub %x \n",os.Args[6][len(os.Args[6])-4:], c.OurRevokePub)
 
 
 	msg := lnutil.NewDlcOfferMsg(peerIdx, c)
@@ -223,6 +228,59 @@ func (nd *LitNode) AcceptDlc(cIdx uint64) error {
 			return
 		}
 
+
+		//-----------------------------------------------
+
+
+		fmt.Printf("::%s::AcceptDlc(): qln/dlc.go: Start to Build Revoke Tx \n",os.Args[6][len(os.Args[6])-4:])
+
+		revoketx := wire.NewMsgTx()
+		revoketx.Version = 2
+	
+		revoketx.AddTxIn(wire.NewTxIn(&c.FundingOutpoint, nil, nil))
+
+		myrevscript :=lnutil.DirectWPKHScript(c.OurRevokePub)
+
+		myOutput := wire.NewTxOut(8000000, myrevscript)
+		revoketx.AddTxOut(myOutput)
+
+
+		fmt.Printf("::%s::AcceptDlc(): qln/dlc.go: DirectWPKHScript: myScript %x \n",os.Args[6][len(os.Args[6])-4:], myrevscript)
+
+
+		theirrevscript :=lnutil.DirectWPKHScript(c.TheirRevokePub)
+
+		theirOutput := wire.NewTxOut(8000000, theirrevscript)
+		revoketx.AddTxOut(theirOutput)
+
+		fmt.Printf("::%s::AcceptDlc(): qln/dlc.go: DirectWPKHScript: theirScript %x \n",os.Args[6][len(os.Args[6])-4:], theirrevscript)
+
+		
+		txsort.InPlaceSort(revoketx)
+
+		hCache := txscript.NewTxSigHashes(revoketx)
+		revokepre, _, err := lnutil.FundTxScript(c.OurFundMultisigPub, c.TheirFundMultisigPub)
+
+		kg.Step[2] = UseContractRevoke
+		
+
+		wal, _ := nd.SubWallet[c.CoinType]
+		priv, err := wal.GetPriv(kg)
+
+		fmt.Printf("::%s:: AcceptDlc() lnutil.TxToString(revoketx) %x \n",os.Args[6][len(os.Args[6])-4:], lnutil.TxToString(revoketx))
+
+		revoketxSig, err := txscript.RawTxInWitnessSignature(revoketx, hCache, 0, 8000000, revokepre, txscript.SigHashAll, priv)
+
+		revoketxSig = revoketxSig[:len(revoketxSig)-1]
+
+		revoketxSig64 , _ := sig64.SigCompress(revoketxSig)
+
+		c.OurrevoketxSig64 = revoketxSig64
+
+		fmt.Printf("::%s::AcceptDlc(): qln/dlc.go: c.OurRevokePub %x, c.TheirRevokePub %x, c.OurrevoketxSig64 %x \n",os.Args[6][len(os.Args[6])-4:], c.OurRevokePub, c.TheirRevokePub, c.OurrevoketxSig64)
+
+		//------------------------------------------------		
+
 		msg := lnutil.NewDlcOfferAcceptMsg(c, sigs)
 		c.Status = lnutil.ContractStatusAccepted
 
@@ -252,6 +310,10 @@ func (nd *LitNode) DlcOfferHandler(msg lnutil.DlcOfferMsg, peer *RemotePeer) {
 	c.TheirPayoutPKH = msg.Contract.OurPayoutPKH
 
 	c.TheirRevokePub = msg.Contract.OurRevokePub
+
+	fmt.Printf("::%s:: DlcOfferHandler(): qln/dlc.go: c.TheirRevokePub %x \n",os.Args[6][len(os.Args[6])-4:], c.TheirRevokePub)
+
+	fmt.Printf("::%s:: DlcOfferHandler(): qln/dlc.go: msg.Contract %+v \n",os.Args[6][len(os.Args[6])-4:], msg.Contract)
 
 	c.Division = make([]lnutil.DlcContractDivision, len(msg.Contract.Division))
 	for i := 0; i < len(msg.Contract.Division); i++ {
@@ -314,6 +376,10 @@ func (nd *LitNode) DlcAcceptHandler(msg lnutil.DlcOfferAcceptMsg, peer *RemotePe
 
 	c.TheirRevokePub = msg.OurRevokePub
 
+	fmt.Printf("::%s:: DlcAcceptHandler(): qln/dlc.go: msg.OurrevoketxSig64: %x \n",os.Args[6][len(os.Args[6])-4:], msg.OurrevoketxSig64)
+
+	c.TheirrevoketxSig64 = msg.OurrevoketxSig64
+
 	c.Status = lnutil.ContractStatusAccepted
 	err = nd.DlcManager.SaveContract(c)
 	if err != nil {
@@ -367,6 +433,8 @@ func (nd *LitNode) DlcContractAckHandler(msg lnutil.DlcContractAckMsg, peer *Rem
 		return
 	}
 
+
+	fmt.Printf("::%s:: DlcContractAckHandler(): BuildDlcFundingTransaction(): \n",os.Args[6][len(os.Args[6])-4:])
 	tx, err := nd.BuildDlcFundingTransaction(c)
 	if err != nil {
 		logging.Errorf("DlcContractAckHandler BuildDlcFundingTransaction err %s\n", err.Error())
@@ -401,6 +469,25 @@ func (nd *LitNode) DlcFundingSigsHandler(msg lnutil.DlcContractFundingSigsMsg, p
 	}
 
 	wal.SignMyInputs(msg.SignedFundingTx)
+
+
+	fmt.Printf("::%s:: DlcFundingSigsHandler(): qln/dlc.go: lnutil.TxToString(msg.SignedFundingTx) %s \n",os.Args[6][len(os.Args[6])-4:], lnutil.TxToString(msg.SignedFundingTx))
+
+
+	var buft bytes.Buffer
+	wtt := bufio.NewWriter(&buft)
+	msg.SignedFundingTx.Serialize(wtt)
+	wtt.Flush()
+
+
+	fmt.Printf("::%s:: DlcFundingSigsHandler(): qln/dlc.go: CONTRACT %+v \n",os.Args[6][len(os.Args[6])-4:], c)
+
+
+	fmt.Printf("::%s:: DlcFundingSigsHandler(): qln/dlc.go: msg.SignedFundingTx %x \n",os.Args[6][len(os.Args[6])-4:], buft.Bytes())
+
+
+
+
 
 	wal.DirectSendTx(msg.SignedFundingTx)
 
@@ -469,6 +556,9 @@ func (nd *LitNode) SignSettlementDivisions(c *lnutil.DlcContract) ([]lnutil.DlcC
 		return nil, fmt.Errorf("Could not get private key for contract %d", c.Idx)
 	}
 
+
+	fmt.Printf("::%s:: SignSettlementDivisions(): BuildDlcFundingTransaction() \n",os.Args[6][len(os.Args[6])-4:])
+
 	fundingTx, err := nd.BuildDlcFundingTransaction(c)
 	if err != nil {
 		return nil, err
@@ -507,6 +597,10 @@ func (nd *LitNode) BuildDlcFundingTransaction(c *lnutil.DlcContract) (wire.MsgTx
 	our_txin_num := 0
 	for _, u := range c.OurFundingInputs {
 		txin := wire.NewTxIn(&u.Outpoint, nil, nil)
+
+		fmt.Printf("::%s:: BuildDlcFundingTransaction()1: wallit/signsend.go: c.OurFundingInputs: AddTxIn: u.Outpoint.Index %d, u.Outpoint.Hash %x \n",os.Args[6][len(os.Args[6])-4:], u.Outpoint.Index, u.Outpoint.Hash)
+
+
 		tx.AddTxIn(txin)
 		ourInputTotal += u.Value
 		our_txin_num += 1
@@ -517,6 +611,9 @@ func (nd *LitNode) BuildDlcFundingTransaction(c *lnutil.DlcContract) (wire.MsgTx
 	their_txin_num := 0
 	for _, u := range c.TheirFundingInputs {
 		txin := wire.NewTxIn(&u.Outpoint, nil, nil)
+
+		fmt.Printf("::%s:: BuildDlcFundingTransaction()2: wallit/signsend.go: c.TheirFundingInputs: AddTxIn: u.Outpoint.Index %d, u.Outpoint.Hash %x \n",os.Args[6][len(os.Args[6])-4:], u.Outpoint.Index, u.Outpoint.Hash)
+
 		tx.AddTxIn(txin)
 		theirInputTotal += u.Value
 		their_txin_num += 1
@@ -553,9 +650,12 @@ func (nd *LitNode) BuildDlcFundingTransaction(c *lnutil.DlcContract) (wire.MsgTx
 	their_txout := wire.NewTxOut(theirInputTotal-c.TheirFundingAmount-their_fee, lnutil.DirectWPKHScriptFromPKH(c.TheirChangePKH)) 
 	tx.AddTxOut(their_txout)
 
+	fmt.Printf("::%s:: BuildDlcFundingTransaction()3: wallit/signsend.go: AddTxOut: their_txout.Value %d, their_txout.PkScript %x \n",os.Args[6][len(os.Args[6])-4:], their_txout.Value, their_txout.PkScript)
 
 	our_txout := wire.NewTxOut(ourInputTotal-c.OurFundingAmount-our_fee, lnutil.DirectWPKHScriptFromPKH(c.OurChangePKH))
 	tx.AddTxOut(our_txout)
+
+	fmt.Printf("::%s:: BuildDlcFundingTransaction()4: wallit/signsend.go: AddTxOut: our_txout.Value %d, our_txout.PkScript %x \n",os.Args[6][len(os.Args[6])-4:], our_txout.Value, our_txout.PkScript)
 
 	
 
@@ -566,6 +666,8 @@ func (nd *LitNode) BuildDlcFundingTransaction(c *lnutil.DlcContract) (wire.MsgTx
 	if err != nil {
 		return *tx, err
 	}
+
+	fmt.Printf("::%s:: BuildDlcFundingTransaction()5: wallit/signsend.go: AddTxOut txo.PkScript %x \n",os.Args[6][len(os.Args[6])-4:], txo.PkScript)
 
 	// Ensure contract funding output is always at position 0
 	txos := make([]*wire.TxOut, len(tx.TxOut)+1)
@@ -764,9 +866,9 @@ func (nd *LitNode) SettleContract(cIdx uint64, oracleValue int64, oracleSig [32]
 //======================================================================
 
 
-func (nd *LitNode) RevoceContract(cIdx uint64) (bool, error) {
+func (nd *LitNode) RevokeContract(cIdx uint64) (bool, error) {
 	
-	fmt.Printf("::%s:: RevoceContract() ----START----: qln/dlc.go \n",os.Args[6][len(os.Args[6])-4:])
+	fmt.Printf("::%s:: RevokeContract() ----START----: qln/dlc.go \n",os.Args[6][len(os.Args[6])-4:])
 
 
 	c, err := nd.DlcManager.LoadContract(cIdx)
@@ -775,31 +877,129 @@ func (nd *LitNode) RevoceContract(cIdx uint64) (bool, error) {
 		return false, err
 	}
 
-	tx := wire.NewMsgTx()
-	// set version 2, for op_csv
-	tx.Version = 2
 
-	tx.AddTxIn(wire.NewTxIn(&c.FundingOutpoint, nil, nil))	
+	wal, _ := nd.SubWallet[c.CoinType]
+
+
+	//----------------------------------------------------
+	// MY Simple close tx START
+	//----------------------------------------------------
+
+	mytx := wire.NewMsgTx()
+	// set version 2, for op_csv
+	mytx.Version = 2
+
+	mytx.AddTxIn(wire.NewTxIn(&c.FundingOutpoint, nil, nil))	
 
 
 	myScript := lnutil.DirectWPKHScript(c.OurRevokePub)
 
-	myOutput := wire.NewTxOut(80, myScript)
+	myOutput := wire.NewTxOut(8000000, myScript)
+	mytx.AddTxOut(myOutput)
 
-	tx.AddTxOut(myOutput)
+	fmt.Printf("::%s::AcceptDlc(): qln/dlc.go: DirectWPKHScript: myScript %x \n",os.Args[6][len(os.Args[6])-4:], myScript)
 
 
 	theirScript := lnutil.DirectWPKHScript(c.TheirRevokePub)
 
-	theirOutput := wire.NewTxOut(80, theirScript)
+	theirOutput := wire.NewTxOut(8000000, theirScript)
+	mytx.AddTxOut(theirOutput)
 
-	tx.AddTxOut(theirOutput)
+	fmt.Printf("::%s::AcceptDlc(): qln/dlc.go: DirectWPKHScript: theirScript %x \n",os.Args[6][len(os.Args[6])-4:], theirScript)
+
+	txsort.InPlaceSort(mytx)
+
+	//----------------------------------------------------
+	// MY Simple close tx END
+	//----------------------------------------------------
 
 
-	fmt.Printf("::%s:: RevoceContract(): qln/dlc.go: c: %+v \n", os.Args[6][len(os.Args[6])-4:], c)
+	//----------------------------------------------------
+	// MY Sign simple close tx START
+	//----------------------------------------------------
 
 
-	fmt.Printf("::%s:: RevoceContract() ----END----: qln/dlc.go \n",os.Args[6][len(os.Args[6])-4:])
+	myhCache := txscript.NewTxSigHashes(mytx)
+
+	mypre, _, err := lnutil.FundTxScript(c.OurFundMultisigPub, c.TheirFundMultisigPub)
+
+
+	var kg portxo.KeyGen
+	kg.Depth = 5
+	kg.Step[0] = 44 | 1<<31
+	kg.Step[1] = c.CoinType | 1<<31
+	kg.Step[2] = UseContractRevoke
+	kg.Step[3] = c.PeerIdx | 1<<31
+	kg.Step[4] = uint32(c.Idx) | 1<<31
+
+	mypriv, err := wal.GetPriv(kg)
+
+
+	fmt.Printf("::%s:: RevokeContract() lnutil.TxToString(mytx) %x \n",os.Args[6][len(os.Args[6])-4:], lnutil.TxToString(mytx))
+
+	mySig, err := txscript.RawTxInWitnessSignature(mytx, myhCache, 0, 8000000, mypre, txscript.SigHashAll, mypriv)
+
+	mySig = mySig[:len(mySig)-1]
+	
+	mySig64 , _ := sig64.SigCompress(mySig)
+
+	//--------------------------------------------
+
+	myBigSig := sig64.SigDecompress(mySig64)
+
+	myBigSig = append(myBigSig, byte(txscript.SigHashAll))	
+
+
+	//----------------------------------------------------
+	// MY Sign simple close tx END
+	//----------------------------------------------------
+
+	fmt.Printf("::%s::RevokeContract(): qln/dlc.go: c.TheirrevoketxSig64 %x \n",os.Args[6][len(os.Args[6])-4:], c.TheirrevoketxSig64)
+
+	theirBigSig := sig64.SigDecompress(c.TheirrevoketxSig64)
+
+	theirBigSig = append(theirBigSig, byte(txscript.SigHashAll))
+
+	
+	
+	
+	//=================================================================================
+
+
+	fmt.Printf("::%s:: RevokeContract(): qln/dlc.go: myBigSig %x, theirBigSig %x \n",os.Args[6][len(os.Args[6])-4:], myBigSig, theirBigSig)
+
+	pre, swap, err := lnutil.FundTxScript(c.OurFundMultisigPub, c.TheirFundMultisigPub)
+
+	
+	// swap if needed
+	if swap {
+		mytx.TxIn[0].Witness = SpendMultiSigWitStack(pre, theirBigSig, myBigSig)
+	} else {
+		mytx.TxIn[0].Witness = SpendMultiSigWitStack(pre, myBigSig, theirBigSig)
+	}	
+
+
+	fmt.Printf("::%s:: RevokeContract(): qln/dlc.go: lnutil.TxToString(mytx) %s \n",os.Args[6][len(os.Args[6])-4:], lnutil.TxToString(mytx))
+
+
+	var buft bytes.Buffer
+	wtt := bufio.NewWriter(&buft)
+	mytx.Serialize(wtt)
+	wtt.Flush()
+
+
+	fmt.Printf("::%s:: RevokeContract(): qln/dlc.go: mytx %x \n",os.Args[6][len(os.Args[6])-4:], buft.Bytes())
+
+
+	
+	err = wal.DirectSendTx(mytx)
+
+
+
+	fmt.Printf("::%s:: RevokeContract(): qln/dlc.go: c: %+v \n", os.Args[6][len(os.Args[6])-4:], c)
+
+
+	fmt.Printf("::%s:: RevokeContract() ----END----: qln/dlc.go \n",os.Args[6][len(os.Args[6])-4:])
 
 
 

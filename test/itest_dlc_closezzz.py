@@ -92,6 +92,8 @@ def run_close_test(env, initiator, target, closer):
 
     # Now we confirm the block.
     env.generate_block()
+    env.generate_block()
+    env.generate_block()
 
 
     #-------------------------------------------------------------------------
@@ -167,8 +169,8 @@ def run_close_test(env, initiator, target, closer):
     print('  = sum ', bal2sum)  
 
 
-    #=================================================================
-    time.sleep(2)
+    # #=================================================================
+    # time.sleep(2)
 
     print("==========================================================")
     print('Print Blockchain Info')

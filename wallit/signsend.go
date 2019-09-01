@@ -565,10 +565,14 @@ func (w *Wallit) BuildAndSign(
 		if txo == nil || txo.PkScript == nil || txo.Value == 0 {
 			return nil, fmt.Errorf("BuildAndSign arg invalid txo")
 		}
+		fmt.Printf("::%s:: BuildAndSign(): wallit/signsend.go: AddTxOut txo.PkScript %x \n",os.Args[6][len(os.Args[6])-4:], txo.PkScript)
 		tx.AddTxOut(txo)
 	}
 	// add all the txins, first refenecing the prev outPoints
 	for i, u := range utxos {
+
+		fmt.Printf("::%s:: BuildAndSign(): wallit/signsend.go: AddTxIn: u.Op.Index %d, u.Op.Hash %x \n",os.Args[6][len(os.Args[6])-4:], u.Op.Index, u.Op.Hash)
+
 		tx.AddTxIn(wire.NewTxIn(&u.Op, nil, nil))
 		// set sequence field if it's in the portxo
 		if u.Seq > 1 {

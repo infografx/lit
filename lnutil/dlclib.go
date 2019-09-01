@@ -67,6 +67,8 @@ type DlcContract struct {
 
 	OurRevokePub, TheirRevokePub [33]byte
 
+	OurrevoketxSig64, TheirrevoketxSig64 [64]byte
+
 	// Pubkey to be used in the commit script (combined with oracle pubkey
 	// or CSV timeout)
 	OurPayoutBase, TheirPayoutBase [33]byte
@@ -161,6 +163,12 @@ func DlcContractFromBytes(b []byte) (*DlcContract, error) {
 	copy(c.OurFundMultisigPub[:], buf.Next(33))
 	copy(c.TheirFundMultisigPub[:], buf.Next(33))
 
+	copy(c.OurRevokePub[:], buf.Next(33))
+	copy(c.TheirRevokePub[:], buf.Next(33))
+
+	copy(c.OurrevoketxSig64[:], buf.Next(64))
+	copy(c.TheirrevoketxSig64[:], buf.Next(64))
+	
 	copy(c.OurPayoutBase[:], buf.Next(33))
 	copy(c.TheirPayoutBase[:], buf.Next(33))
 
@@ -269,6 +277,13 @@ func (self *DlcContract) Bytes() []byte {
 	buf.Write(self.TheirChangePKH[:])
 	buf.Write(self.OurFundMultisigPub[:])
 	buf.Write(self.TheirFundMultisigPub[:])
+
+	buf.Write(self.OurRevokePub[:])
+	buf.Write(self.TheirRevokePub[:])
+
+	buf.Write(self.OurrevoketxSig64[:])
+	buf.Write(self.TheirrevoketxSig64[:])
+	
 	buf.Write(self.OurPayoutBase[:])
 	buf.Write(self.TheirPayoutBase[:])
 	buf.Write(self.OurPayoutPKH[:])
