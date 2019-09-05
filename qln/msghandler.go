@@ -460,60 +460,60 @@ func (nd *LitNode) OPEventHandler(OPEventChan chan lnutil.OutPointEvent) {
 				continue
 			}
 
-			// detect close tx outs.
-			txos, err := theQ.GetCloseTxos(curOPEvent.Tx)
-			if err != nil {
-				logging.Errorf("GetCloseTxos error: %s", err.Error())
-				continue
-			}
+			// // detect close tx outs.
+			// txos, err := theQ.GetCloseTxos(curOPEvent.Tx)
+			// if err != nil {
+			// 	logging.Errorf("GetCloseTxos error: %s", err.Error())
+			// 	continue
+			// }
 
-			// if you have seq=1 txos, modify the privkey...
-			// pretty ugly as we need the private key to do that.
-			for _, ptxo := range txos {
-				if ptxo.Seq == 1 { // revoked key
-					// GetCloseTxos returns a porTxo with the elk scalar in the
-					// privkey field.  It isn't just added though; it needs to
-					// be combined with the private key in a way porTxo isn't
-					// aware of, so derive and subtract that here.
-					var elkScalar [32]byte
-					// swap out elkscalar, leaving privkey empty
-					elkScalar, ptxo.KeyGen.PrivKey =
-						ptxo.KeyGen.PrivKey, elkScalar
+			// // if you have seq=1 txos, modify the privkey...
+			// // pretty ugly as we need the private key to do that.
+			// for _, ptxo := range txos {
+			// 	if ptxo.Seq == 1 { // revoked key
+			// 		// GetCloseTxos returns a porTxo with the elk scalar in the
+			// 		// privkey field.  It isn't just added though; it needs to
+			// 		// be combined with the private key in a way porTxo isn't
+			// 		// aware of, so derive and subtract that here.
+			// 		var elkScalar [32]byte
+			// 		// swap out elkscalar, leaving privkey empty
+			// 		elkScalar, ptxo.KeyGen.PrivKey =
+			// 			ptxo.KeyGen.PrivKey, elkScalar
 
-					privBase, err := nd.SubWallet[theQ.Coin()].GetPriv(ptxo.KeyGen)
-					if err != nil {
-						continue // or return?
-					}
+			// 		privBase, err := nd.SubWallet[theQ.Coin()].GetPriv(ptxo.KeyGen)
+			// 		if err != nil {
+			// 			continue // or return?
+			// 		}
 
-					ptxo.PrivKey = lnutil.CombinePrivKeyAndSubtract(
-						privBase, elkScalar[:])
-				}
-				// make this concurrent to avoid circular locking
-				go func(porTxo portxo.PorTxo) {
-					nd.SubWallet[theQ.Coin()].ExportUtxo(&porTxo)
-				}(ptxo)
-			}
+			// 		ptxo.PrivKey = lnutil.CombinePrivKeyAndSubtract(
+			// 			privBase, elkScalar[:])
+			// 	}
+			// 	// make this concurrent to avoid circular locking
+			// 	go func(porTxo portxo.PorTxo) {
+			// 		nd.SubWallet[theQ.Coin()].ExportUtxo(&porTxo)
+			// 	}(ptxo)
+			// }
 
-			// Fetch the indexes of HTLC outputs, and then register them to be watched
-			// We can monitor this for spends from an HTLC output that contains a preimage
-			// and then use that preimage to claim any HTLCs we have outstanding.
-			_, htlcIdxes, err := theQ.GetHtlcTxos(curOPEvent.Tx, false)
-			if err != nil {
-				logging.Errorf("GetHtlcTxos error: %s", err.Error())
-				continue
-			}
-			_, htlcOurIdxes, err := theQ.GetHtlcTxos(curOPEvent.Tx, true)
-			if err != nil {
-				logging.Errorf("GetHtlcTxos error: %s", err.Error())
-				continue
-			}
-			htlcIdxes = append(htlcIdxes, htlcOurIdxes...)
-			txHash := curOPEvent.Tx.TxHash()
-			for _, i := range htlcIdxes {
-				op := wire.NewOutPoint(&txHash, i)
-				logging.Infof("Watching for spends from [%s] (HTLC)\n", op.String())
-				nd.SubWallet[theQ.Coin()].WatchThis(*op)
-			}
+			// // Fetch the indexes of HTLC outputs, and then register them to be watched
+			// // We can monitor this for spends from an HTLC output that contains a preimage
+			// // and then use that preimage to claim any HTLCs we have outstanding.
+			// _, htlcIdxes, err := theQ.GetHtlcTxos(curOPEvent.Tx, false)
+			// if err != nil {
+			// 	logging.Errorf("GetHtlcTxos error: %s", err.Error())
+			// 	continue
+			// }
+			// _, htlcOurIdxes, err := theQ.GetHtlcTxos(curOPEvent.Tx, true)
+			// if err != nil {
+			// 	logging.Errorf("GetHtlcTxos error: %s", err.Error())
+			// 	continue
+			// }
+			// htlcIdxes = append(htlcIdxes, htlcOurIdxes...)
+			// txHash := curOPEvent.Tx.TxHash()
+			// for _, i := range htlcIdxes {
+			// 	op := wire.NewOutPoint(&txHash, i)
+			// 	logging.Infof("Watching for spends from [%s] (HTLC)\n", op.String())
+			// 	nd.SubWallet[theQ.Coin()].WatchThis(*op)
+			// }
 		}
 	}
 }

@@ -454,29 +454,27 @@ func (nd *LitNode) DualFundingAcceptHandler(msg lnutil.DualFundingAcceptMsg) {
 		return
 	}
 
-	// when funding a channel, give them the first *3* elkpoints.
-	elkPointZero, err := q.ElkPoint(false, 0)
-	if err != nil {
-		logging.Errorf("PointRespHandler ElkpointZero err %s", err.Error())
-		return
-	}
-	elkPointOne, err := q.ElkPoint(false, 1)
-	if err != nil {
-		logging.Errorf("PointRespHandler ElkpointOne err %s", err.Error())
-		return
-	}
+	// // when funding a channel, give them the first *3* elkpoints.
+	// elkPointZero, err := q.ElkPoint(false, 0)
+	// if err != nil {
+	// 	logging.Errorf("PointRespHandler ElkpointZero err %s", err.Error())
+	// 	return
+	// }
+	// elkPointOne, err := q.ElkPoint(false, 1)
+	// if err != nil {
+	// 	logging.Errorf("PointRespHandler ElkpointOne err %s", err.Error())
+	// 	return
+	// }
 
-	elkPointTwo, err := q.N2ElkPointForThem()
-	if err != nil {
-		logging.Errorf("PointRespHandler ElkpointTwo err %s", err.Error())
-		return
-	}
+	// elkPointTwo, err := q.N2ElkPointForThem()
+	// if err != nil {
+	// 	logging.Errorf("PointRespHandler ElkpointTwo err %s", err.Error())
+	// 	return
+	// }
 
 	outMsg := lnutil.NewChanDescMsg(
-		nd.InProgDual.PeerIdx, *nd.InProgDual.OutPoint, q.MyPub, q.MyRefundPub, q.MyHAKDBase, nd.InProgDual.OurNextHTLCBase,
-		nd.InProgDual.OurN2HTLCBase,
-		nd.InProgDual.CoinType, nd.InProgDual.OurAmount+nd.InProgDual.TheirAmount, nd.InProgDual.TheirAmount,
-		elkPointZero, elkPointOne, elkPointTwo, q.State.Data)
+		nd.InProgDual.PeerIdx, *nd.InProgDual.OutPoint, q.MyPub, q.MyRefundPub,
+		nd.InProgDual.CoinType, nd.InProgDual.OurAmount+nd.InProgDual.TheirAmount, nd.InProgDual.TheirAmount, q.State.Data)
 
 	nd.InProgDual.mtx.Unlock()
 	nd.tmpSendLitMsg(outMsg)
@@ -596,19 +594,19 @@ func (nd *LitNode) DualFundChanDescHandler(msg lnutil.ChanDescMsg) error {
 
 	qc.TheirPub = msg.PubKey
 	qc.TheirRefundPub = msg.RefundPub
-	qc.TheirHAKDBase = msg.HAKDbase
+	//qc.TheirHAKDBase = msg.HAKDbase
 	qc.MyPub, _ = nd.GetUsePub(qc.KeyGen, UseChannelFund)
 	qc.MyRefundPub, _ = nd.GetUsePub(qc.KeyGen, UseChannelRefund)
-	qc.MyHAKDBase, _ = nd.GetUsePub(qc.KeyGen, UseChannelHAKDBase)
+	//qc.MyHAKDBase, _ = nd.GetUsePub(qc.KeyGen, UseChannelHAKDBase)
 
-	_, err = koblitz.ParsePubKey(msg.NextHTLCBase[:], koblitz.S256())
-	if err != nil {
-		return fmt.Errorf("QChanDescHandler NextHTLCBase err %s", err.Error())
-	}
-	_, err = koblitz.ParsePubKey(msg.N2HTLCBase[:], koblitz.S256())
-	if err != nil {
-		return fmt.Errorf("QChanDescHandler N2HTLCBase err %s", err.Error())
-	}
+	//_, err = koblitz.ParsePubKey(msg.NextHTLCBase[:], koblitz.S256())
+	// if err != nil {
+	// 	return fmt.Errorf("QChanDescHandler NextHTLCBase err %s", err.Error())
+	// }
+	// _, err = koblitz.ParsePubKey(msg.N2HTLCBase[:], koblitz.S256())
+	// if err != nil {
+	// 	return fmt.Errorf("QChanDescHandler N2HTLCBase err %s", err.Error())
+	// }
 
 	// it should go into the next bucket and get the right key index.
 	// but we can't actually check that.
@@ -632,15 +630,15 @@ func (nd *LitNode) DualFundChanDescHandler(msg lnutil.ChanDescMsg) error {
 
 	qc.State.StateIdx = 0
 	// use new ElkPoint for signing
-	qc.State.ElkPoint = msg.ElkZero
-	qc.State.NextElkPoint = msg.ElkOne
-	qc.State.N2ElkPoint = msg.ElkTwo
+	// qc.State.ElkPoint = msg.ElkZero
+	// qc.State.NextElkPoint = msg.ElkOne
+	// qc.State.N2ElkPoint = msg.ElkTwo
 
-	qc.State.MyNextHTLCBase = nd.InProgDual.OurNextHTLCBase
-	qc.State.MyN2HTLCBase = nd.InProgDual.OurN2HTLCBase
+	// qc.State.MyNextHTLCBase = nd.InProgDual.OurNextHTLCBase
+	// qc.State.MyN2HTLCBase = nd.InProgDual.OurN2HTLCBase
 
-	qc.State.NextHTLCBase = msg.NextHTLCBase
-	qc.State.N2HTLCBase = msg.N2HTLCBase
+	// qc.State.NextHTLCBase = msg.NextHTLCBase
+	// qc.State.N2HTLCBase = msg.N2HTLCBase
 
 	// save new channel to db
 	err = nd.SaveQChan(qc)

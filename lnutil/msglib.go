@@ -285,15 +285,11 @@ type PointRespMsg struct {
 	N2HTLCBase   [33]byte
 }
 
-func NewPointRespMsg(peerid uint32, chanpub [33]byte, refundpub [33]byte,
-	HAKD [33]byte, nextHTLCBase [33]byte, N2HTLCBase [33]byte) PointRespMsg {
+func NewPointRespMsg(peerid uint32, chanpub [33]byte, refundpub [33]byte) PointRespMsg {
 	pr := new(PointRespMsg)
 	pr.PeerIdx = peerid
 	pr.ChannelPub = chanpub
 	pr.RefundPub = refundpub
-	pr.HAKDbase = HAKD
-	pr.NextHTLCBase = nextHTLCBase
-	pr.N2HTLCBase = N2HTLCBase
 	return *pr
 }
 
@@ -303,7 +299,7 @@ func NewPointRespMsg(peerid uint32, chanpub [33]byte, refundpub [33]byte,
 func NewPointRespMsgFromBytes(b []byte, peerid uint32) (PointRespMsg, error) {
 	pm := new(PointRespMsg)
 
-	if len(b) < 166 {
+	if len(b) < 67 {
 		return *pm, fmt.Errorf("PointResp err: msg %d bytes, expect 166\n", len(b))
 	}
 
@@ -311,9 +307,6 @@ func NewPointRespMsgFromBytes(b []byte, peerid uint32) (PointRespMsg, error) {
 	buf := bytes.NewBuffer(b[1:]) // get rid of messageType
 	copy(pm.ChannelPub[:], buf.Next(33))
 	copy(pm.RefundPub[:], buf.Next(33))
-	copy(pm.HAKDbase[:], buf.Next(33))
-	copy(pm.NextHTLCBase[:], buf.Next(33))
-	copy(pm.N2HTLCBase[:], buf.Next(33))
 
 	return *pm, nil
 }
@@ -323,9 +316,6 @@ func (self PointRespMsg) Bytes() []byte {
 	msg = append(msg, self.MsgType())
 	msg = append(msg, self.ChannelPub[:]...)
 	msg = append(msg, self.RefundPub[:]...)
-	msg = append(msg, self.HAKDbase[:]...)
-	msg = append(msg, self.NextHTLCBase[:]...)
-	msg = append(msg, self.N2HTLCBase[:]...)
 	return msg
 }
 
@@ -338,43 +328,29 @@ type ChanDescMsg struct {
 	Outpoint  wire.OutPoint
 	PubKey    [33]byte
 	RefundPub [33]byte
-	HAKDbase  [33]byte
-
-	NextHTLCBase [33]byte
-	N2HTLCBase   [33]byte
 
 	CoinType    uint32
 	Capacity    int64
 	InitPayment int64
 
-	ElkZero [33]byte //consider changing into array in future
-	ElkOne  [33]byte
-	ElkTwo  [33]byte
 
 	Data [32]byte
 }
 
 func NewChanDescMsg(
 	peerid uint32, OP wire.OutPoint,
-	pubkey, refund, hakd [33]byte, nextHTLCBase [33]byte, N2HTLCBase [33]byte,
+	pubkey, refund [33]byte,
 	cointype uint32,
-	capacity int64, payment int64,
-	ELKZero, ELKOne, ELKTwo [33]byte, data [32]byte) ChanDescMsg {
+	capacity int64, payment int64, data [32]byte) ChanDescMsg {
 
 	cd := new(ChanDescMsg)
 	cd.PeerIdx = peerid
 	cd.Outpoint = OP
 	cd.PubKey = pubkey
 	cd.RefundPub = refund
-	cd.HAKDbase = hakd
-	cd.NextHTLCBase = nextHTLCBase
-	cd.N2HTLCBase = N2HTLCBase
 	cd.CoinType = cointype
 	cd.Capacity = capacity
 	cd.InitPayment = payment
-	cd.ElkZero = ELKZero
-	cd.ElkOne = ELKOne
-	cd.ElkTwo = ELKTwo
 	cd.Data = data
 	return *cd
 }
@@ -383,8 +359,8 @@ func NewChanDescMsgFromBytes(b []byte, peerid uint32) (ChanDescMsg, error) {
 	cm := new(ChanDescMsg)
 	cm.PeerIdx = peerid
 
-	if len(b) < 283 {
-		return *cm, fmt.Errorf("got %d byte channel description, expect 283", len(b))
+	if len(b) < 155 {
+		return *cm, fmt.Errorf("got %d byte channel description, expect 155", len(b))
 	}
 
 	buf := bytes.NewBuffer(b[1:]) // get rid of messageType
@@ -393,15 +369,11 @@ func NewChanDescMsgFromBytes(b []byte, peerid uint32) (ChanDescMsg, error) {
 	cm.Outpoint = *OutPointFromBytes(op)
 	copy(cm.PubKey[:], buf.Next(33))
 	copy(cm.RefundPub[:], buf.Next(33))
-	copy(cm.HAKDbase[:], buf.Next(33))
-	copy(cm.NextHTLCBase[:], buf.Next(33))
-	copy(cm.N2HTLCBase[:], buf.Next(33))
+
 	cm.CoinType = BtU32(buf.Next(4))
 	cm.Capacity = BtI64(buf.Next(8))
 	cm.InitPayment = BtI64(buf.Next(8))
-	copy(cm.ElkZero[:], buf.Next(33))
-	copy(cm.ElkOne[:], buf.Next(33))
-	copy(cm.ElkTwo[:], buf.Next(33))
+
 	copy(cm.Data[:], buf.Next(32))
 
 	return *cm, nil
@@ -418,15 +390,11 @@ func (self ChanDescMsg) Bytes() []byte {
 	msg = append(msg, opArr[:]...)
 	msg = append(msg, self.PubKey[:]...)
 	msg = append(msg, self.RefundPub[:]...)
-	msg = append(msg, self.HAKDbase[:]...)
-	msg = append(msg, self.NextHTLCBase[:]...)
-	msg = append(msg, self.N2HTLCBase[:]...)
+
 	msg = append(msg, coinTypeBin[:]...)
 	msg = append(msg, capBin[:]...)
 	msg = append(msg, initBin[:]...)
-	msg = append(msg, self.ElkZero[:]...)
-	msg = append(msg, self.ElkOne[:]...)
-	msg = append(msg, self.ElkTwo[:]...)
+
 	msg = append(msg, self.Data[:]...)
 	return msg
 }
@@ -444,13 +412,10 @@ type ChanAckMsg struct {
 	Signature [64]byte
 }
 
-func NewChanAckMsg(peerid uint32, OP wire.OutPoint, ELKZero [33]byte, ELKOne [33]byte, ELKTwo [33]byte, SIG [64]byte) ChanAckMsg {
+func NewChanAckMsg(peerid uint32, OP wire.OutPoint, SIG [64]byte) ChanAckMsg {
 	ca := new(ChanAckMsg)
 	ca.PeerIdx = peerid
 	ca.Outpoint = OP
-	ca.ElkZero = ELKZero
-	ca.ElkOne = ELKOne
-	ca.ElkTwo = ELKTwo
 	ca.Signature = SIG
 	return *ca
 }
@@ -459,7 +424,7 @@ func NewChanAckMsgFromBytes(b []byte, peerid uint32) (ChanAckMsg, error) {
 	cm := new(ChanAckMsg)
 	cm.PeerIdx = peerid
 
-	if len(b) < 200 {
+	if len(b) < 101 {
 		return *cm, fmt.Errorf("got %d byte multiAck, expect 200", len(b))
 	}
 
@@ -468,9 +433,7 @@ func NewChanAckMsgFromBytes(b []byte, peerid uint32) (ChanAckMsg, error) {
 	var op [36]byte
 	copy(op[:], buf.Next(36))
 	cm.Outpoint = *OutPointFromBytes(op)
-	copy(cm.ElkZero[:], buf.Next(33))
-	copy(cm.ElkOne[:], buf.Next(33))
-	copy(cm.ElkTwo[:], buf.Next(33))
+
 	copy(cm.Signature[:], buf.Next(64))
 	return *cm, nil
 }
@@ -480,9 +443,7 @@ func (self ChanAckMsg) Bytes() []byte {
 	opArr := OutPointToBytes(self.Outpoint)
 	msg = append(msg, self.MsgType())
 	msg = append(msg, opArr[:]...)
-	msg = append(msg, self.ElkZero[:]...)
-	msg = append(msg, self.ElkOne[:]...)
-	msg = append(msg, self.ElkTwo[:]...)
+
 	msg = append(msg, self.Signature[:]...)
 	return msg
 }
