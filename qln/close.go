@@ -44,6 +44,10 @@ func (nd *LitNode) CoopClose(q *Qchan) error {
 	}
 
 
+	// tx := wire.NewMsgTx()
+	// tx.Version = 2
+
+
 	//=================================================================
 
 	sig, err := nd.SignSimpleClose(q, tx)
