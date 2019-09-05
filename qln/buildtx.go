@@ -79,11 +79,6 @@ func (q *Qchan) SimpleCloseTx() (*wire.MsgTx, error) {
 
 	fmt.Printf("::%s:: SimpleCloseTx(): qln/dlc.go: q.MyRefundPub %x, q.TheirRefundPub %x,  \n",os.Args[6][len(os.Args[6])-4:], q.MyRefundPub, q.TheirRefundPub)
 
-	// sanity checks
-	if q == nil || q.State == nil {
-		return nil, fmt.Errorf("SimpleCloseTx: nil chan / state")
-	}
-
 
 	myScript := lnutil.DirectWPKHScript(q.MyRefundPub)
 	fmt.Printf("::%s:: SimpleCloseTx(): qln/dlc.go: DirectWPKHScript: myScript: %x \n",os.Args[6][len(os.Args[6])-4:], myScript)
@@ -106,13 +101,11 @@ func (q *Qchan) SimpleCloseTx() (*wire.MsgTx, error) {
 
 	tx := wire.NewMsgTx()
 
-	// make tx with these outputs
-	if myAmt != 0 {
-		tx.AddTxOut(myOutput)
-	}
-	if theirAmt != 0 {
-		tx.AddTxOut(theirOutput)
-	}
+
+	tx.AddTxOut(myOutput)
+
+	tx.AddTxOut(theirOutput)
+
 
 
 	fmt.Printf("::%s:: SimpleCloseTx(): qln/dlc.go: q.Op for TxIn %+v \n",os.Args[6][len(os.Args[6])-4:], q.Op)
