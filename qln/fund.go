@@ -8,7 +8,7 @@ import (
 
 	"github.com/mit-dci/lit/consts"
 	//"github.com/mit-dci/lit/crypto/koblitz"
-	"github.com/mit-dci/lit/elkrem"
+	//"github.com/mit-dci/lit/elkrem"
 	"github.com/mit-dci/lit/lnutil"
 	"github.com/mit-dci/lit/logging"
 	"github.com/mit-dci/lit/portxo"
@@ -130,35 +130,7 @@ func (nd *LitNode) PointReqHandler(msg lnutil.PointReqMsg) {
 	myChanPub, _ := nd.GetUsePub(kg, UseChannelFund)
 
 	myRefundPub, _ := nd.GetUsePub(kg, UseChannelRefund)
-	// myHAKDbase, err := nd.GetUsePub(kg, UseChannelHAKDBase)
 
-	// if err != nil {
-	// 	logging.Errorf("PointReqHandler err %s", err.Error())
-	// 	return
-	// }
-
-	// logging.Infof("Generated channel pubkey %x\n", myChanPub)
-
-	// var keyGen portxo.KeyGen
-	// keyGen.Depth = 5
-	// keyGen.Step[0] = 44 | 1<<31
-	// keyGen.Step[1] = msg.Cointype | 1<<31
-	// keyGen.Step[2] = UseHTLCBase
-	// keyGen.Step[3] = 0 | 1<<31
-	// keyGen.Step[4] = cIdx | 1<<31
-
-	// myNextHTLCBase, err := nd.GetUsePub(keyGen, UseHTLCBase)
-	// if err != nil {
-	// 	logging.Errorf("error generating NextHTLCBase %v", err)
-	// 	return
-	// }
-
-	// keyGen.Step[3] = 1 | 1<<31
-	// myN2HTLCBase, err := nd.GetUsePub(keyGen, UseHTLCBase)
-	// if err != nil {
-	// 	logging.Errorf("error generating N2HTLCBase %v", err)
-	// 	return
-	// }
 
 	outMsg := lnutil.NewPointRespMsg(msg.Peer(), myChanPub, myRefundPub)
 	nd.tmpSendLitMsg(outMsg)
@@ -193,7 +165,6 @@ func (nd *LitNode) PointRespHandler(msg lnutil.PointRespMsg) error {
 		return fmt.Errorf("Not connected to coin type %d\n", nd.InProg.Coin)
 	}
 
-	// make channel (not in db) just for keys / elk
 	q := new(Qchan)
 
 	q.Height = -1
@@ -216,38 +187,17 @@ func (nd *LitNode) PointRespHandler(msg lnutil.PointRespMsg) error {
 	fmt.Printf("::%s:: PointRespHandler(): qln/fund.go: q.MyPub: %x \n",os.Args[6][len(os.Args[6])-4:], q.MyPub)
 	fmt.Printf("::%s:: PointRespHandler(): qln/fund.go: q.MyRefundPub: %x \n",os.Args[6][len(os.Args[6])-4:], q.MyRefundPub)
 
-	// q.MyHAKDBase, _ = nd.GetUsePub(q.KeyGen, UseChannelHAKDBase)
-	// q.ElkRcv = elkrem.NewElkremReceiver()
 
-	// chop up incoming message, save points to channel struct
 	copy(q.TheirPub[:], msg.ChannelPub[:])
-	// copy(q.TheirRefundPub[:], msg.RefundPub[:])
-	// copy(q.TheirHAKDBase[:], msg.HAKDbase[:])
+
 
 
 	fmt.Printf("::%s:: PointRespHandler(): qln/fund.go: q.TheirPub: %x \n",os.Args[6][len(os.Args[6])-4:], q.TheirPub)
 	fmt.Printf("::%s:: PointRespHandler(): qln/fund.go: q.TheirRefundPub: %x \n",os.Args[6][len(os.Args[6])-4:], q.TheirRefundPub)
 
 
-	// // make sure their pubkeys are real pubkeys
-	// _, err = koblitz.ParsePubKey(q.TheirPub[:], koblitz.S256())
-	// if err != nil {
-	// 	return fmt.Errorf("PubRespHandler TheirPub err %s", err.Error())
-	// }
-	// _, err = koblitz.ParsePubKey(q.TheirRefundPub[:], koblitz.S256())
-	// if err != nil {
-	// 	return fmt.Errorf("PubRespHandler TheirRefundPub err %s", err.Error())
-	// }
-	// _, err = koblitz.ParsePubKey(q.TheirHAKDBase[:], koblitz.S256())
-	// if err != nil {
-	// 	return fmt.Errorf("PubRespHandler TheirHAKDBase err %s", err.Error())
-	// }
 
-	// derive elkrem sender root from HD keychain
-	elkRoot, _ := nd.GetElkremRoot(q.KeyGen)
-	q.ElkSnd = elkrem.NewElkremSender(elkRoot)
 
-	// set the time
 	q.LastUpdate = uint64(time.Now().UnixNano() / 1000)
 
 
@@ -261,8 +211,6 @@ func (nd *LitNode) PointRespHandler(msg lnutil.PointRespMsg) error {
 
 	fmt.Printf("::%s:: PointRespHandler()1: FundTxOut() qln/fund.go \n",os.Args[6][len(os.Args[6])-4:])
 
-	// call MaybeSend, freezing inputs and learning the txid of the channel
-	// here, we require only witness inputs
 	outPoints, err := nd.SubWallet[q.Coin()].MaybeSend([]*wire.TxOut{txo}, true)
 	if err != nil {
 		return err
@@ -284,46 +232,10 @@ func (nd *LitNode) PointRespHandler(msg lnutil.PointRespMsg) error {
 
 	// // create initial state for elkrem points
 	q.State = new(StatCom)
-	// q.State.StateIdx = 0
-	// q.State.MyAmt = nd.InProg.Amt - nd.InProg.InitSend
-	// // get fee from sub wallet.  Later should make fee per channel and update state
-	// // based on size
-	// q.State.Fee = nd.SubWallet[q.Coin()].Fee() * consts.QcStateFee
 
-	// q.State.Data = nd.InProg.Data
-
-	// _, err = koblitz.ParsePubKey(msg.NextHTLCBase[:], koblitz.S256())
-	// if err != nil {
-	// 	return fmt.Errorf("PubRespHandler NextHTLCBase err %s", err.Error())
-	// }
-	// _, err = koblitz.ParsePubKey(msg.N2HTLCBase[:], koblitz.S256())
-	// if err != nil {
-	// 	return fmt.Errorf("PubRespHandler N2HTLCBase err %s", err.Error())
-	// }
-
-	// var keyGen portxo.KeyGen
-	// keyGen.Depth = 5
-	// keyGen.Step[0] = 44 | 1<<31
-	// keyGen.Step[1] = nd.InProg.Coin | 1<<31
-	// keyGen.Step[2] = UseHTLCBase
-	// keyGen.Step[3] = 0 | 1<<31
-	// keyGen.Step[4] = nd.InProg.ChanIdx | 1<<31
-
-	// q.State.MyNextHTLCBase, err = nd.GetUsePub(keyGen, UseHTLCBase)
-	// if err != nil {
-	// 	return fmt.Errorf("error generating NextHTLCBase %v", err)
-	// }
-
-	// keyGen.Step[3] = 1 | 1<<31
-	// q.State.MyN2HTLCBase, err = nd.GetUsePub(keyGen, UseHTLCBase)
-	// if err != nil {
-	// 	return fmt.Errorf("error generating N2HTLCBase %v", err)
-	// }
 
 	fmt.Printf("::%s:: PointRespHandler()3: FundTxOut() qln/fund.go \n",os.Args[6][len(os.Args[6])-4:])
 
-	// q.State.NextHTLCBase = msg.NextHTLCBase
-	// q.State.N2HTLCBase = msg.N2HTLCBase
 
 	// save channel to db
 	err = nd.SaveQChan(q)
@@ -334,35 +246,9 @@ func (nd *LitNode) PointRespHandler(msg lnutil.PointRespMsg) error {
 
 	fmt.Printf("::%s:: PointRespHandler()4: FundTxOut() qln/fund.go \n",os.Args[6][len(os.Args[6])-4:])
 
-	// // when funding a channel, give them the first *3* elkpoints.
-	// elkPointZero, err := q.ElkPoint(false, 0)
-	// if err != nil {
-	// 	nd.FailChannel(q)
-	// 	return err
-	// }
-	// elkPointOne, err := q.ElkPoint(false, 1)
-	// if err != nil {
-	// 	nd.FailChannel(q)
-	// 	return err
-	// }
 
-	// elkPointTwo, err := q.N2ElkPointForThem()
-	// if err != nil {
-	// 	nd.FailChannel(q)
-	// 	return err
-	// }
 
 	fmt.Printf("::%s:: PointRespHandler()5: FundTxOut() qln/fund.go \n",os.Args[6][len(os.Args[6])-4:])
-
-	// description is outpoint (36), mypub(33), myrefund(33),
-	// myHAKDbase(33), capacity (8),
-	// initial payment (8), ElkPoint0,1,2 (99)
-
-	// outMsg := lnutil.NewChanDescMsg(
-	// 	msg.Peer(), *nd.InProg.op, q.MyPub, q.MyRefundPub, q.MyHAKDBase,
-	// 	q.State.MyNextHTLCBase, q.State.MyN2HTLCBase,
-	// 	nd.InProg.Coin, nd.InProg.Amt, nd.InProg.InitSend,
-	// 	elkPointZero, elkPointOne, elkPointTwo, nd.InProg.Data)
 
 
 	outMsg := lnutil.NewChanDescMsg(
@@ -377,8 +263,7 @@ func (nd *LitNode) PointRespHandler(msg lnutil.PointRespMsg) error {
 }
 
 // RECIPIENT
-// QChanDescHandler takes in a description of a channel output.  It then
-// saves it to the local db, and returns a channel acknowledgement
+
 func (nd *LitNode) QChanDescHandler(msg lnutil.ChanDescMsg) error {
 
 	fmt.Printf("::%s:: QChanDescHandler() ----START----: qln/fund.go \n",os.Args[6][len(os.Args[6])-4:])
@@ -416,22 +301,11 @@ func (nd *LitNode) QChanDescHandler(msg lnutil.ChanDescMsg) error {
 	qc.TheirPub = msg.PubKey
 	qc.TheirRefundPub = msg.RefundPub
 
-	//qc.TheirHAKDBase = msg.HAKDbase
-
 	qc.MyPub, _ = nd.GetUsePub(qc.KeyGen, UseChannelFund)
 	qc.MyRefundPub, _ = nd.GetUsePub(qc.KeyGen, UseChannelRefund)
 	
 	
-	//qc.MyHAKDBase, _ = nd.GetUsePub(qc.KeyGen, UseChannelHAKDBase)
 
-	// it should go into the next bucket and get the right key index.
-	// but we can't actually check that.
-	//	qc, err := nd.SaveFundTx(
-	//		op, amt, peerArr, theirPub, theirRefundPub, theirHAKDbase)
-	//	if err != nil {
-	//		logging.Errorf("QChanDescHandler SaveFundTx err %s", err.Error())
-	//		return
-	//	}
 	logging.Infof("got multisig output %s amt %d\n", op.String(), amt)
 
 	// create initial state
@@ -444,42 +318,6 @@ func (nd *LitNode) QChanDescHandler(msg lnutil.ChanDescMsg) error {
 
 	qc.State.Data = msg.Data
 
-	// qc.State.StateIdx = 0
-	// // use new ElkPoint for signing
-	// qc.State.ElkPoint = msg.ElkZero
-	// qc.State.NextElkPoint = msg.ElkOne
-	// qc.State.N2ElkPoint = msg.ElkTwo
-
-	// _, err = koblitz.ParsePubKey(msg.NextHTLCBase[:], koblitz.S256())
-	// if err != nil {
-	// 	return fmt.Errorf("QChanDescHandler NextHTLCBase err %s", err.Error())
-	// }
-	// _, err = koblitz.ParsePubKey(msg.N2HTLCBase[:], koblitz.S256())
-	// if err != nil {
-	// 	return fmt.Errorf("QChanDescHandler N2HTLCBase err %s", err.Error())
-	// }
-
-	// var keyGen portxo.KeyGen
-	// keyGen.Depth = 5
-	// keyGen.Step[0] = 44 | 1<<31
-	// keyGen.Step[1] = msg.CoinType | 1<<31
-	// keyGen.Step[2] = UseHTLCBase
-	// keyGen.Step[3] = 0 | 1<<31
-	// keyGen.Step[4] = cIdx | 1<<31
-
-	// qc.State.MyNextHTLCBase, err = nd.GetUsePub(keyGen, UseHTLCBase)
-	// if err != nil {
-	// 	return fmt.Errorf("error generating NextHTLCBase %v", err)
-	// }
-
-	// keyGen.Step[3] = 1 | 1<<31
-	// qc.State.MyN2HTLCBase, err = nd.GetUsePub(keyGen, UseHTLCBase)
-	// if err != nil {
-	// 	return fmt.Errorf("error generating N2HTLCBase %v", err)
-	// }
-
-	// qc.State.NextHTLCBase = msg.NextHTLCBase
-	// qc.State.N2HTLCBase = msg.N2HTLCBase
 
 	// save new channel to db
 	err = nd.SaveQChan(qc)
@@ -497,37 +335,11 @@ func (nd *LitNode) QChanDescHandler(msg lnutil.ChanDescMsg) error {
 		return err
 	}
 
-	// // when funding a channel, give them the first *2* elkpoints.
-	// theirElkPointZero, err := qc.ElkPoint(false, 0)
-	// if err != nil {
-	// 	nd.FailChannel(qc)
-	// 	logging.Errorf("QChanDescHandler err %s", err.Error())
-	// 	return err
-	// }
-	// theirElkPointOne, err := qc.ElkPoint(false, 1)
-	// if err != nil {
-	// 	nd.FailChannel(qc)
-	// 	logging.Errorf("QChanDescHandler err %s", err.Error())
-	// 	return err
-	// }
-
-	// theirElkPointTwo, err := qc.N2ElkPointForThem()
-	// if err != nil {
-	// 	nd.FailChannel(qc)
-	// 	logging.Errorf("QChanDescHandler err %s", err.Error())
-	// 	return err
-	// }
 
 	fmt.Printf("::%s:: QChanDescHandler(): qln/fund.go: nd.SignState(qc) \n",os.Args[6][len(os.Args[6])-4:])
 
-	sig, _, err := nd.SignState(qc)
-	if err != nil {
-		nd.FailChannel(qc)
-		logging.Errorf("QChanDescHandler SignState err %s", err.Error())
-		return err
-	}
 
-	//var sig [64]byte = [...]byte { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }
+	var sig [64]byte = [...]byte { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }
 
 
 
@@ -548,7 +360,7 @@ func (nd *LitNode) QChanDescHandler(msg lnutil.ChanDescMsg) error {
 // when a multisig outpoint is ackd, that causes the funder to sign and broadcast.
 func (nd *LitNode) QChanAckHandler(msg lnutil.ChanAckMsg, peer *RemotePeer) {
 	opArr := lnutil.OutPointToBytes(msg.Outpoint)
-	sig := msg.Signature
+
 
 	fmt.Printf("::%s:: QChanAckHandler() ----START----: qln/fund.go \n",os.Args[6][len(os.Args[6])-4:])
 
@@ -562,21 +374,7 @@ func (nd *LitNode) QChanAckHandler(msg lnutil.ChanAckMsg, peer *RemotePeer) {
 		return
 	}
 
-		// err = qc.IngestElkrem(revElk)
-		// if err != nil { // this can't happen because it's the first elk... remove?
-		// 	logging.Errorf("QChanAckHandler IngestElkrem err %s", err.Error())
-		// 	return
-		// }
-	// qc.State.ElkPoint = msg.ElkZero
-	// qc.State.NextElkPoint = msg.ElkOne
-	// qc.State.N2ElkPoint = msg.ElkTwo
 
-	// err = qc.VerifySigs(sig, nil)
-	// if err != nil {
-	// 	nd.FailChannel(qc)
-	// 	logging.Errorf("QChanAckHandler VerifySig err %s", err.Error())
-	// 	return
-	// }
 
 	// verify worked; Save state 1 to DB
 	err = nd.SaveQchanState(qc)
@@ -586,22 +384,14 @@ func (nd *LitNode) QChanAckHandler(msg lnutil.ChanAckMsg, peer *RemotePeer) {
 		return
 	}
 
-	// Make sure everything works & is saved, then clear InProg.
 
-	// sign their com tx to send
 
 
 	fmt.Printf("::%s:: QChanAckHandler(): qln/fund.go: nd.SignState(qc) \n",os.Args[6][len(os.Args[6])-4:])
 
-	// sig, _, err = nd.SignState(qc)
-	// if err != nil {
-	// 	nd.FailChannel(qc)
-	// 	logging.Errorf("QChanAckHandler SignState err %s", err.Error())
-	// 	return
-	// }
 
 
-	//var sig [64]byte = [...]byte { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }
+	var sig [64]byte = [...]byte { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }
 
 
 	// OK to fund.
@@ -612,12 +402,7 @@ func (nd *LitNode) QChanAckHandler(msg lnutil.ChanAckMsg, peer *RemotePeer) {
 		return
 	}
 
-	// err = nd.SubWallet[qc.Coin()].WatchThis(qc.Op)
-	// if err != nil {
-	// 	nd.FailChannel(qc)
-	// 	logging.Errorf("QChanAckHandler WatchThis err %s", err.Error())
-	// 	return
-	// }
+
 
 	// tell base wallet about watcher refund address in case that happens
 	// TODO this is weird & ugly... maybe have an export keypath func?
@@ -652,8 +437,7 @@ func (nd *LitNode) QChanAckHandler(msg lnutil.ChanAckMsg, peer *RemotePeer) {
 }
 
 // RECIPIENT
-// SigProofHandler saves the signature the recipient stores.
-// In some cases you don't need this message.
+
 func (nd *LitNode) SigProofHandler(msg lnutil.SigProofMsg, peer *RemotePeer) {
 
 	fmt.Printf("::%s:: SigProofHandler() ----START----: qln/fund.go \n",os.Args[6][len(os.Args[6])-4:])
@@ -675,12 +459,7 @@ func (nd *LitNode) SigProofHandler(msg lnutil.SigProofMsg, peer *RemotePeer) {
 		return
 	}
 
-	// err = qc.VerifySigs(msg.Signature, nil)
-	// if err != nil {
-	// 	nd.FailChannel(qc)
-	// 	logging.Errorf("SigProofHandler err %s", err.Error())
-	// 	return
-	// }
+
 
 	// sig OK, save
 	err = nd.SaveQchanState(qc)
