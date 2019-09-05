@@ -233,6 +233,12 @@ func (nd *LitNode) PointRespHandler(msg lnutil.PointRespMsg) error {
 	// // create initial state for elkrem points
 	q.State = new(StatCom)
 
+	q.State.StateIdx = 0
+	q.State.MyAmt = nd.InProg.Amt - nd.InProg.InitSend
+	// get fee from sub wallet.  Later should make fee per channel and update state
+	// based on size
+	q.State.Fee = nd.SubWallet[q.Coin()].Fee() * consts.QcStateFee
+
 
 	fmt.Printf("::%s:: PointRespHandler()3: FundTxOut() qln/fund.go \n",os.Args[6][len(os.Args[6])-4:])
 
