@@ -84,42 +84,22 @@ func (q *Qchan) SimpleCloseTx() (*wire.MsgTx, error) {
 		return nil, fmt.Errorf("SimpleCloseTx: nil chan / state")
 	}
 
-	fee := q.State.Fee // symmetric fee
 
-	// make my output
 	myScript := lnutil.DirectWPKHScript(q.MyRefundPub)
-
 	fmt.Printf("::%s:: SimpleCloseTx(): qln/dlc.go: DirectWPKHScript: myScript: %x \n",os.Args[6][len(os.Args[6])-4:], myScript)
-
 	var myAmt int64
-	var myOutput *wire.TxOut
-	if q.State.MyAmt != 0 {
-		myAmt = q.State.MyAmt - fee
-		myOutput = wire.NewTxOut(myAmt, myScript)
-	}
-	// make their output
+	myAmt = 100000
+	myOutput := wire.NewTxOut(myAmt, myScript)
+
+
+
 	theirScript := lnutil.DirectWPKHScript(q.TheirRefundPub)
-
 	fmt.Printf("::%s:: SimpleCloseTx(): qln/dlc.go: DirectWPKHScript: theirScript: %x \n",os.Args[6][len(os.Args[6])-4:], theirScript)
-
 	var theirAmt int64
-	var theirOutput *wire.TxOut
-	if q.Value-q.State.MyAmt != 0 {
-		theirAmt = (q.Value - q.State.MyAmt) - fee
-		theirOutput = wire.NewTxOut(theirAmt, theirScript)
-	}
+	theirAmt = 100000
+	theirOutput := wire.NewTxOut(theirAmt, theirScript)
 
-	if myAmt == 0 && theirAmt == 0 {
-		return nil, fmt.Errorf("SimpleCloseTx: both outputs cannot be 0")
-	}
 
-	// // check output amounts (should never fail)
-	// if myAmt != 0 && myAmt < consts.MinOutput {
-	// 	return nil, fmt.Errorf("SimpleCloseTx: my output amt %d too low", myAmt)
-	// }
-	// if theirAmt != 0 && theirAmt < consts.MinOutput {
-	// 	return nil, fmt.Errorf("SimpleCloseTx: their output amt %d too low", theirAmt)
-	// }
 
 	fmt.Printf("::%s:: SimpleCloseTx: my output amt %d \n", os.Args[6][len(os.Args[6])-4:], myAmt)
 	fmt.Printf("::%s:: SimpleCloseTx: my output theirAmt %d \n", os.Args[6][len(os.Args[6])-4:], theirAmt)

@@ -171,6 +171,8 @@ func (nd *LitNode) PointRespHandler(msg lnutil.PointRespMsg) error {
 
 	q.Value = nd.InProg.Amt
 
+	fmt.Printf("::%s:: PointRespHandler(): qln/fund.go: q.Value %d \n",os.Args[6][len(os.Args[6])-4:], q.Value)
+
 	q.KeyGen.Depth = 5
 	q.KeyGen.Step[0] = 44 | 1<<31
 	q.KeyGen.Step[1] = nd.InProg.Coin | 1<<31
@@ -189,6 +191,7 @@ func (nd *LitNode) PointRespHandler(msg lnutil.PointRespMsg) error {
 
 
 	copy(q.TheirPub[:], msg.ChannelPub[:])
+	copy(q.TheirRefundPub[:], msg.RefundPub[:])
 
 
 
