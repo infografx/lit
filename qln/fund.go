@@ -295,7 +295,7 @@ func (nd *LitNode) QChanDescHandler(msg lnutil.ChanDescMsg) error {
 	qc.KeyGen.Step[3] = msg.Peer() | 1<<31
 	qc.KeyGen.Step[4] = cIdx | 1<<31
 	qc.Value = amt
-	qc.Mode = portxo.TxoP2WSHComp
+	//qc.Mode = portxo.TxoP2WSHComp
 	qc.Op = op
 
 	qc.TheirPub = msg.PubKey
@@ -404,16 +404,14 @@ func (nd *LitNode) QChanAckHandler(msg lnutil.ChanAckMsg, peer *RemotePeer) {
 
 
 
-	// tell base wallet about watcher refund address in case that happens
-	// TODO this is weird & ugly... maybe have an export keypath func?
+
 	nullTxo := new(portxo.PorTxo)
-	nullTxo.Value = 0 // redundant, but explicitly show that this is just for adr
+	nullTxo.Value = 0 
 	nullTxo.KeyGen = qc.KeyGen
 	nullTxo.KeyGen.Step[2] = UseChannelWatchRefund
 	nd.SubWallet[qc.Coin()].ExportUtxo(nullTxo)
 
-	// channel creation is ~complete, clear InProg.
-	// We may be asked to re-send the sig-proof
+
 
 	nd.InProg.mtx.Lock()
 	nd.InProg.done <- qc.KeyGen.Step[4] & 0x7fffffff
@@ -423,9 +421,7 @@ func (nd *LitNode) QChanAckHandler(msg lnutil.ChanAckMsg, peer *RemotePeer) {
 	peer.QCs[qc.Idx()] = qc
 	peer.OpMap[opArr] = qc.Idx()
 
-	// sig proof should be sent later once there are confirmations.
-	// it'll have an spv proof of the fund tx.
-	// but for now just send the sig.
+
 
 	outMsg := lnutil.NewSigProofMsg(msg.Peer(), msg.Outpoint, sig)
 
