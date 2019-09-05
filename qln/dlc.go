@@ -84,6 +84,8 @@ func (nd *LitNode) OfferDlc(peerIdx uint32, cIdx uint64) error {
 	kg.Step[3] = c.PeerIdx | 1<<31
 	kg.Step[4] = uint32(c.Idx) | 1<<31
 
+	fmt.Printf("::%s:: OfferDlc(): qc.OurFundMultisigPub, err = nd.GetUsePub(kg, UseContractFundMultisig) %d \n",os.Args[6][len(os.Args[6])-4:], UseContractFundMultisig)
+
 	c.OurFundMultisigPub, err = nd.GetUsePub(kg, UseContractFundMultisig)
 	if err != nil {
 		return err
@@ -192,6 +194,8 @@ func (nd *LitNode) AcceptDlc(cIdx uint64) error {
 		kg.Step[3] = c.PeerIdx | 1<<31
 		kg.Step[4] = uint32(c.Idx) | 1<<31
 
+		fmt.Printf("::%s:: AcceptDlc(): c.OurFundMultisigPub, err = nd.GetUsePub(kg, UseContractFundMultisig) %d \n",os.Args[6][len(os.Args[6])-4:], UseContractFundMultisig)
+
 		c.OurFundMultisigPub, err = nd.GetUsePub(kg, UseContractFundMultisig)
 		if err != nil {
 			logging.Errorf("Error while getting multisig pubkey: %s", err.Error())
@@ -241,7 +245,7 @@ func (nd *LitNode) AcceptDlc(cIdx uint64) error {
 
 		myrevscript :=lnutil.DirectWPKHScript(c.OurRevokePub)
 
-		myOutput := wire.NewTxOut(8000000, myrevscript)
+		myOutput := wire.NewTxOut(800000, myrevscript)
 		revoketx.AddTxOut(myOutput)
 
 
@@ -250,7 +254,7 @@ func (nd *LitNode) AcceptDlc(cIdx uint64) error {
 
 		theirrevscript :=lnutil.DirectWPKHScript(c.TheirRevokePub)
 
-		theirOutput := wire.NewTxOut(8000000, theirrevscript)
+		theirOutput := wire.NewTxOut(800000, theirrevscript)
 		revoketx.AddTxOut(theirOutput)
 
 		fmt.Printf("::%s::AcceptDlc(): qln/dlc.go: DirectWPKHScript: theirScript %x \n",os.Args[6][len(os.Args[6])-4:], theirrevscript)
@@ -258,10 +262,16 @@ func (nd *LitNode) AcceptDlc(cIdx uint64) error {
 		
 		txsort.InPlaceSort(revoketx)
 
+
+		fmt.Printf("::%s:: AcceptDlc(): qln/dlc.go: lnutil.TxToString(theirtx) %s \n",os.Args[6][len(os.Args[6])-4:], lnutil.TxToString(revoketx))
+
 		hCache := txscript.NewTxSigHashes(revoketx)
+		
 		revokepre, _, err := lnutil.FundTxScript(c.OurFundMultisigPub, c.TheirFundMultisigPub)
 
-		kg.Step[2] = UseContractRevoke
+		kg.Step[2] = UseContractFundMultisig
+
+		fmt.Printf("::%s:: AcceptDlc() priv, err := wal.GetPriv(kg) Step[2] %d \n",os.Args[6][len(os.Args[6])-4:], UseContractFundMultisig)
 		
 
 		wal, _ := nd.SubWallet[c.CoinType]
@@ -269,7 +279,7 @@ func (nd *LitNode) AcceptDlc(cIdx uint64) error {
 
 		fmt.Printf("::%s:: AcceptDlc() lnutil.TxToString(revoketx) %x \n",os.Args[6][len(os.Args[6])-4:], lnutil.TxToString(revoketx))
 
-		revoketxSig, err := txscript.RawTxInWitnessSignature(revoketx, hCache, 0, 8000000, revokepre, txscript.SigHashAll, priv)
+		revoketxSig, err := txscript.RawTxInWitnessSignature(revoketx, hCache, 0, 800000, revokepre, txscript.SigHashAll, priv)
 
 		revoketxSig = revoketxSig[:len(revoketxSig)-1]
 
@@ -551,6 +561,8 @@ func (nd *LitNode) SignSettlementDivisions(c *lnutil.DlcContract) ([]lnutil.DlcC
 	kg.Step[3] = c.PeerIdx | 1<<31
 	kg.Step[4] = uint32(c.Idx) | 1<<31
 
+	fmt.Printf("::%s:: SignSettlementDivisions(): priv, err := wal.GetPriv(kg) %d \n",os.Args[6][len(os.Args[6])-4:], UseContractFundMultisig)
+
 	priv, err := wal.GetPriv(kg)
 	if err != nil {
 		return nil, fmt.Errorf("Could not get private key for contract %d", c.Idx)
@@ -737,6 +749,8 @@ func (nd *LitNode) SettleContract(cIdx uint64, oracleValue int64, oracleSig [32]
 	kg.Step[3] = c.PeerIdx | 1<<31
 	kg.Step[4] = uint32(c.Idx) | 1<<31
 
+	fmt.Printf("::%s:: SettleContract(): priv, err := wal.GetPriv(kg) %d \n",os.Args[6][len(os.Args[6])-4:], UseContractFundMultisig)
+
 	priv, err := wal.GetPriv(kg)
 	if err != nil {
 		return [32]byte{}, [32]byte{}, fmt.Errorf("SettleContract Could not get private key for contract %d", c.Idx)
@@ -894,21 +908,25 @@ func (nd *LitNode) RevokeContract(cIdx uint64) (bool, error) {
 
 	myScript := lnutil.DirectWPKHScript(c.OurRevokePub)
 
-	myOutput := wire.NewTxOut(8000000, myScript)
+	myOutput := wire.NewTxOut(800000, myScript)
 	mytx.AddTxOut(myOutput)
 
-	fmt.Printf("::%s::AcceptDlc(): qln/dlc.go: DirectWPKHScript: myScript %x \n",os.Args[6][len(os.Args[6])-4:], myScript)
+	fmt.Printf("::%s::RevokeContract(): qln/dlc.go: DirectWPKHScript: myScript %x \n",os.Args[6][len(os.Args[6])-4:], myScript)
 
 
 	theirScript := lnutil.DirectWPKHScript(c.TheirRevokePub)
 
-	theirOutput := wire.NewTxOut(8000000, theirScript)
+	theirOutput := wire.NewTxOut(800000, theirScript)
 	mytx.AddTxOut(theirOutput)
 
-	fmt.Printf("::%s::AcceptDlc(): qln/dlc.go: DirectWPKHScript: theirScript %x \n",os.Args[6][len(os.Args[6])-4:], theirScript)
+	fmt.Printf("::%s::RevokeContract(): qln/dlc.go: DirectWPKHScript: theirScript %x \n",os.Args[6][len(os.Args[6])-4:], theirScript)
 
+	
 	txsort.InPlaceSort(mytx)
 
+	fmt.Printf("::%s::RevokeContract(): qln/dlc.go: lnutil.TxToString(mytx) %s \n",os.Args[6][len(os.Args[6])-4:], lnutil.TxToString(mytx))
+
+	
 	//----------------------------------------------------
 	// MY Simple close tx END
 	//----------------------------------------------------
@@ -921,6 +939,8 @@ func (nd *LitNode) RevokeContract(cIdx uint64) (bool, error) {
 
 	myhCache := txscript.NewTxSigHashes(mytx)
 
+
+
 	mypre, _, err := lnutil.FundTxScript(c.OurFundMultisigPub, c.TheirFundMultisigPub)
 
 
@@ -928,16 +948,18 @@ func (nd *LitNode) RevokeContract(cIdx uint64) (bool, error) {
 	kg.Depth = 5
 	kg.Step[0] = 44 | 1<<31
 	kg.Step[1] = c.CoinType | 1<<31
-	kg.Step[2] = UseContractRevoke
+	kg.Step[2] = UseContractFundMultisig
 	kg.Step[3] = c.PeerIdx | 1<<31
 	kg.Step[4] = uint32(c.Idx) | 1<<31
+
+	fmt.Printf("::%s:: RevokeContract() mypriv, err := wal.GetPriv(kg) %d \n",os.Args[6][len(os.Args[6])-4:], UseContractFundMultisig)
 
 	mypriv, err := wal.GetPriv(kg)
 
 
 	fmt.Printf("::%s:: RevokeContract() lnutil.TxToString(mytx) %x \n",os.Args[6][len(os.Args[6])-4:], lnutil.TxToString(mytx))
 
-	mySig, err := txscript.RawTxInWitnessSignature(mytx, myhCache, 0, 8000000, mypre, txscript.SigHashAll, mypriv)
+	mySig, err := txscript.RawTxInWitnessSignature(mytx, myhCache, 0, 800000, mypre, txscript.SigHashAll, mypriv)
 
 	mySig = mySig[:len(mySig)-1]
 	
@@ -960,6 +982,81 @@ func (nd *LitNode) RevokeContract(cIdx uint64) (bool, error) {
 
 	theirBigSig = append(theirBigSig, byte(txscript.SigHashAll))
 
+
+	//--------------------------------------
+	//--------------------------------------
+	// Verify Their sig
+
+	pSig, err := koblitz.ParseDERSignature(theirBigSig, koblitz.S256())
+	if err != nil {
+		fmt.Printf("RevokeContract Their Sig err %s", err.Error())
+
+	}
+
+	theirPubKey, err := koblitz.ParsePubKey(c.TheirFundMultisigPub[:], koblitz.S256())
+	if err != nil {
+		fmt.Printf("RevokeContract Their PubKey err %s", err.Error())
+
+	}
+
+	theirpre, _, err := lnutil.FundTxScript(c.TheirFundMultisigPub, c.OurFundMultisigPub)
+
+	theirparsed, err := txscript.ParseScript(theirpre)
+	if err != nil {
+		fmt.Printf("RevokeContract ParseScript err %s", err.Error())
+	}
+
+
+	hash := txscript.CalcWitnessSignatureHash(
+		theirparsed, myhCache, txscript.SigHashAll, mytx, 0, 800000)
+
+
+	worked := pSig.Verify(hash, theirPubKey)
+	if !worked {
+		fmt.Printf("zzzzzz RevokeContract Their Sig err invalid signature on close tx %s", err.Error())
+
+	}else{
+		fmt.Println("Their Sig Worked")
+	}
+
+	//--------------------------------------
+	//--------------------------------------
+
+
+	pSig, err = koblitz.ParseDERSignature(myBigSig, koblitz.S256())
+	if err != nil {
+		fmt.Printf("RevokeContract My Sig err %s", err.Error())
+
+	}
+
+	myPubKey, err := koblitz.ParsePubKey(c.OurFundMultisigPub[:], koblitz.S256())
+	if err != nil {
+		fmt.Printf("RevokeContract My PubKey err %s", err.Error())
+
+	}
+
+
+	parsed, err := txscript.ParseScript(mypre)
+	if err != nil {
+		fmt.Printf("RevokeContract ParseScript err %s", err.Error())
+	}
+
+
+	hash = txscript.CalcWitnessSignatureHash(
+		parsed, myhCache, txscript.SigHashAll, mytx, 0, 800000)
+
+
+	worked = pSig.Verify(hash, myPubKey)
+	if !worked {
+		fmt.Printf("zzzzzz RevokeContract My Sig err invalid signature on close tx %s", err.Error())
+
+	}else{
+		fmt.Println("My Sig Worked")
+	}
+
+
+	//--------------------------------------
+	//--------------------------------------
 	
 	
 	
@@ -979,7 +1076,7 @@ func (nd *LitNode) RevokeContract(cIdx uint64) (bool, error) {
 	}	
 
 
-	fmt.Printf("::%s:: RevokeContract(): qln/dlc.go: lnutil.TxToString(mytx) %s \n",os.Args[6][len(os.Args[6])-4:], lnutil.TxToString(mytx))
+	fmt.Printf("::%s:: RevokeContract(): qln/dlc.go: lnutil.TxToString(mytx) with wit %s \n",os.Args[6][len(os.Args[6])-4:], lnutil.TxToString(mytx))
 
 
 	var buft bytes.Buffer

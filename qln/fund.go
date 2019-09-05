@@ -303,11 +303,18 @@ func (nd *LitNode) PointRespHandler(msg lnutil.PointRespMsg) error {
 	q.KeyGen.Step[0] = 44 | 1<<31
 	q.KeyGen.Step[1] = nd.InProg.Coin | 1<<31
 	q.KeyGen.Step[2] = UseChannelFund
+
+	fmt.Printf("::%s:: PointRespHandler(): qln/fund.go: q.KeyGen.Step[2] = UseChannelFund: %d \n",os.Args[6][len(os.Args[6])-4:], UseChannelFund)
+
 	q.KeyGen.Step[3] = nd.InProg.PeerIdx | 1<<31
 	q.KeyGen.Step[4] = nd.InProg.ChanIdx | 1<<31
 
 	q.MyPub, _ = nd.GetUsePub(q.KeyGen, UseChannelFund)
 	q.MyRefundPub, _ = nd.GetUsePub(q.KeyGen, UseChannelRefund)
+
+	fmt.Printf("::%s:: PointRespHandler(): qln/fund.go: q.MyPub: %x \n",os.Args[6][len(os.Args[6])-4:], q.MyPub)
+	fmt.Printf("::%s:: PointRespHandler(): qln/fund.go: q.MyRefundPub: %x \n",os.Args[6][len(os.Args[6])-4:], q.MyRefundPub)
+
 	q.MyHAKDBase, _ = nd.GetUsePub(q.KeyGen, UseChannelHAKDBase)
 	q.ElkRcv = elkrem.NewElkremReceiver()
 
@@ -315,6 +322,11 @@ func (nd *LitNode) PointRespHandler(msg lnutil.PointRespMsg) error {
 	copy(q.TheirPub[:], msg.ChannelPub[:])
 	copy(q.TheirRefundPub[:], msg.RefundPub[:])
 	copy(q.TheirHAKDBase[:], msg.HAKDbase[:])
+
+
+	fmt.Printf("::%s:: PointRespHandler(): qln/fund.go: q.TheirPub: %x \n",os.Args[6][len(os.Args[6])-4:], q.TheirPub)
+	fmt.Printf("::%s:: PointRespHandler(): qln/fund.go: q.TheirRefundPub: %x \n",os.Args[6][len(os.Args[6])-4:], q.TheirRefundPub)
+
 
 	// make sure their pubkeys are real pubkeys
 	_, err = koblitz.ParsePubKey(q.TheirPub[:], koblitz.S256())
@@ -596,14 +608,16 @@ func (nd *LitNode) QChanDescHandler(msg lnutil.ChanDescMsg) error {
 		return err
 	}
 
-	// sig, _, err := nd.SignState(qc)
-	// if err != nil {
-	// 	nd.FailChannel(qc)
-	// 	logging.Errorf("QChanDescHandler SignState err %s", err.Error())
-	// 	return err
-	// }
+	fmt.Printf("::%s:: QChanDescHandler(): qln/fund.go: nd.SignState(qc) \n",os.Args[6][len(os.Args[6])-4:])
 
-	var sig [64]byte = [...]byte { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }
+	sig, _, err := nd.SignState(qc)
+	if err != nil {
+		nd.FailChannel(qc)
+		logging.Errorf("QChanDescHandler SignState err %s", err.Error())
+		return err
+	}
+
+	//var sig [64]byte = [...]byte { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }
 
 
 
@@ -625,7 +639,7 @@ func (nd *LitNode) QChanDescHandler(msg lnutil.ChanDescMsg) error {
 // when a multisig outpoint is ackd, that causes the funder to sign and broadcast.
 func (nd *LitNode) QChanAckHandler(msg lnutil.ChanAckMsg, peer *RemotePeer) {
 	opArr := lnutil.OutPointToBytes(msg.Outpoint)
-	//sig := msg.Signature
+	sig := msg.Signature
 
 	fmt.Printf("::%s:: QChanAckHandler() ----START----: qln/fund.go \n",os.Args[6][len(os.Args[6])-4:])
 
@@ -639,21 +653,21 @@ func (nd *LitNode) QChanAckHandler(msg lnutil.ChanAckMsg, peer *RemotePeer) {
 		return
 	}
 
-	//	err = qc.IngestElkrem(revElk)
-	//	if err != nil { // this can't happen because it's the first elk... remove?
-	//		logging.Errorf("QChanAckHandler IngestElkrem err %s", err.Error())
-	//		return
-	//	}
+		// err = qc.IngestElkrem(revElk)
+		// if err != nil { // this can't happen because it's the first elk... remove?
+		// 	logging.Errorf("QChanAckHandler IngestElkrem err %s", err.Error())
+		// 	return
+		// }
 	qc.State.ElkPoint = msg.ElkZero
 	qc.State.NextElkPoint = msg.ElkOne
 	qc.State.N2ElkPoint = msg.ElkTwo
 
-	// err = qc.VerifySigs(sig, nil)
-	// if err != nil {
-	// 	nd.FailChannel(qc)
-	// 	logging.Errorf("QChanAckHandler VerifySig err %s", err.Error())
-	// 	return
-	// }
+	err = qc.VerifySigs(sig, nil)
+	if err != nil {
+		nd.FailChannel(qc)
+		logging.Errorf("QChanAckHandler VerifySig err %s", err.Error())
+		return
+	}
 
 	// verify worked; Save state 1 to DB
 	err = nd.SaveQchanState(qc)
@@ -666,15 +680,19 @@ func (nd *LitNode) QChanAckHandler(msg lnutil.ChanAckMsg, peer *RemotePeer) {
 	// Make sure everything works & is saved, then clear InProg.
 
 	// sign their com tx to send
-	// sig, _, err = nd.SignState(qc)
-	// if err != nil {
-	// 	nd.FailChannel(qc)
-	// 	logging.Errorf("QChanAckHandler SignState err %s", err.Error())
-	// 	return
-	// }
 
 
-	var sig [64]byte = [...]byte { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }
+	fmt.Printf("::%s:: QChanAckHandler(): qln/fund.go: nd.SignState(qc) \n",os.Args[6][len(os.Args[6])-4:])
+
+	sig, _, err = nd.SignState(qc)
+	if err != nil {
+		nd.FailChannel(qc)
+		logging.Errorf("QChanAckHandler SignState err %s", err.Error())
+		return
+	}
+
+
+	//var sig [64]byte = [...]byte { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }
 
 
 	// OK to fund.

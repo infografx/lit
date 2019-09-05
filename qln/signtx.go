@@ -93,6 +93,8 @@ func (nd *LitNode) SignSimpleClose(q *Qchan, tx *wire.MsgTx) ([64]byte, error) {
 	}
 
 
+	fmt.Printf("::%s:: SignSimpleClose() lnutil.TxToString(tx): GetPriv(q.KeyGen) Step[2] %d \n",os.Args[6][len(os.Args[6])-4:], q.KeyGen.Step[2])
+
 	// get private signing key
 	priv, err := nd.SubWallet[q.Coin()].GetPriv(q.KeyGen)
 	if err != nil {
@@ -221,6 +223,8 @@ func (nd *LitNode) SignState(q *Qchan) ([64]byte, [][64]byte, error) {
 	if err != nil {
 		return sig, nil, err
 	}
+
+	fmt.Printf("::%s:: FundTxScript(): SignState: qln/signtx.go GetPriv(q.KeyGen) Step[2] %d \n",os.Args[6][len(os.Args[6])-4:], q.KeyGen.Step[2])
 
 	// generate sig.
 	bigSig, err := txscript.RawTxInWitnessSignature(
