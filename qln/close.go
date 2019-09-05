@@ -15,7 +15,8 @@ import (
 	"github.com/mit-dci/lit/logging"
 	//"github.com/mit-dci/lit/portxo"
 	"github.com/mit-dci/lit/sig64"
-	//"github.com/mit-dci/lit/wire"
+	"github.com/mit-dci/lit/wire"
+	"github.com/mit-dci/lit/btcutil/txsort"
 )
 
 
@@ -38,14 +39,42 @@ func (nd *LitNode) CoopClose(q *Qchan) error {
 	//=================================================================
 	//=================================================================
 
-	tx, err := q.SimpleCloseTx()
-	if err != nil {
-		return err
-	}
+	// tx, err := q.SimpleCloseTx()
+	// if err != nil {
+	// 	return err
+	// }
 
 
-	// tx := wire.NewMsgTx()
-	// tx.Version = 2
+	tx := wire.NewMsgTx()
+	tx.Version = 2
+
+	
+	fmt.Printf("::%s:: SimpleCloseTx(): qln/close.go: q.Op for TxIn %+v \n",os.Args[6][len(os.Args[6])-4:], q.Op)
+
+	tx.AddTxIn(wire.NewTxIn(&q.Op, nil, nil))
+
+	//--------------------------------------------------
+
+	fmt.Printf("::%s:: SimpleCloseTx(): qln/close.go: q.MyRefundPub %x, q.TheirRefundPub %x,  \n",os.Args[6][len(os.Args[6])-4:], q.MyRefundPub, q.TheirRefundPub)
+
+	myScript := lnutil.DirectWPKHScript(q.MyRefundPub)
+	fmt.Printf("::%s:: SimpleCloseTx(): qln/close.go: DirectWPKHScript: myScript: %x \n",os.Args[6][len(os.Args[6])-4:], myScript)
+	
+	myOutput := wire.NewTxOut(100000, myScript)
+	tx.AddTxOut(myOutput)
+
+	//--------------------------------------------------
+
+	theirScript := lnutil.DirectWPKHScript(q.TheirRefundPub)
+	fmt.Printf("::%s:: SimpleCloseTx(): qln/close: DirectWPKHScript: theirScript: %x \n",os.Args[6][len(os.Args[6])-4:], theirScript)
+
+	theirOutput := wire.NewTxOut(100000, theirScript)
+	tx.AddTxOut(theirOutput)
+
+	//--------------------------------------------------
+
+
+	txsort.InPlaceSort(tx)
 
 
 	//=================================================================
@@ -54,6 +83,8 @@ func (nd *LitNode) CoopClose(q *Qchan) error {
 	if err != nil {
 		return err
 	}
+
+
 
 	//=================================================================
 	//=================================================================

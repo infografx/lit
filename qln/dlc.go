@@ -240,27 +240,35 @@ func (nd *LitNode) AcceptDlc(cIdx uint64) error {
 
 		revoketx := wire.NewMsgTx()
 		revoketx.Version = 2
+
+		fmt.Printf("::%s:: AcceptDlc(): qln/dlc.go: c.FundingOutpoint for TxIn %+v \n",os.Args[6][len(os.Args[6])-4:], c.FundingOutpoint)
 	
 		revoketx.AddTxIn(wire.NewTxIn(&c.FundingOutpoint, nil, nil))
 
+		//--------------------------------------------------
+
 		myrevscript :=lnutil.DirectWPKHScript(c.OurRevokePub)
+		fmt.Printf("::%s::AcceptDlc(): qln/dlc.go: DirectWPKHScript: myScript %x \n",os.Args[6][len(os.Args[6])-4:], myrevscript)
 
 		myOutput := wire.NewTxOut(800000, myrevscript)
 		revoketx.AddTxOut(myOutput)
 
 
-		fmt.Printf("::%s::AcceptDlc(): qln/dlc.go: DirectWPKHScript: myScript %x \n",os.Args[6][len(os.Args[6])-4:], myrevscript)
+		//--------------------------------------------------
 
 
 		theirrevscript :=lnutil.DirectWPKHScript(c.TheirRevokePub)
+		fmt.Printf("::%s::AcceptDlc(): qln/dlc.go: DirectWPKHScript: theirScript %x \n",os.Args[6][len(os.Args[6])-4:], theirrevscript)
 
 		theirOutput := wire.NewTxOut(800000, theirrevscript)
 		revoketx.AddTxOut(theirOutput)
 
-		fmt.Printf("::%s::AcceptDlc(): qln/dlc.go: DirectWPKHScript: theirScript %x \n",os.Args[6][len(os.Args[6])-4:], theirrevscript)
+		//--------------------------------------------------
 
 		
 		txsort.InPlaceSort(revoketx)
+
+		//--------------------------------------------------
 
 
 		fmt.Printf("::%s:: AcceptDlc(): qln/dlc.go: lnutil.TxToString(theirtx) %s \n",os.Args[6][len(os.Args[6])-4:], lnutil.TxToString(revoketx))
@@ -279,7 +287,7 @@ func (nd *LitNode) AcceptDlc(cIdx uint64) error {
 
 		fmt.Printf("::%s:: AcceptDlc() lnutil.TxToString(revoketx) %x \n",os.Args[6][len(os.Args[6])-4:], lnutil.TxToString(revoketx))
 
-		revoketxSig, err := txscript.RawTxInWitnessSignature(revoketx, hCache, 0, 800000, revokepre, txscript.SigHashAll, priv)
+		revoketxSig, err := txscript.RawTxInWitnessSignature(revoketx, hCache, 0, c.TheirFundingAmount+c.OurFundingAmount, revokepre, txscript.SigHashAll, priv)
 
 		revoketxSig = revoketxSig[:len(revoketxSig)-1]
 
@@ -903,6 +911,8 @@ func (nd *LitNode) RevokeContract(cIdx uint64) (bool, error) {
 	// set version 2, for op_csv
 	mytx.Version = 2
 
+	fmt.Printf("::%s:: RevokeContract(): qln/dlc.go: c.FundingOutpoint for TxIn %+v \n",os.Args[6][len(os.Args[6])-4:], c.FundingOutpoint)
+
 	mytx.AddTxIn(wire.NewTxIn(&c.FundingOutpoint, nil, nil))	
 
 
@@ -959,7 +969,7 @@ func (nd *LitNode) RevokeContract(cIdx uint64) (bool, error) {
 
 	fmt.Printf("::%s:: RevokeContract() lnutil.TxToString(mytx) %x \n",os.Args[6][len(os.Args[6])-4:], lnutil.TxToString(mytx))
 
-	mySig, err := txscript.RawTxInWitnessSignature(mytx, myhCache, 0, 800000, mypre, txscript.SigHashAll, mypriv)
+	mySig, err := txscript.RawTxInWitnessSignature(mytx, myhCache, 0, c.TheirFundingAmount+c.OurFundingAmount, mypre, txscript.SigHashAll, mypriv)
 
 	mySig = mySig[:len(mySig)-1]
 	
@@ -976,83 +986,83 @@ func (nd *LitNode) RevokeContract(cIdx uint64) (bool, error) {
 	// MY Sign simple close tx END
 	//----------------------------------------------------
 
-	fmt.Printf("::%s::RevokeContract(): qln/dlc.go: c.TheirrevoketxSig64 %x \n",os.Args[6][len(os.Args[6])-4:], c.TheirrevoketxSig64)
+	// fmt.Printf("::%s::RevokeContract(): qln/dlc.go: c.TheirrevoketxSig64 %x \n",os.Args[6][len(os.Args[6])-4:], c.TheirrevoketxSig64)
 
-	theirBigSig := sig64.SigDecompress(c.TheirrevoketxSig64)
+	// theirBigSig := sig64.SigDecompress(c.TheirrevoketxSig64)
 
-	theirBigSig = append(theirBigSig, byte(txscript.SigHashAll))
-
-
-	//--------------------------------------
-	//--------------------------------------
-	// Verify Their sig
-
-	pSig, err := koblitz.ParseDERSignature(theirBigSig, koblitz.S256())
-	if err != nil {
-		fmt.Printf("RevokeContract Their Sig err %s", err.Error())
-
-	}
-
-	theirPubKey, err := koblitz.ParsePubKey(c.TheirFundMultisigPub[:], koblitz.S256())
-	if err != nil {
-		fmt.Printf("RevokeContract Their PubKey err %s", err.Error())
-
-	}
-
-	theirpre, _, err := lnutil.FundTxScript(c.TheirFundMultisigPub, c.OurFundMultisigPub)
-
-	theirparsed, err := txscript.ParseScript(theirpre)
-	if err != nil {
-		fmt.Printf("RevokeContract ParseScript err %s", err.Error())
-	}
+	// theirBigSig = append(theirBigSig, byte(txscript.SigHashAll))
 
 
-	hash := txscript.CalcWitnessSignatureHash(
-		theirparsed, myhCache, txscript.SigHashAll, mytx, 0, 800000)
+	// //--------------------------------------
+	// //--------------------------------------
+	// // Verify Their sig
+
+	// pSig, err := koblitz.ParseDERSignature(theirBigSig, koblitz.S256())
+	// if err != nil {
+	// 	fmt.Printf("RevokeContract Their Sig err %s", err.Error())
+
+	// }
+
+	// theirPubKey, err := koblitz.ParsePubKey(c.TheirFundMultisigPub[:], koblitz.S256())
+	// if err != nil {
+	// 	fmt.Printf("RevokeContract Their PubKey err %s", err.Error())
+
+	// }
+
+	// theirpre, _, err := lnutil.FundTxScript(c.TheirFundMultisigPub, c.OurFundMultisigPub)
+
+	// theirparsed, err := txscript.ParseScript(theirpre)
+	// if err != nil {
+	// 	fmt.Printf("RevokeContract ParseScript err %s", err.Error())
+	// }
 
 
-	worked := pSig.Verify(hash, theirPubKey)
-	if !worked {
-		fmt.Printf("zzzzzz RevokeContract Their Sig err invalid signature on close tx %s", err.Error())
-
-	}else{
-		fmt.Println("Their Sig Worked")
-	}
-
-	//--------------------------------------
-	//--------------------------------------
+	// hash := txscript.CalcWitnessSignatureHash(
+	// 	theirparsed, myhCache, txscript.SigHashAll, mytx, 0, 800000)
 
 
-	pSig, err = koblitz.ParseDERSignature(myBigSig, koblitz.S256())
-	if err != nil {
-		fmt.Printf("RevokeContract My Sig err %s", err.Error())
+	// worked := pSig.Verify(hash, theirPubKey)
+	// if !worked {
+	// 	fmt.Printf("zzzzzz RevokeContract Their Sig err invalid signature on close tx %s", err.Error())
 
-	}
+	// }else{
+	// 	fmt.Println("Their Sig Worked")
+	// }
 
-	myPubKey, err := koblitz.ParsePubKey(c.OurFundMultisigPub[:], koblitz.S256())
-	if err != nil {
-		fmt.Printf("RevokeContract My PubKey err %s", err.Error())
-
-	}
-
-
-	parsed, err := txscript.ParseScript(mypre)
-	if err != nil {
-		fmt.Printf("RevokeContract ParseScript err %s", err.Error())
-	}
+	// //--------------------------------------
+	// //--------------------------------------
 
 
-	hash = txscript.CalcWitnessSignatureHash(
-		parsed, myhCache, txscript.SigHashAll, mytx, 0, 800000)
+	// pSig, err = koblitz.ParseDERSignature(myBigSig, koblitz.S256())
+	// if err != nil {
+	// 	fmt.Printf("RevokeContract My Sig err %s", err.Error())
+
+	// }
+
+	// myPubKey, err := koblitz.ParsePubKey(c.OurFundMultisigPub[:], koblitz.S256())
+	// if err != nil {
+	// 	fmt.Printf("RevokeContract My PubKey err %s", err.Error())
+
+	// }
 
 
-	worked = pSig.Verify(hash, myPubKey)
-	if !worked {
-		fmt.Printf("zzzzzz RevokeContract My Sig err invalid signature on close tx %s", err.Error())
+	// parsed, err := txscript.ParseScript(mypre)
+	// if err != nil {
+	// 	fmt.Printf("RevokeContract ParseScript err %s", err.Error())
+	// }
 
-	}else{
-		fmt.Println("My Sig Worked")
-	}
+
+	// hash = txscript.CalcWitnessSignatureHash(
+	// 	parsed, myhCache, txscript.SigHashAll, mytx, 0, 800000)
+
+
+	// worked = pSig.Verify(hash, myPubKey)
+	// if !worked {
+	// 	fmt.Printf("zzzzzz RevokeContract My Sig err invalid signature on close tx %s", err.Error())
+
+	// }else{
+	// 	fmt.Println("My Sig Worked")
+	// }
 
 
 	//--------------------------------------

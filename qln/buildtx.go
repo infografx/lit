@@ -100,6 +100,7 @@ func (q *Qchan) SimpleCloseTx() (*wire.MsgTx, error) {
 	fmt.Printf("::%s:: SimpleCloseTx: my output theirAmt %d \n", os.Args[6][len(os.Args[6])-4:], theirAmt)
 
 	tx := wire.NewMsgTx()
+	tx.Version = 2
 
 
 	tx.AddTxOut(myOutput)
