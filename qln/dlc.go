@@ -986,11 +986,11 @@ func (nd *LitNode) RevokeContract(cIdx uint64) (bool, error) {
 	// MY Sign simple close tx END
 	//----------------------------------------------------
 
-	// fmt.Printf("::%s::RevokeContract(): qln/dlc.go: c.TheirrevoketxSig64 %x \n",os.Args[6][len(os.Args[6])-4:], c.TheirrevoketxSig64)
+	fmt.Printf("::%s::RevokeContract(): qln/dlc.go: c.TheirrevoketxSig64 %x \n",os.Args[6][len(os.Args[6])-4:], c.TheirrevoketxSig64)
 
-	// theirBigSig := sig64.SigDecompress(c.TheirrevoketxSig64)
+	theirBigSig := sig64.SigDecompress(c.TheirrevoketxSig64)
 
-	// theirBigSig = append(theirBigSig, byte(txscript.SigHashAll))
+	theirBigSig = append(theirBigSig, byte(txscript.SigHashAll))
 
 
 	// //--------------------------------------
