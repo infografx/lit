@@ -60,6 +60,9 @@ func (s *SPVCon) GimmeFilter() (*bloom.Filter, error) {
 
 // MatchTx queries whether a tx mathches registered addresses and outpoints.
 func (s *SPVCon) MatchTx(tx *wire.MsgTx) bool {
+
+	fmt.Printf("::%s:: MatchTx(): uspv/eight333.go: \n",os.Args[6][len(os.Args[6])-4:] )
+
 	gain := false
 	txid := tx.TxHash()
 
@@ -74,16 +77,21 @@ func (s *SPVCon) MatchTx(tx *wire.MsgTx) bool {
 		// create outpoint of what we're looking at
 		op := wire.NewOutPoint(&txid, uint32(i))
 
+		fmt.Printf("::%s:: MatchTx(): uspv/eight333.go: NewOutPoint %+v \n", os.Args[6][len(os.Args[6])-4:], op)
+
 		// 20 byte pubkey hash of this txout (if any)
 		var adr20 [20]byte
 		copy(adr20[:], lnutil.KeyHashFromPkScript(out.PkScript))
 		// when we gain utxo, set as gain so we can return a match, but
 		// also go through all gained utxos and register to track them
 
-		//		logging.Infof("got output key %x ", adr20)
+		fmt.Printf("::%s:: MatchTx(): uspv/eight333.go: got output key %x \n",os.Args[6][len(os.Args[6])-4:], adr20 )
+			//logging.Infof("got output key %x ", adr20)
 		if s.TrackingAdrs[adr20] {
 			gain = true
+			fmt.Printf("::%s:: MatchTx() 1: uspv/eight333.go: len(s.TrackingOPs): %d \n",os.Args[6][len(os.Args[6])-4:], len(s.TrackingOPs) )
 			s.TrackingOPs[*op] = true
+			fmt.Printf("::%s:: MatchTx() 1: uspv/eight333.go: len(s.TrackingOPs): %d \n",os.Args[6][len(os.Args[6])-4:], len(s.TrackingOPs) )
 		} else {
 			//			logging.Infof(" no match\n")
 		}
@@ -91,6 +99,7 @@ func (s *SPVCon) MatchTx(tx *wire.MsgTx) bool {
 		// this outpoint may confirm an outpoint we're watching.  Check that here.
 		if s.TrackingOPs[*op] {
 			// not quite "gain", more like confirm, but same idea.
+			fmt.Printf("::%s:: MatchTx() 2: uspv/eight333.go: \n",os.Args[6][len(os.Args[6])-4:] )
 			gain = true
 		}
 
@@ -103,11 +112,14 @@ func (s *SPVCon) MatchTx(tx *wire.MsgTx) bool {
 
 	// next pessimism.  Iterate through inputs, matching tracked outpoints
 	for _, in := range tx.TxIn {
+		fmt.Printf("::%s:: MatchTx() 3: uspv/eight333.go: \n",os.Args[6][len(os.Args[6])-4:] )
 		if s.TrackingOPs[in.PreviousOutPoint] {
+			fmt.Printf("::%s:: MatchTx() 4: uspv/eight333.go: \n",os.Args[6][len(os.Args[6])-4:] )
 			return true
 		}
 	}
 
+	fmt.Printf("::%s:: MatchTx() 5: uspv/eight333.go: \n",os.Args[6][len(os.Args[6])-4:] )
 	return false
 }
 

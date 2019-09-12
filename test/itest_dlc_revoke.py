@@ -9,7 +9,7 @@ import requests # pip3 install requests
 
 import codecs
 
-deb_mod = False
+deb_mod = True
 
 
 
@@ -85,7 +85,7 @@ def run_t(env, params):
         if deb_mod:
             print("Funding TxId lit1: " + str(txid1))
 
-        time.sleep(5)
+        time.sleep(2)
 
         addr2 = lit2.make_new_addr()
         txid2 = bc.rpc.sendtoaddress(addr2, lit_funding_amt)
@@ -93,10 +93,25 @@ def run_t(env, params):
         if deb_mod:
             print("Funding TxId lit2: " + str(txid2))
 
-        time.sleep(5)
+        time.sleep(2)
 
         env.generate_block()
-        time.sleep(5)
+        time.sleep(2)
+
+
+        #------------------------------------------
+        if deb_mod:
+            print("ADDRESSES AFTER SEND TO ADDRESS")
+            print("LIT1 Addresses")
+            print(pp.pprint(lit1.rpc.GetAddresses()))
+
+            print("LIT2 Addresses")
+            print(pp.pprint(lit2.rpc.GetAddresses()))
+
+            print("bitcoind Addresses")
+            print(pp.pprint(bc.rpc.listaddressgroupings()))
+        #------------------------------------------    
+
 
         print("Funding")
         bals1 = lit1.get_balance_info()  
@@ -119,22 +134,7 @@ def run_t(env, params):
 
         assert bal1sum == lit_funding_amt, "Funding lit1 does not works"
         assert bal2sum == lit_funding_amt, "Funding lit2 does not works"
-        
-
-        #------------------------------------------
-        if deb_mod:
-            print("ADDRESSES AFTER SEND TO ADDRESS")
-            print("LIT1 Addresses")
-            print(pp.pprint(lit1.rpc.GetAddresses()))
-
-            print("LIT2 Addresses")
-            print(pp.pprint(lit2.rpc.GetAddresses()))
-
-            print("bitcoind Addresses")
-            print(pp.pprint(bc.rpc.listaddressgroupings()))
-        #------------------------------------------          
-
-
+      
         # #------------
         # # Add oracles
         # #------------
@@ -221,7 +221,7 @@ def run_t(env, params):
         
         print("After SetContractDivision")
 
-        time.sleep(8)
+        time.sleep(3)
   
 
         res = lit1.rpc.ListConnections()
@@ -234,7 +234,7 @@ def run_t(env, params):
 
         print("After OfferContract")
 
-        time.sleep(8)
+        time.sleep(3)
        
 
         print("Before ContractRespond")
@@ -244,20 +244,20 @@ def run_t(env, params):
 
         print("After ContractRespond")
 
-        time.sleep(8)
+        time.sleep(3)
 
         #------------------------------------------
         
         if deb_mod:
             print("ADDRESSES AFTER CONTRACT RESPOND")
             print("LIT1 Addresses")
-            print(lit1.rpc.GetAddresses())
+            print(pp.pprint(lit1.rpc.GetAddresses()))
 
             print("LIT2 Addresses")
-            print(lit2.rpc.GetAddresses())
+            print(pp.pprint(lit2.rpc.GetAddresses()))
 
             print("bitcoind Addresses")
-            print(bc.rpc.listaddressgroupings())
+            print(pp.pprint(bc.rpc.listaddressgroupings()))
 
 
         # #------------------------------------------  
@@ -266,7 +266,7 @@ def run_t(env, params):
         print("Before Generate Block")
 
         env.generate_block()
-        time.sleep(5)
+        time.sleep(2)
 
         print("After Generate Block")
 
@@ -311,7 +311,7 @@ def run_t(env, params):
 
 
         print("Before Revoke Contract")
-        time.sleep(3)
+        time.sleep(1)
 
         res = lit1.rpc.RevokeContract(CIdx=1)
 
@@ -320,7 +320,43 @@ def run_t(env, params):
         env.generate_block()
         time.sleep(2)
         env.generate_block()
-        time.sleep(3)
+        time.sleep(2)
+
+
+        if deb_mod:
+            print("ADDRESSES AFTER CONTRACT REVOKE")
+            print("LIT1 Addresses")
+            print(pp.pprint(lit1.rpc.GetAddresses()))
+
+            print("LIT2 Addresses")
+            print(pp.pprint(lit2.rpc.GetAddresses()))
+
+            print("bitcoind Addresses")
+            print(pp.pprint(bc.rpc.listaddressgroupings()))
+
+
+
+        print("Revoke")
+        bals1 = lit1.get_balance_info()  
+        print('new lit1 balance:', bals1['TxoTotal'], 'in txos,', bals1['ChanTotal'], 'in chans')
+        bal1sum = bals1['TxoTotal'] + bals1['ChanTotal']
+        print('  = sum ', bal1sum)
+
+
+        bals2 = lit2.get_balance_info()
+        print('new lit2 balance:', bals2['TxoTotal'], 'in txos,', bals2['ChanTotal'], 'in chans')
+        bal2sum = bals2['TxoTotal'] + bals2['ChanTotal']
+        print('  = sum ', bal2sum) 
+
+
+        #-----------------------------------------------
+        # Send 10000 sat from lit1 to lit2
+
+        print("Address to send: ")
+        print(lit2.rpc.GetAddresses()['WitAddresses'][0])
+
+        #------------------------------------------------
+
 
 
         print("==========================================================")

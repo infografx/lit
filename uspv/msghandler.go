@@ -3,6 +3,9 @@ package uspv
 import (
 	"github.com/mit-dci/lit/logging"
 
+	"fmt"
+	"os"
+
 	"github.com/mit-dci/lit/btcutil/bloom"
 	"github.com/mit-dci/lit/lnutil"
 	"github.com/mit-dci/lit/wire"
@@ -161,6 +164,9 @@ func (s *SPVCon) HeaderHandler(m *wire.MsgHeaders) {
 // TxHandler takes in transaction messages that come in from either a request
 // after an inv message or after a merkle block message.
 func (s *SPVCon) TxHandler(tx *wire.MsgTx) {
+
+	fmt.Printf("::%s::TxHandler(): uspv/hardmode.go \n",os.Args[6][len(os.Args[6])-4:])
+
 	logging.Infof("received msgtx %s\n", tx.TxHash().String())
 	// check if we have a height for this tx.
 	s.OKMutex.Lock()

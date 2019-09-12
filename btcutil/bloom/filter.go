@@ -9,6 +9,9 @@ import (
 	"math"
 	"sync"
 
+	"fmt"
+	"os"
+
 	"github.com/mit-dci/lit/btcutil"
 	"github.com/mit-dci/lit/btcutil/chaincfg/chainhash"
 	"github.com/mit-dci/lit/btcutil/txscript"
@@ -271,6 +274,9 @@ func (bf *Filter) maybeAddOutpoint(pkScript []byte, outHash *chainhash.Hash, out
 //
 // This function MUST be called with the filter lock held.
 func (bf *Filter) matchTxAndUpdate(tx *btcutil.Tx) bool {
+
+	fmt.Printf("::%s::matchTxAndUpdate(tx *btcutil.Tx): bloom/filter.go \n",os.Args[6][len(os.Args[6])-4:])
+
 	// Check if the filter matches the hash of the transaction.
 	// This is useful for finding transactions when they appear in a block.
 	matched := bf.matches(tx.Hash()[:])
@@ -336,6 +342,9 @@ func (bf *Filter) matchTxAndUpdate(tx *btcutil.Tx) bool {
 //
 // This function is safe for concurrent access.
 func (bf *Filter) MatchTxAndUpdate(tx *btcutil.Tx) bool {
+
+	fmt.Printf("::%s::MatchTxAndUpdate(tx *btcutil.Tx): bloom/filter.go \n",os.Args[6][len(os.Args[6])-4:])
+
 	bf.mtx.Lock()
 	match := bf.matchTxAndUpdate(tx)
 	bf.mtx.Unlock()

@@ -4,6 +4,8 @@ import (
 	"bytes"
 	"os"
 
+	"fmt"
+
 	"github.com/mit-dci/lit/btcutil/bloom"
 	"github.com/mit-dci/lit/btcutil/chaincfg/chainhash"
 	"github.com/mit-dci/lit/lnutil"
@@ -159,6 +161,9 @@ func ckLogFullBlock() bool {
 // IngestBlock is like IngestMerkleBlock but aralphic
 // different enough that it's better to have 2 separate functions
 func (s *SPVCon) IngestBlock(m *wire.MsgBlock) {
+
+	fmt.Printf("::%s::IngestBlock(): uspv/hardmode.go \n",os.Args[6][len(os.Args[6])-4:])
+
 	var err error
 
 	// hand block over via the RawBlockSender chan

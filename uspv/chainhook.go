@@ -159,7 +159,13 @@ func (s *SPVCon) RegisterAddress(adr160 [20]byte) error {
 // RegisterOutPoint ...
 func (s *SPVCon) RegisterOutPoint(op wire.OutPoint) error {
 	s.TrackingOPsMtx.Lock()
+
+	fmt.Printf("::%s:: RegisterOutPoint(): uspv/chainhook.go: before: len(s.TrackingOPs): %d \n",os.Args[6][len(os.Args[6])-4:], len(s.TrackingOPs))
+
 	s.TrackingOPs[op] = true
+
+	fmt.Printf("::%s:: RegisterOutPoint(): uspv/chainhook.go: after: len(s.TrackingOPs): %d \n",os.Args[6][len(os.Args[6])-4:], len(s.TrackingOPs))
+
 	s.TrackingOPsMtx.Unlock()
 	return nil
 }
