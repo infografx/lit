@@ -113,9 +113,15 @@ func (nd *LitNode) OfferDlc(peerIdx uint32, cIdx uint64) error {
 	}
 
 
-	c.OurRevokePub, err = nd.GetUsePub(kg, UseContractRevoke)
+	//c.OurRevokePub, err = nd.GetUsePub(kg, UseContractRevoke)
 
-	fmt.Printf("::%s:: OfferDlc(): qln/dlc.go: c.OurRevokePub %x \n",os.Args[6][len(os.Args[6])-4:], c.OurRevokePub)
+	wal, _ := nd.SubWallet[c.CoinType]
+
+	c.OurRevokePKH, err = wal.NewAdr()
+
+	//fmt.Printf("::%s:: OfferDlc(): qln/dlc.go: c.OurRevokePub %x \n",os.Args[6][len(os.Args[6])-4:], c.OurRevokePub)
+
+	fmt.Printf("::%s:: OfferDlc(): qln/dlc.go: c.OurRevokePKH %x \n",os.Args[6][len(os.Args[6])-4:], c.OurRevokePKH)
 
 
 	msg := lnutil.NewDlcOfferMsg(peerIdx, c)
@@ -221,7 +227,13 @@ func (nd *LitNode) AcceptDlc(cIdx uint64) error {
 		}
 		copy(c.OurPayoutPKH[:], btcutil.Hash160(ourPayoutPKHKey[:]))
 
-		c.OurRevokePub, err = nd.GetUsePub(kg, UseContractRevoke)	
+		//c.OurRevokePub, err = nd.GetUsePub(kg, UseContractRevoke)
+		
+		wal, _ := nd.SubWallet[c.CoinType]
+
+		c.OurRevokePKH, err = wal.NewAdr()
+
+		
 
 		// Now we can sign the division
 		sigs, err := nd.SignSettlementDivisions(c)
@@ -243,11 +255,9 @@ func (nd *LitNode) AcceptDlc(cIdx uint64) error {
 	
 		revoketx.AddTxIn(wire.NewTxIn(&c.FundingOutpoint, nil, nil))
 
-		myrevscript :=lnutil.DirectWPKHScript(c.OurRevokePub)
+		//myrevscript :=lnutil.DirectWPKHScript(c.OurRevokePub)
 
-		// wal, ok := nd.SubWallet[c.CoinType]
-
-		// myrevscript :=lnutil.DirectWPKHScriptFromPKH(wal.NewAdr())
+		myrevscript :=lnutil.DirectWPKHScriptFromPKH(c.OurRevokePKH)
 
 		myOutput := wire.NewTxOut(800000, myrevscript)
 		revoketx.AddTxOut(myOutput)
@@ -256,7 +266,9 @@ func (nd *LitNode) AcceptDlc(cIdx uint64) error {
 		fmt.Printf("::%s::AcceptDlc(): qln/dlc.go: DirectWPKHScript: myScript %x \n",os.Args[6][len(os.Args[6])-4:], myrevscript)
 
 
-		theirrevscript :=lnutil.DirectWPKHScript(c.TheirRevokePub)
+		//theirrevscript :=lnutil.DirectWPKHScript(c.TheirRevokePub)
+
+		theirrevscript :=lnutil.DirectWPKHScriptFromPKH(c.TheirRevokePKH)
 
 		theirOutput := wire.NewTxOut(800000, theirrevscript)
 		revoketx.AddTxOut(theirOutput)
@@ -278,7 +290,7 @@ func (nd *LitNode) AcceptDlc(cIdx uint64) error {
 		fmt.Printf("::%s:: AcceptDlc() priv, err := wal.GetPriv(kg) Step[2] %d \n",os.Args[6][len(os.Args[6])-4:], UseContractFundMultisig)
 		
 
-		wal, _ := nd.SubWallet[c.CoinType]
+		//wal, _ := nd.SubWallet[c.CoinType]
 		priv, err := wal.GetPriv(kg)
 
 		fmt.Printf("::%s:: AcceptDlc() lnutil.TxToString(revoketx) %x \n",os.Args[6][len(os.Args[6])-4:], lnutil.TxToString(revoketx))
@@ -291,7 +303,9 @@ func (nd *LitNode) AcceptDlc(cIdx uint64) error {
 
 		c.OurrevoketxSig64 = revoketxSig64
 
-		fmt.Printf("::%s::AcceptDlc(): qln/dlc.go: c.OurRevokePub %x, c.TheirRevokePub %x, c.OurrevoketxSig64 %x \n",os.Args[6][len(os.Args[6])-4:], c.OurRevokePub, c.TheirRevokePub, c.OurrevoketxSig64)
+		//fmt.Printf("::%s::AcceptDlc(): qln/dlc.go: c.OurRevokePub %x, c.TheirRevokePub %x, c.OurrevoketxSig64 %x \n",os.Args[6][len(os.Args[6])-4:], c.OurRevokePub, c.TheirRevokePub, c.OurrevoketxSig64)
+
+		fmt.Printf("::%s::AcceptDlc(): qln/dlc.go: c.OurRevokePKH %x, c.TheirRevokePKH %x, c.OurrevoketxSig64 %x \n",os.Args[6][len(os.Args[6])-4:], c.OurRevokePKH, c.TheirRevokePKH, c.OurrevoketxSig64)
 
 		//------------------------------------------------		
 
@@ -323,9 +337,13 @@ func (nd *LitNode) DlcOfferHandler(msg lnutil.DlcOfferMsg, peer *RemotePeer) {
 	c.TheirIdx = msg.Contract.Idx
 	c.TheirPayoutPKH = msg.Contract.OurPayoutPKH
 
-	c.TheirRevokePub = msg.Contract.OurRevokePub
+	//c.TheirRevokePub = msg.Contract.OurRevokePub
 
-	fmt.Printf("::%s:: DlcOfferHandler(): qln/dlc.go: c.TheirRevokePub %x \n",os.Args[6][len(os.Args[6])-4:], c.TheirRevokePub)
+	c.TheirRevokePKH = msg.Contract.OurRevokePKH
+
+	//fmt.Printf("::%s:: DlcOfferHandler(): qln/dlc.go: c.TheirRevokePub %x \n",os.Args[6][len(os.Args[6])-4:], c.TheirRevokePub)
+
+	fmt.Printf("::%s:: DlcOfferHandler(): qln/dlc.go: c.TheirRevokePKH %x \n",os.Args[6][len(os.Args[6])-4:], c.TheirRevokePKH)
 
 	fmt.Printf("::%s:: DlcOfferHandler(): qln/dlc.go: msg.Contract %+v \n",os.Args[6][len(os.Args[6])-4:], msg.Contract)
 
@@ -388,7 +406,8 @@ func (nd *LitNode) DlcAcceptHandler(msg lnutil.DlcOfferAcceptMsg, peer *RemotePe
 	c.TheirPayoutPKH = msg.OurPayoutPKH
 	c.TheirIdx = msg.OurIdx
 
-	c.TheirRevokePub = msg.OurRevokePub
+	//c.TheirRevokePub = msg.OurRevokePub
+	c.TheirRevokePKH = msg.OurRevokePKH
 
 	fmt.Printf("::%s:: DlcAcceptHandler(): qln/dlc.go: msg.OurrevoketxSig64: %x \n",os.Args[6][len(os.Args[6])-4:], msg.OurrevoketxSig64)
 
@@ -910,7 +929,9 @@ func (nd *LitNode) RevokeContract(cIdx uint64) (bool, error) {
 	mytx.AddTxIn(wire.NewTxIn(&c.FundingOutpoint, nil, nil))	
 
 
-	myScript := lnutil.DirectWPKHScript(c.OurRevokePub)
+	//myScript := lnutil.DirectWPKHScript(c.OurRevokePub)
+
+	myScript := lnutil.DirectWPKHScriptFromPKH(c.OurRevokePKH)
 
 	myOutput := wire.NewTxOut(800000, myScript)
 	mytx.AddTxOut(myOutput)
@@ -918,7 +939,9 @@ func (nd *LitNode) RevokeContract(cIdx uint64) (bool, error) {
 	fmt.Printf("::%s::RevokeContract(): qln/dlc.go: DirectWPKHScript: myScript %x \n",os.Args[6][len(os.Args[6])-4:], myScript)
 
 
-	theirScript := lnutil.DirectWPKHScript(c.TheirRevokePub)
+	//theirScript := lnutil.DirectWPKHScript(c.TheirRevokePub)
+
+	theirScript := lnutil.DirectWPKHScriptFromPKH(c.TheirRevokePKH)
 
 	theirOutput := wire.NewTxOut(800000, theirScript)
 	mytx.AddTxOut(theirOutput)

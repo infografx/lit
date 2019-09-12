@@ -65,7 +65,8 @@ type DlcContract struct {
 	// Pubkey used in the funding multisig output
 	OurFundMultisigPub, TheirFundMultisigPub [33]byte
 
-	OurRevokePub, TheirRevokePub [33]byte
+	//OurRevokePub, TheirRevokePub [33]byte
+	OurRevokePKH, TheirRevokePKH [20]byte
 
 	OurrevoketxSig64, TheirrevoketxSig64 [64]byte
 
@@ -163,8 +164,11 @@ func DlcContractFromBytes(b []byte) (*DlcContract, error) {
 	copy(c.OurFundMultisigPub[:], buf.Next(33))
 	copy(c.TheirFundMultisigPub[:], buf.Next(33))
 
-	copy(c.OurRevokePub[:], buf.Next(33))
-	copy(c.TheirRevokePub[:], buf.Next(33))
+//	copy(c.OurRevokePub[:], buf.Next(33))
+//	copy(c.TheirRevokePub[:], buf.Next(33))
+
+	copy(c.OurRevokePKH[:], buf.Next(20))
+	copy(c.TheirRevokePKH[:], buf.Next(20))
 
 	copy(c.OurrevoketxSig64[:], buf.Next(64))
 	copy(c.TheirrevoketxSig64[:], buf.Next(64))
@@ -278,8 +282,11 @@ func (self *DlcContract) Bytes() []byte {
 	buf.Write(self.OurFundMultisigPub[:])
 	buf.Write(self.TheirFundMultisigPub[:])
 
-	buf.Write(self.OurRevokePub[:])
-	buf.Write(self.TheirRevokePub[:])
+	// buf.Write(self.OurRevokePub[:])
+	// buf.Write(self.TheirRevokePub[:])
+
+	buf.Write(self.OurRevokePKH[:])
+	buf.Write(self.TheirRevokePKH[:])	
 
 	buf.Write(self.OurrevoketxSig64[:])
 	buf.Write(self.TheirrevoketxSig64[:])
