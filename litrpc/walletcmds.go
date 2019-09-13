@@ -138,6 +138,8 @@ type SendArgs struct {
 func (r *LitRPC) Send(args SendArgs, reply *TxidsReply) error {
 	var err error
 
+	fmt.Printf("SendArgs: %+v \n", args)
+
 	nOutputs := len(args.DestAddrs)
 	if nOutputs < 1 {
 		return fmt.Errorf("No destination address specified")

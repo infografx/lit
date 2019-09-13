@@ -355,6 +355,30 @@ def run_t(env, params):
         print("Address to send: ")
         print(lit2.rpc.GetAddresses()['WitAddresses'][0])
 
+        # res = lit1.rpc.SetContractRPoint(CIdx=contract["Contract"]["Idx"], RPoint=RPoint)
+
+        res = lit1.rpc.Send(DestAddrs=[lit2.rpc.GetAddresses()['WitAddresses'][0]], Amts=[90769920])
+
+        time.sleep(1)
+
+        env.generate_block()
+        time.sleep(2)
+
+
+        print("After Spend")
+        bals1 = lit1.get_balance_info()  
+        print('new lit1 balance:', bals1['TxoTotal'], 'in txos,', bals1['ChanTotal'], 'in chans')
+        bal1sum = bals1['TxoTotal'] + bals1['ChanTotal']
+        print('  = sum ', bal1sum)
+
+
+        bals2 = lit2.get_balance_info()
+        print('new lit2 balance:', bals2['TxoTotal'], 'in txos,', bals2['ChanTotal'], 'in chans')
+        bal2sum = bals2['TxoTotal'] + bals2['ChanTotal']
+        print('  = sum ', bal2sum) 
+
+
+
         #------------------------------------------------
 
 
