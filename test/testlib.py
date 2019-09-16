@@ -183,8 +183,6 @@ class LitNode():
 
     def resync(self):
         def ck_synced():
-            print(self.get_sync_height())
-            print(self.bcnode.get_block_height())
             return self.get_sync_height() == self.bcnode.get_block_height()
         testutil.wait_until(ck_synced, attempts=40, errmsg="node failing to resync!")
 
@@ -380,7 +378,6 @@ class TestEnv():
         def ck_lits_synced():
             for l in self.lits:
                 sh = l.get_sync_height()
-                print("l.get_sync_height(): " + str(l.get_sync_height()) + ", h:" + str(h))
                 if sh != h:
                     return False
             return True

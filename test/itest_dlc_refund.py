@@ -9,7 +9,7 @@ import requests # pip3 install requests
 
 import codecs
 
-deb_mod = True
+deb_mod = False
 
 
 
@@ -385,48 +385,48 @@ def run_t(env, params):
 
         #------------------------------------------------
 
+        if deb_mod:
+
+            print("==========================================================")
+            print('Print Blockchain Info')
+            print("==========================================================")
 
 
-        print("==========================================================")
-        print('Print Blockchain Info')
-        print("==========================================================")
+            best_block_hash = bc.rpc.getbestblockhash()
+            bb = bc.rpc.getblock(best_block_hash)
+            print(bb)
+            print("bb['height']: " + str(bb['height']))
 
+            print("Balance from RPC: " + str(bc.rpc.getbalance()))
 
-        best_block_hash = bc.rpc.getbestblockhash()
-        bb = bc.rpc.getblock(best_block_hash)
-        print(bb)
-        print("bb['height']: " + str(bb['height']))
+            # batch support : print timestamps of blocks 0 to 99 in 2 RPC round-trips:
+            commands = [ [ "getblockhash", height] for height in range(bb['height'] + 1) ]
+            block_hashes = bc.rpc.batch_(commands)
+            blocks = bc.rpc.batch_([ [ "getblock", h ] for h in block_hashes ])
+            block_times = [ block["time"] for block in blocks ]
+            print(block_times)
 
-        print("Balance from RPC: " + str(bc.rpc.getbalance()))
+            print('--------------------')
 
-        # batch support : print timestamps of blocks 0 to 99 in 2 RPC round-trips:
-        commands = [ [ "getblockhash", height] for height in range(bb['height'] + 1) ]
-        block_hashes = bc.rpc.batch_(commands)
-        blocks = bc.rpc.batch_([ [ "getblock", h ] for h in block_hashes ])
-        block_times = [ block["time"] for block in blocks ]
-        print(block_times)
+            for b in blocks:
+                print("--------BLOCK--------")
+                print(b)
+                tx = b["tx"]
+                #print(tx)
+                try:
 
-        print('--------------------')
+                    for i in range(len(tx)):
+                        print("--------TRANSACTION--------")
+                        rtx = bc.rpc.getrawtransaction(tx[i])
+                        print(rtx)
+                        decoded = bc.rpc.decoderawtransaction(rtx)
+                        pp.pprint(decoded)
+                except BaseException as be:
+                    print(be)
+                # print(type(rtx))
+                print('--------')    
 
-        for b in blocks:
-            print("--------BLOCK--------")
-            print(b)
-            tx = b["tx"]
-            #print(tx)
-            try:
-
-                for i in range(len(tx)):
-                    print("--------TRANSACTION--------")
-                    rtx = bc.rpc.getrawtransaction(tx[i])
-                    print(rtx)
-                    decoded = bc.rpc.decoderawtransaction(rtx)
-                    pp.pprint(decoded)
-            except BaseException as be:
-                print(be)
-            # print(type(rtx))
-            print('--------')    
-
-        #assert bals['ChanTotal'] == 0, "channel balance isn't zero!"
+            #assert bals['ChanTotal'] == 0, "channel balance isn't zero!"
 
 
     except BaseException as be:
