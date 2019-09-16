@@ -36,6 +36,8 @@ def run_t(env, params):
         ClaimTxFeeOurs = params[10]
         ClaimTxFeeTheirs = params[11]
 
+        node_to_refund = params[12]
+
         bc = env.bitcoind
 
         #------------
@@ -317,7 +319,7 @@ def run_t(env, params):
         print("Before Revoke Contract")
         time.sleep(2)
 
-        res = lit2.rpc.RevokeContract(CIdx=1)
+        res = env.lits[node_to_refund].rpc.RevokeContract(CIdx=1)
 
         time.sleep(2)
 
@@ -358,8 +360,6 @@ def run_t(env, params):
 
         print("Address to send: ")
         print(lit2.rpc.GetAddresses()['WitAddresses'][0])
-
-        # res = lit1.rpc.SetContractRPoint(CIdx=contract["Contract"]["Idx"], RPoint=RPoint)
 
         res = lit1.rpc.Send(DestAddrs=[lit2.rpc.GetAddresses()['WitAddresses'][0]], Amts=[99960240])
 
@@ -440,6 +440,37 @@ def run_t(env, params):
 
 def forward(env):
     
+    oracle_value = 10
+    node_to_settle = 0
+
+    valueFullyOurs=10
+    valueFullyTheirs=20
+
+    lit_funding_amt =      1     # 1 BTC
+    contract_funding_amt = 10000000     # satoshi
+
+    FundingTxVsize = 252
+    SettlementTxVsize = 150
+
+    SetTxFeeOurs = 150 * 80
+    SetTxFeeTheirs = 0
+
+    ClaimTxFeeOurs = 121 * 80
+    ClaimTxFeeTheirs = 0
+
+
+    feeperbyte = 80
+
+
+    vsizes = [FundingTxVsize, SettlementTxVsize]
+
+    params = [lit_funding_amt, contract_funding_amt, oracle_value, node_to_settle, valueFullyOurs, valueFullyTheirs, vsizes, feeperbyte, SetTxFeeOurs, SetTxFeeTheirs, ClaimTxFeeOurs, ClaimTxFeeTheirs, 0]
+
+    run_t(env, params)
+
+
+
+def reverse(env):
 
     oracle_value = 10
     node_to_settle = 0
@@ -465,6 +496,6 @@ def forward(env):
 
     vsizes = [FundingTxVsize, SettlementTxVsize]
 
-    params = [lit_funding_amt, contract_funding_amt, oracle_value, node_to_settle, valueFullyOurs, valueFullyTheirs, vsizes, feeperbyte, SetTxFeeOurs, SetTxFeeTheirs, ClaimTxFeeOurs, ClaimTxFeeTheirs]
+    params = [lit_funding_amt, contract_funding_amt, oracle_value, node_to_settle, valueFullyOurs, valueFullyTheirs, vsizes, feeperbyte, SetTxFeeOurs, SetTxFeeTheirs, ClaimTxFeeOurs, ClaimTxFeeTheirs, 1]
 
     run_t(env, params)
