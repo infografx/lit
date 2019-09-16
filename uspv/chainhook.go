@@ -202,6 +202,9 @@ func (s *SPVCon) PushTx(tx *wire.MsgTx) error {
 		return err
 	}
 	// broadcast inv message
+
+	fmt.Printf("::%s:: PushTx(): uspv/chainhook.go s.outMsgQueue <- invMsg \n",os.Args[6][len(os.Args[6])-4:])
+
 	s.outMsgQueue <- invMsg
 
 	// TODO wait a few seconds here for a reject message and return it

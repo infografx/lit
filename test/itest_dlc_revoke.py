@@ -158,6 +158,7 @@ def run_t(env, params):
         lit2.rpc.AddOracle(Key=oracle1_pubkey["A"], Name="oracle1")
 
 
+
         # #------------
         # # Now we have to create a contract in the lit1 node.
         # #------------
@@ -184,6 +185,9 @@ def run_t(env, params):
 
         # dlc contract settime 1 1552080600
         lit1.rpc.SetContractSettlementTime(CIdx=contract["Contract"]["Idx"], Time=settlement_time)
+
+        # we set settlement_time equal to refundtime, actually the refund transaction will be valid.
+        lit1.rpc.SetContractRefundTime(CIdx=contract["Contract"]["Idx"], Time=settlement_time)
 
         res = lit1.rpc.ListContracts()
         assert res["Contracts"][contract["Contract"]["Idx"] - 1]["OracleTimestamp"] == settlement_time, "SetContractSettlementTime does not match settlement_time"
@@ -311,9 +315,9 @@ def run_t(env, params):
 
 
         print("Before Revoke Contract")
-        time.sleep(1)
+        time.sleep(2)
 
-        res = lit1.rpc.RevokeContract(CIdx=1)
+        res = lit2.rpc.RevokeContract(CIdx=1)
 
         time.sleep(2)
 
@@ -357,7 +361,7 @@ def run_t(env, params):
 
         # res = lit1.rpc.SetContractRPoint(CIdx=contract["Contract"]["Idx"], RPoint=RPoint)
 
-        res = lit1.rpc.Send(DestAddrs=[lit2.rpc.GetAddresses()['WitAddresses'][0]], Amts=[90769920])
+        res = lit1.rpc.Send(DestAddrs=[lit2.rpc.GetAddresses()['WitAddresses'][0]], Amts=[99960240])
 
         time.sleep(1)
 
@@ -434,7 +438,7 @@ def run_t(env, params):
 
 
 
-def coop(env):
+def forward(env):
     
 
     oracle_value = 10

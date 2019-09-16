@@ -70,6 +70,8 @@ func (mgr *DlcManager) SetContractSettlementTime(cIdx, time uint64) error {
 
 	c.OracleTimestamp = time
 
+	fmt.Printf("c.OracleTimestamp %d \n", c.OracleTimestamp)
+
 	// Reset the R point
 	c.OracleR = [33]byte{}
 
@@ -77,6 +79,32 @@ func (mgr *DlcManager) SetContractSettlementTime(cIdx, time uint64) error {
 
 	return nil
 }
+
+
+// SetContractRefundTime. If until this time Oracle does not publish the data, 
+// then either party can publish a RefundTransaction
+func (mgr *DlcManager) SetContractRefundTime(cIdx, time uint64) error {
+	c, err := mgr.LoadContract(cIdx)
+	if err != nil {
+		return err
+	}
+
+	if c.Status != lnutil.ContractStatusDraft {
+		return fmt.Errorf("You cannot change or set the settlement time" +
+			" unless the contract is in Draft state")
+	}
+
+	c.RefundTimestamp = time
+
+	fmt.Printf("c.RefundTimestamp %d \n", c.RefundTimestamp)
+
+	mgr.SaveContract(c)
+
+	return nil
+}
+
+
+
 
 // SetContractDatafeed will automatically fetch the R-point from the REST API,
 // if an oracle is imported from a REST API. You need to set the settlement time
