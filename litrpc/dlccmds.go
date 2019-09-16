@@ -220,8 +220,8 @@ type SetContractSettlementTimeReply struct {
 	Success bool
 }
 
-// SetContractSettlementTime sets the time this contract will settle (the
-// unix epoch)
+// SetContractSettlementTime sets the time this the oracle will publish data (
+// unix time)
 func (r *LitRPC) SetContractSettlementTime(args SetContractSettlementTimeArgs,
 	reply *SetContractSettlementTimeReply) error {
 	var err error
@@ -234,6 +234,24 @@ func (r *LitRPC) SetContractSettlementTime(args SetContractSettlementTimeArgs,
 	reply.Success = true
 	return nil
 }
+
+
+// SetContractRefundTime. If until this time Oracle does not publish the data, 
+// then either party can publish a RefundTransaction
+func (r *LitRPC) SetContractRefundTime(args SetContractSettlementTimeArgs,
+	reply *SetContractSettlementTimeReply) error {
+	var err error
+
+	err = r.Node.DlcManager.SetContractRefundTime(args.CIdx, args.Time)
+	if err != nil {
+		return err
+	}
+
+	reply.Success = true
+	return nil
+}
+
+
 
 type SetContractFundingArgs struct {
 	CIdx        uint64
@@ -450,6 +468,32 @@ func (r *LitRPC) SettleContract(args SettleContractArgs,
 
 	reply.SettleTxHash, reply.ClaimTxHash, err = r.Node.SettleContract(
 		args.CIdx, args.OracleValue, args.OracleSig)
+	if err != nil {
+		return err
+	}
+
+	reply.Success = true
+	return nil
+}
+
+
+//======================================================================
+
+
+type RevokeContractArgs struct {
+	CIdx        uint64
+}
+
+type RevokeContractReply struct {
+	Success      bool
+}
+
+// RevokeContract
+
+func (r *LitRPC) RevokeContract(args RevokeContractArgs,reply *RevokeContractReply) error {
+	var err error
+
+	reply.Success, err = r.Node.RevokeContract(args.CIdx)
 	if err != nil {
 		return err
 	}

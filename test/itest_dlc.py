@@ -132,9 +132,9 @@ def run_t(env, params):
         #------------------------------------------          
 
 
-        # #------------
-        # # Add oracles
-        # #------------
+        #------------
+        # Add oracles
+        #------------
 
         res = lit1.rpc.ListOracles()
         assert len(res) != 0, "Initial lis of oracles must be empty"
@@ -155,9 +155,9 @@ def run_t(env, params):
         lit2.rpc.AddOracle(Key=oracle1_pubkey["A"], Name="oracle1")
 
 
-        # #------------
-        # # Now we have to create a contract in the lit1 node.
-        # #------------
+        #------------
+        # Now we have to create a contract in the lit1 node.
+        #------------
 
         contract = lit1.rpc.NewContract()
 
@@ -181,6 +181,9 @@ def run_t(env, params):
 
         # dlc contract settime 1 1552080600
         lit1.rpc.SetContractSettlementTime(CIdx=contract["Contract"]["Idx"], Time=settlement_time)
+
+        # we set settlement_time equal to refundtime, actually the refund transaction will be valid.
+        lit1.rpc.SetContractRefundTime(CIdx=contract["Contract"]["Idx"], Time=settlement_time)
 
         res = lit1.rpc.ListContracts()
         assert res["Contracts"][contract["Contract"]["Idx"] - 1]["OracleTimestamp"] == settlement_time, "SetContractSettlementTime does not match settlement_time"
@@ -257,7 +260,7 @@ def run_t(env, params):
             print(bc.rpc.listaddressgroupings())
 
 
-        # #------------------------------------------  
+        #------------------------------------------  
 
 
         print("Before Generate Block")
@@ -375,7 +378,7 @@ def run_t(env, params):
 
 
         #------------------------------------------
-        #------------------------------------------
+        
         print("AFter Settle")
 
         print("ORACLE VALUE:", oracle1_val, "; oracle signature:", oracle1_sig)
@@ -433,8 +436,6 @@ def run_t(env, params):
             assert bal2sum == lit1_bal_result, "The resulting lit2 node balance does not match." 
 
 
-
-
         #------------------------------------------
         if deb_mod:
             print("ADDRESSES AFTER SETTLE")
@@ -475,11 +476,6 @@ def t_11_0(env):
     # 1)Funding transaction.
     # Here can be a situation when peers have different number of inputs.
 
-    # ::lit1:: BuildDlcFundingTransaction: qln/dlc.go: our_tx_vsize: 126
-    # ::lit1:: BuildDlcFundingTransaction: qln/dlc.go: their_tx_vsize: 126
-    # ::lit1:: BuildDlcFundingTransaction: qln/dlc.go: our_fee: 10080
-    # ::lit1:: BuildDlcFundingTransaction: qln/dlc.go: their_fee: 10080
-
     # Vsize from Blockchain: 252
 
     # So we expect lit1, and lit2 balances equal to 89989920 !!!
@@ -489,31 +485,12 @@ def t_11_0(env):
     #-----------------------------
     # 2) SettlementTx vsize will be printed
 
-    # ::lit0:: SettlementTx()1: qln/dlclib.go: --------------------: 
-    # ::lit0:: SettlementTx()1: qln/dlclib.go: valueOurs: 18000000
-    # ::lit0:: SettlementTx()1: qln/dlclib.go: valueTheirs: 2000000
-    # ::lit0:: SettlementTx()1: qln/dlclib.go: --------------------: 
-    # ::lit0:: SettlementTx()2: qln/dlclib.go: --------------------: 
-    # ::lit0:: SettlementTx()2: qln/dlclib.go: valueOurs: 18000000
-    # ::lit0:: SettlementTx()2: qln/dlclib.go: valueTheirs: 2000000
-    # ::lit0:: SettlementTx()2: qln/dlclib.go: --------------------: 
-    # ::lit0:: SettlementTx()3: qln/dlclib.go: --------------------: 
-    # ::lit0:: SettlementTx()3: qln/dlclib.go: totalFee: 14400 
-    # ::lit0:: SettlementTx()3: qln/dlclib.go: feeEach: 7200
-    # ::lit0:: SettlementTx()3: qln/dlclib.go: feeOurs: 7200
-    # ::lit0:: SettlementTx()3: qln/dlclib.go: feeTheirs: 7200
-    # ::lit0:: SettlementTx()3: qln/dlclib.go: valueOurs: 17992800
-    # ::lit0:: SettlementTx()3: qln/dlclib.go: valueTheirs: 1992800
-    # ::lit0:: SettlementTx()3: qln/dlclib.go: vsize: 0   # Actually we have 14400/80 = 180
-    # ::lit0:: SettlementTx()3: qln/dlclib.go: --------------------:     
-
 
     # Vsize from Blockchain: 181
 
     # There fore we expect here
     # valueOurs: 17992800 = 18000000 - 7200     !!!
     # valueTheirs: 1992800 = 2000000 - 7200     !!!
-
 
     #-----------------------------
 
@@ -589,37 +566,14 @@ def t_1300_1(env):
     # 1)Funding transaction.
     # Here can be a situation when peers have different number of inputs.
 
-    # ::lit1:: BuildDlcFundingTransaction: qln/dlc.go: our_tx_vsize: 126
-    # ::lit1:: BuildDlcFundingTransaction: qln/dlc.go: their_tx_vsize: 126
-    # ::lit1:: BuildDlcFundingTransaction: qln/dlc.go: our_fee: 10080
-    # ::lit1:: BuildDlcFundingTransaction: qln/dlc.go: their_fee: 10080
-
     # Vsize from Blockchain: 252
 
-    # So we expect lit1, and lit2 balances equal to 89989920 !!!
+    # So we expect lit1, and lit2 balances equal to 89989920
     # 90000000 - 89989920 = 10080
     # But this is only when peers have one input each. What we expect.
 
     #-----------------------------
     # 2) SettlementTx vsize will be printed
-
-    # ::lit1:: SettlementTx()1: qln/dlclib.go: --------------------:
-    # ::lit1:: SettlementTx()1: qln/dlclib.go: valueOurs: 6000000 
-    # ::lit1:: SettlementTx()1: qln/dlclib.go: valueTheirs: 14000000 
-    # ::lit1:: SettlementTx()1: qln/dlclib.go: --------------------:
-    # ::lit1:: SettlementTx()2: qln/dlclib.go: --------------------:
-    # ::lit1:: SettlementTx()2: qln/dlclib.go: valueOurs: 5992800 
-    # ::lit1:: SettlementTx()2: qln/dlclib.go: valueTheirs: 13992800 
-    # ::lit1:: SettlementTx()2: qln/dlclib.go: --------------------:
-    # ::lit1:: SettlementTx()2: qln/dlclib.go: --------------------:
-    # ::lit1:: SettlementTx()2: qln/dlclib.go: totalFee: 14400 
-    # ::lit1:: SettlementTx()2: qln/dlclib.go: feeEach: 7200 
-    # ::lit1:: SettlementTx()2: qln/dlclib.go: feeOurs: 7200 
-    # ::lit1:: SettlementTx()2: qln/dlclib.go: feeTheirs: 7200 
-    # ::lit1:: SettlementTx()2: qln/dlclib.go: valueOurs: 5992800 
-    # ::lit1:: SettlementTx()2: qln/dlclib.go: valueTheirs: 13992800 
-    # ::lit1:: SettlementTx()2: qln/dlclib.go: vsize: 180 
-    # ::lit1:: SettlementTx()2: qln/dlclib.go: --------------------:  
 
 
     # Vsize from Blockchain: 181
@@ -628,12 +582,10 @@ def t_1300_1(env):
     # valueOurs: 5992800 = 6000000 - 7200     !!!
     # valueTheirs: 13992800 = 14000000 - 7200     !!!
 
-
     #-----------------------------
 
     # 3) Claim TX in SettleContract lit1
     # Here the transaction vsize is always the same: 121
-
 
     # Vsize from Blockchain: 121
 
@@ -695,9 +647,7 @@ def t_1300_1(env):
 
 
 
-# ====================================================================================
-# ====================================================================================  
-
+# -----------------------------------------------------------------------------
 
 
 def t_10_0(env):
@@ -733,8 +683,7 @@ def t_10_0(env):
 
 
 
-# ====================================================================================
-# ====================================================================================  
+# -----------------------------------------------------------------------------  
 
 
 
@@ -773,8 +722,7 @@ def t_10_1(env):
 
 
 
-# ====================================================================================
-# ====================================================================================  
+# -----------------------------------------------------------------------------  
 
 
 

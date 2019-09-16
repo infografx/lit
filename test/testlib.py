@@ -1,5 +1,6 @@
 import os
 import os.path as paths
+import shutil
 import time
 import signal
 import subprocess
@@ -62,6 +63,10 @@ def get_new_id():
     next_id += 1
     return id
 
+privkeys = [
+'158f6b6d07303ffd50f6c76d289e2e1d3ac90ba7d5fa4b267e4d6c4e368483c2',
+'1c224161af22b5ecd39d97a5ba62305d0552df8b6ac2d1f6a26b926f03691dca'
+]
 
 
 class LitNode():
@@ -76,9 +81,9 @@ class LitNode():
 
         # Write a hexkey to the privkey file
         with open(paths.join(self.data_dir, "privkey.hex"), 'w+') as f:
-            s = ''
-            for _ in range(64):
-                s += hexchars[random.randint(0, len(hexchars) - 1)]
+            s = privkeys[self.id]
+            # for _ in range(64):
+            #     s += hexchars[random.randint(0, len(hexchars) - 1)]
             print('Using key:', s)
             f.write(s + "\n")
 
@@ -178,6 +183,8 @@ class LitNode():
 
     def resync(self):
         def ck_synced():
+            print(self.get_sync_height())
+            print(self.bcnode.get_block_height())
             return self.get_sync_height() == self.bcnode.get_block_height()
         testutil.wait_until(ck_synced, attempts=40, errmsg="node failing to resync!")
 
@@ -194,6 +201,9 @@ class BitcoinNode():
         self.p2p_port = new_port()
         self.rpc_port = new_port()
         self.data_dir = new_data_dir("bitcoind")
+
+        shutil.copytree('/home/andriy/Documents/WS/mit-dci/raw/bitcoind0/blocks',self.data_dir + '/blocks')
+        shutil.copytree('/home/andriy/Documents/WS/mit-dci/raw/bitcoind0/regtest',self.data_dir + '/regtest')
 
         # Actually start the bitcoind
         args = [
@@ -231,6 +241,7 @@ class BitcoinNode():
 
         # Activate SegWit (apparently this is how you do it)
         self.rpc.generate(500)
+
         def ck_segwit():
             bci = self.rpc.getblockchaininfo()
             try:
@@ -335,11 +346,16 @@ class TestEnv():
             self.lits.append(node)
         logger.info("started nodes!  syncing...")
 
+        #
+        # self.generate_block(1)
+
         time.sleep(0.1)
 
         # Sync the nodes
         try:
+            print("Sync the nodes1.")
             self.generate_block(count=0)
+            print("Sync the nodes2.")
         except Exception as e:
             logger.warning("probem syncing nodes, exiting (" + str(e) + ")")
             self.shutdown()
@@ -364,6 +380,7 @@ class TestEnv():
         def ck_lits_synced():
             for l in self.lits:
                 sh = l.get_sync_height()
+                print("l.get_sync_height(): " + str(l.get_sync_height()) + ", h:" + str(h))
                 if sh != h:
                     return False
             return True
@@ -380,5 +397,6 @@ class TestEnv():
             o.shutdown()
 
 def clean_data_dir():
+    #pass
     datadir = get_root_data_dir()
     shutil.rmtree(datadir)
