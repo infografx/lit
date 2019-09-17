@@ -34,24 +34,18 @@ func (mgr *DlcManager) SetContractOracle(cIdx, oIdx uint64) error {
 	if err != nil {
 		return err
 	}
-
 	if c.Status != lnutil.ContractStatusDraft {
 		return fmt.Errorf("You cannot change or set the oracle unless the" +
 			" contract is in Draft state")
 	}
-
 	o, err := mgr.LoadOracle(oIdx)
 	if err != nil {
 		return err
 	}
-
 	c.OracleA = o.A
-
 	// Reset the R point when changing the oracle
 	c.OracleR = [33]byte{}
-
 	mgr.SaveContract(c)
-
 	return nil
 }
 
@@ -62,21 +56,14 @@ func (mgr *DlcManager) SetContractSettlementTime(cIdx, time uint64) error {
 	if err != nil {
 		return err
 	}
-
 	if c.Status != lnutil.ContractStatusDraft {
 		return fmt.Errorf("You cannot change or set the settlement time" +
 			" unless the contract is in Draft state")
 	}
-
 	c.OracleTimestamp = time
-
-	fmt.Printf("c.OracleTimestamp %d \n", c.OracleTimestamp)
-
 	// Reset the R point
 	c.OracleR = [33]byte{}
-
 	mgr.SaveContract(c)
-
 	return nil
 }
 
@@ -88,21 +75,14 @@ func (mgr *DlcManager) SetContractRefundTime(cIdx, time uint64) error {
 	if err != nil {
 		return err
 	}
-
 	if c.Status != lnutil.ContractStatusDraft {
 		return fmt.Errorf("You cannot change or set the settlement time" +
 			" unless the contract is in Draft state")
 	}
-
 	c.RefundTimestamp = time
-
-	fmt.Printf("c.RefundTimestamp %d \n", c.RefundTimestamp)
-
 	mgr.SaveContract(c)
-
 	return nil
 }
-
 
 
 

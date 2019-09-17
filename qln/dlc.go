@@ -2,8 +2,6 @@ package qln
 
 import (
 	"fmt"
-	"bytes"
-	"bufio"
 	"github.com/mit-dci/lit/btcutil"
 	"github.com/mit-dci/lit/btcutil/txscript"
 	"github.com/mit-dci/lit/btcutil/txsort"
@@ -111,13 +109,8 @@ func (nd *LitNode) OfferDlc(peerIdx uint32, cIdx uint64) error {
 		return err
 	}
 
-
-	//c.OurRevokePub, err = nd.GetUsePub(kg, UseContractRevoke)
-
 	wal, _ := nd.SubWallet[c.CoinType]
-
 	c.OurRevokePKH, err = wal.NewAdr()
-
 	msg := lnutil.NewDlcOfferMsg(peerIdx, c)
 
 	c.Status = lnutil.ContractStatusOfferedByMe
@@ -219,13 +212,8 @@ func (nd *LitNode) AcceptDlc(cIdx uint64) error {
 		}
 		copy(c.OurPayoutPKH[:], btcutil.Hash160(ourPayoutPKHKey[:]))
 
-		//c.OurRevokePub, err = nd.GetUsePub(kg, UseContractRevoke)
-		
 		wal, _ := nd.SubWallet[c.CoinType]
-
 		c.OurRevokePKH, err = wal.NewAdr()
-
-		
 
 		// Now we can sign the division
 		sigs, err := nd.SignSettlementDivisions(c)
@@ -354,10 +342,7 @@ func (nd *LitNode) DlcAcceptHandler(msg lnutil.DlcOfferAcceptMsg, peer *RemotePe
 	c.TheirPayoutBase = msg.OurPayoutBase
 	c.TheirPayoutPKH = msg.OurPayoutPKH
 	c.TheirIdx = msg.OurIdx
-
-	//c.TheirRevokePub = msg.OurRevokePub
 	c.TheirRevokePKH = msg.OurRevokePKH
-
 	c.TheirrefundTxSig64 = msg.OurrefundTxSig64
 
 	//------------------------------------------
@@ -374,8 +359,6 @@ func (nd *LitNode) DlcAcceptHandler(msg lnutil.DlcOfferAcceptMsg, peer *RemotePe
 	if err != nil {
 		return err
 	}
-
-
 
 	//------------------------------------------
 
@@ -410,24 +393,16 @@ func (nd *LitNode) DlcAcceptHandler(msg lnutil.DlcOfferAcceptMsg, peer *RemotePe
 
 	//------------------------------------------
 
-
-
-
-
-
 	outMsg := lnutil.NewDlcContractAckMsg(c, sigs, c.OurrefundTxSig64)
-	//outMsg := lnutil.NewDlcContractAckMsg(c, sigs)
 	c.Status = lnutil.ContractStatusAcknowledged
 
 	err = nd.DlcManager.SaveContract(c)
 	if err != nil {
 		return err
 	}
-
 	nd.tmpSendLitMsg(outMsg)
 
 	return nil
-
 }
 
 func (nd *LitNode) DlcContractAckHandler(msg lnutil.DlcContractAckMsg, peer *RemotePeer) {
@@ -440,9 +415,7 @@ func (nd *LitNode) DlcContractAckHandler(msg lnutil.DlcContractAckMsg, peer *Rem
 	// TODO: Check signatures
 
 	c.Status = lnutil.ContractStatusAcknowledged
-
 	c.TheirSettlementSignatures = msg.SettlementSignatures
-
 	c.TheirrefundTxSig64 = msg.OurrefundTxSig64
 
 	err = nd.DlcManager.SaveContract(c)
@@ -492,14 +465,6 @@ func (nd *LitNode) DlcFundingSigsHandler(msg lnutil.DlcContractFundingSigsMsg, p
 	}
 
 	wal.SignMyInputs(msg.SignedFundingTx)
-
-
-	var buft bytes.Buffer
-	wtt := bufio.NewWriter(&buft)
-	msg.SignedFundingTx.Serialize(wtt)
-	wtt.Flush()
-
-
 	wal.DirectSendTx(msg.SignedFundingTx)
 
 	err = wal.WatchThis(c.FundingOutpoint)
@@ -649,7 +614,6 @@ func (nd *LitNode) BuildDlcFundingTransaction(c *lnutil.DlcContract) (wire.MsgTx
 	their_fee := int64(their_tx_vsize * c.FeePerByte)
 
 	// add change and sort
-
 	their_txout := wire.NewTxOut(theirInputTotal-c.TheirFundingAmount-their_fee, lnutil.DirectWPKHScriptFromPKH(c.TheirChangePKH)) 
 	tx.AddTxOut(their_txout)
 

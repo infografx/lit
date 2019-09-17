@@ -1744,12 +1744,9 @@ type DlcOfferAcceptMsg struct {
 	OurFundMultisigPub [33]byte
 	// The Pubkey to be used to in the contract settlement
 	OurPayoutBase [33]byte
-
 	//OurRevokePub [33]byte
 	OurRevokePKH [20]byte
-
 	OurrefundTxSig64 [64]byte
-
 	// The PKH to be paid to in the contract settlement
 	OurPayoutPKH [20]byte
 	// The UTXOs we are using to fund the contract

@@ -69,12 +69,9 @@ type DlcContract struct {
 	OurChangePKH, TheirChangePKH [20]byte
 	// Pubkey used in the funding multisig output
 	OurFundMultisigPub, TheirFundMultisigPub [33]byte
-
 	//OurRevokePub, TheirRevokePub [33]byte
 	OurRevokePKH, TheirRevokePKH [20]byte
-
 	OurrefundTxSig64, TheirrefundTxSig64 [64]byte
-
 	// Pubkey to be used in the commit script (combined with oracle pubkey
 	// or CSV timeout)
 	OurPayoutBase, TheirPayoutBase [33]byte
@@ -172,9 +169,6 @@ func DlcContractFromBytes(b []byte) (*DlcContract, error) {
 
 	copy(c.OurFundMultisigPub[:], buf.Next(33))
 	copy(c.TheirFundMultisigPub[:], buf.Next(33))
-
-//	copy(c.OurRevokePub[:], buf.Next(33))
-//	copy(c.TheirRevokePub[:], buf.Next(33))
 
 	copy(c.OurRevokePKH[:], buf.Next(20))
 	copy(c.TheirRevokePKH[:], buf.Next(20))
@@ -291,9 +285,6 @@ func (self *DlcContract) Bytes() []byte {
 	buf.Write(self.TheirChangePKH[:])
 	buf.Write(self.OurFundMultisigPub[:])
 	buf.Write(self.TheirFundMultisigPub[:])
-
-	// buf.Write(self.OurRevokePub[:])
-	// buf.Write(self.TheirRevokePub[:])
 
 	buf.Write(self.OurRevokePKH[:])
 	buf.Write(self.TheirRevokePKH[:])	

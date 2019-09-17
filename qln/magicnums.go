@@ -22,7 +22,6 @@ const (
 	// pays TO)
 	UseContractPayoutPKH = 53 | hdkeychain.HardenedKeyStart
 
-
 	UseContractRevoke = 54 | hdkeychain.HardenedKeyStart
 
 	// key derivation path for HTLC pubkeys
