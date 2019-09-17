@@ -41,8 +41,6 @@ def run_t(env, params):
 
         env.new_oracle(1, oracle_value) # publishing interval is 1 second.
 
-        #settle_lit = env.lits[node_to_settle]
-
         oracle1 = env.oracles[0]
 
         time.sleep(2)
@@ -142,9 +140,6 @@ def run_t(env, params):
         oracle1_pubkey = json.loads(oracle1.get_pubkey())
         assert len(oracle1_pubkey["A"]) == 66, "Wrong oracle1 pub key"
         
-        # oracle2_pubkey = json.loads(oracle2.get_pubkey())
-        # assert len(oracle2_pubkey["A"]) == 66, "Wrong oracle2 pub key"
-
         oracle_res1 = lit1.rpc.AddOracle(Key=oracle1_pubkey["A"], Name="oracle1")
         assert oracle_res1["Oracle"]["Idx"] == 1, "AddOracle does not works"
 
@@ -179,11 +174,13 @@ def run_t(env, params):
 
         settlement_time = int(time.time()) + 3
 
-        # dlc contract settime 1 1552080600
-        lit1.rpc.SetContractSettlementTime(CIdx=contract["Contract"]["Idx"], Time=settlement_time)
+        # dlc contract settime
+        res = lit1.rpc.SetContractSettlementTime(CIdx=contract["Contract"]["Idx"], Time=settlement_time)
+        assert res["Success"], "SetContractSettlementTime does not works"
 
         # we set settlement_time equal to refundtime, actually the refund transaction will be valid.
-        lit1.rpc.SetContractRefundTime(CIdx=contract["Contract"]["Idx"], Time=settlement_time)
+        res = lit1.rpc.SetContractRefundTime(CIdx=contract["Contract"]["Idx"], Time=settlement_time)
+        assert res["Success"], "SetContractRefundTime does not works"
 
         res = lit1.rpc.ListContracts()
         assert res["Contracts"][contract["Contract"]["Idx"] - 1]["OracleTimestamp"] == settlement_time, "SetContractSettlementTime does not match settlement_time"

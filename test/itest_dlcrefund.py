@@ -141,7 +141,6 @@ def run_t(env, params):
         lit2.rpc.AddOracle(Key=oracle1_pubkey["A"], Name="oracle1")
 
 
-
         # #------------
         # # Now we have to create a contract in the lit1 node.
         # #------------
@@ -167,10 +166,12 @@ def run_t(env, params):
         settlement_time = int(time.time()) + 3
 
         # dlc contract settime
-        lit1.rpc.SetContractSettlementTime(CIdx=contract["Contract"]["Idx"], Time=settlement_time)
+        res = lit1.rpc.SetContractSettlementTime(CIdx=contract["Contract"]["Idx"], Time=settlement_time)
+        assert res["Success"], "SetContractSettlementTime does not works"
 
         # we set settlement_time equal to refundtime, actually the refund transaction will be valid.
-        lit1.rpc.SetContractRefundTime(CIdx=contract["Contract"]["Idx"], Time=settlement_time)
+        res = lit1.rpc.SetContractRefundTime(CIdx=contract["Contract"]["Idx"], Time=settlement_time)
+        assert res["Success"], "SetContractRefundTime does not works"
 
         res = lit1.rpc.ListContracts()
         assert res["Contracts"][contract["Contract"]["Idx"] - 1]["OracleTimestamp"] == settlement_time, "SetContractSettlementTime does not match settlement_time"
@@ -301,11 +302,10 @@ def run_t(env, params):
         res = env.lits[node_to_refund].rpc.RefundContract(CIdx=1)
 
         time.sleep(2)
-
         env.generate_block()
-        time.sleep(2)
+        time.sleep(1)
         env.generate_block()
-        time.sleep(2)
+        time.sleep(1)
 
 
         if deb_mod:
@@ -333,6 +333,9 @@ def run_t(env, params):
         bal2sum = bals2['TxoTotal'] + bals2['ChanTotal']
         print('  = sum ', bal2sum) 
 
+        assert bal1sum == 99976400, "lit1 After Refund balance does not match."
+        assert bal2sum == 99976400, "lit2 After Refund balance does not match."        
+
 
         #-----------------------------------------------
         # Send 10000 sat from lit1 to lit2
@@ -343,10 +346,8 @@ def run_t(env, params):
         res = lit1.rpc.Send(DestAddrs=[lit2.rpc.GetAddresses()['WitAddresses'][0]], Amts=[99960240])
 
         time.sleep(1)
-
         env.generate_block()
         time.sleep(2)
-
 
         print("After Spend")
         bals1 = lit1.get_balance_info()  
@@ -359,6 +360,11 @@ def run_t(env, params):
         print('new lit2 balance:', bals2['TxoTotal'], 'in txos,', bals2['ChanTotal'], 'in chans')
         bal2sum = bals2['TxoTotal'] + bals2['ChanTotal']
         print('  = sum ', bal2sum) 
+
+        assert bal1sum == 0, "lit1 After Spend balance does not match."
+        assert bal2sum == 199936640, "lit2 After Spend balance does not match."
+        
+
 
 
 
@@ -391,7 +397,6 @@ def run_t(env, params):
                 print("--------BLOCK--------")
                 print(b)
                 tx = b["tx"]
-                #print(tx)
                 try:
 
                     for i in range(len(tx)):
@@ -402,11 +407,7 @@ def run_t(env, params):
                         pp.pprint(decoded)
                 except BaseException as be:
                     print(be)
-                # print(type(rtx))
                 print('--------')    
-
-            #assert bals['ChanTotal'] == 0, "channel balance isn't zero!"
-
 
     except BaseException as be:
         raise be
