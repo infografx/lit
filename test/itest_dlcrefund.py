@@ -12,8 +12,6 @@ import codecs
 deb_mod = False
 
 
-
-
 def run_t(env, params):
     global deb_mod
     try:
@@ -21,22 +19,12 @@ def run_t(env, params):
         lit_funding_amt = params[0]
         contract_funding_amt = params[1]
         oracle_value = params[2]
-        node_to_settle = params[3]
-        valueFullyOurs=params[4]
-        valueFullyTheirs=params[5]
+        valueFullyOurs=params[3]
+        valueFullyTheirs=params[4]
 
-        FundingTxVsize = params[6][0]
-        SettlementTxVsize = params[6][1]
+        feeperbyte = params[5]
 
-        feeperbyte = params[7]
-
-        SetTxFeeOurs = params[8]
-        SetTxFeeTheirs = params[9]
-
-        ClaimTxFeeOurs = params[10]
-        ClaimTxFeeTheirs = params[11]
-
-        node_to_refund = params[12]
+        node_to_refund = params[6]
 
         bc = env.bitcoind
 
@@ -45,8 +33,6 @@ def run_t(env, params):
         #------------
 
         env.new_oracle(1, oracle_value) # publishing interval is 1 second.
-
-        #settle_lit = env.lits[node_to_settle]
 
         oracle1 = env.oracles[0]
 
@@ -125,8 +111,6 @@ def run_t(env, params):
 
         lit_funding_amt *= 100000000        # to satoshi
 
-        
-
 
         bals2 = lit2.get_balance_info()
         print('new lit2 balance:', bals2['TxoTotal'], 'in txos,', bals2['ChanTotal'], 'in chans')
@@ -147,9 +131,6 @@ def run_t(env, params):
         oracle1_pubkey = json.loads(oracle1.get_pubkey())
         assert len(oracle1_pubkey["A"]) == 66, "Wrong oracle1 pub key"
         
-        # oracle2_pubkey = json.loads(oracle2.get_pubkey())
-        # assert len(oracle2_pubkey["A"]) == 66, "Wrong oracle2 pub key"
-
         oracle_res1 = lit1.rpc.AddOracle(Key=oracle1_pubkey["A"], Name="oracle1")
         assert oracle_res1["Oracle"]["Idx"] == 1, "AddOracle does not works"
 
@@ -185,7 +166,7 @@ def run_t(env, params):
 
         settlement_time = int(time.time()) + 3
 
-        # dlc contract settime 1 1552080600
+        # dlc contract settime
         lit1.rpc.SetContractSettlementTime(CIdx=contract["Contract"]["Idx"], Time=settlement_time)
 
         # we set settlement_time equal to refundtime, actually the refund transaction will be valid.
@@ -229,7 +210,6 @@ def run_t(env, params):
 
         time.sleep(3)
   
-
         res = lit1.rpc.ListConnections()
         print(res)
 
@@ -242,7 +222,6 @@ def run_t(env, params):
 
         time.sleep(3)
        
-
         print("Before ContractRespond")
 
         res = lit2.rpc.ContractRespond(AcceptOrDecline=True, CIdx=1)
@@ -316,10 +295,10 @@ def run_t(env, params):
                 next
 
 
-        print("Before Revoke Contract")
+        print("Before Refund Contract")
         time.sleep(2)
 
-        res = env.lits[node_to_refund].rpc.RevokeContract(CIdx=1)
+        res = env.lits[node_to_refund].rpc.RefundContract(CIdx=1)
 
         time.sleep(2)
 
@@ -330,7 +309,7 @@ def run_t(env, params):
 
 
         if deb_mod:
-            print("ADDRESSES AFTER CONTRACT REVOKE")
+            print("ADDRESSES AFTER CONTRACT Refund")
             print("LIT1 Addresses")
             print(pp.pprint(lit1.rpc.GetAddresses()))
 
@@ -342,7 +321,7 @@ def run_t(env, params):
 
 
 
-        print("Revoke")
+        print("Refund")
         bals1 = lit1.get_balance_info()  
         print('new lit1 balance:', bals1['TxoTotal'], 'in txos,', bals1['ChanTotal'], 'in chans')
         bal1sum = bals1['TxoTotal'] + bals1['ChanTotal']
@@ -449,22 +428,9 @@ def forward(env):
     lit_funding_amt =      1     # 1 BTC
     contract_funding_amt = 10000000     # satoshi
 
-    FundingTxVsize = 252
-    SettlementTxVsize = 150
-
-    SetTxFeeOurs = 150 * 80
-    SetTxFeeTheirs = 0
-
-    ClaimTxFeeOurs = 121 * 80
-    ClaimTxFeeTheirs = 0
-
-
     feeperbyte = 80
 
-
-    vsizes = [FundingTxVsize, SettlementTxVsize]
-
-    params = [lit_funding_amt, contract_funding_amt, oracle_value, node_to_settle, valueFullyOurs, valueFullyTheirs, vsizes, feeperbyte, SetTxFeeOurs, SetTxFeeTheirs, ClaimTxFeeOurs, ClaimTxFeeTheirs, 0]
+    params = [lit_funding_amt, contract_funding_amt, oracle_value, valueFullyOurs, valueFullyTheirs, feeperbyte, 0]
 
     run_t(env, params)
 
@@ -481,21 +447,8 @@ def reverse(env):
     lit_funding_amt =      1     # 1 BTC
     contract_funding_amt = 10000000     # satoshi
 
-    FundingTxVsize = 252
-    SettlementTxVsize = 150
-
-    SetTxFeeOurs = 150 * 80
-    SetTxFeeTheirs = 0
-
-    ClaimTxFeeOurs = 121 * 80
-    ClaimTxFeeTheirs = 0
-
-
     feeperbyte = 80
 
-
-    vsizes = [FundingTxVsize, SettlementTxVsize]
-
-    params = [lit_funding_amt, contract_funding_amt, oracle_value, node_to_settle, valueFullyOurs, valueFullyTheirs, vsizes, feeperbyte, SetTxFeeOurs, SetTxFeeTheirs, ClaimTxFeeOurs, ClaimTxFeeTheirs, 1]
+    params = [lit_funding_amt, contract_funding_amt, oracle_value, valueFullyOurs, valueFullyTheirs, feeperbyte, 1]
 
     run_t(env, params)

@@ -856,7 +856,7 @@ func (nd *LitNode) SettleContract(cIdx uint64, oracleValue int64, oracleSig [32]
 
 
 
-func (nd *LitNode) RevokeContract(cIdx uint64) (bool, error) {
+func (nd *LitNode) RefundContract(cIdx uint64) (bool, error) {
 
 	c, err := nd.DlcManager.LoadContract(cIdx)
 	if err != nil {

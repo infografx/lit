@@ -132,9 +132,9 @@ def run_t(env, params):
         #------------------------------------------          
 
 
-        #------------
-        # Add oracles
-        #------------
+        # #------------
+        # # Add oracles
+        # #------------
 
         res = lit1.rpc.ListOracles()
         assert len(res) != 0, "Initial lis of oracles must be empty"
@@ -155,9 +155,9 @@ def run_t(env, params):
         lit2.rpc.AddOracle(Key=oracle1_pubkey["A"], Name="oracle1")
 
 
-        #------------
-        # Now we have to create a contract in the lit1 node.
-        #------------
+        # #------------
+        # # Now we have to create a contract in the lit1 node.
+        # #------------
 
         contract = lit1.rpc.NewContract()
 
@@ -221,7 +221,7 @@ def run_t(env, params):
         
         print("After SetContractDivision")
 
-        time.sleep(8)
+        time.sleep(5)
   
 
         res = lit1.rpc.ListConnections()
@@ -234,7 +234,7 @@ def run_t(env, params):
 
         print("After OfferContract")
 
-        time.sleep(8)
+        time.sleep(5)
        
 
         print("Before ContractRespond")
@@ -244,7 +244,7 @@ def run_t(env, params):
 
         print("After ContractRespond")
 
-        time.sleep(8)
+        time.sleep(5)
 
         #------------------------------------------
         
@@ -260,13 +260,13 @@ def run_t(env, params):
             print(bc.rpc.listaddressgroupings())
 
 
-        #------------------------------------------  
+        # #------------------------------------------  
 
 
         print("Before Generate Block")
 
         env.generate_block()
-        time.sleep(5)
+        time.sleep(2)
 
         print("After Generate Block")
 
@@ -315,13 +315,13 @@ def run_t(env, params):
 
 
         print("Before SettleContract")
-        time.sleep(8)
+        time.sleep(5)
 
 
         res = env.lits[node_to_settle].rpc.SettleContract(CIdx=contract["Contract"]["Idx"], OracleValue=oracle1_val, OracleSig=OracleSig)
         assert res["Success"], "SettleContract does not works."
 
-        time.sleep(8)
+        time.sleep(5)
 
         print('After SettleContract:')
         print(res)
@@ -329,15 +329,15 @@ def run_t(env, params):
 
         try:
             env.generate_block(1)
-            time.sleep(2)
+            time.sleep(1)
             env.generate_block(10)
-            time.sleep(2)
+            time.sleep(1)
             env.generate_block(1)
+            time.sleep(1)
         except BaseException as be:
             print("Exception After SettleContract: ")
             print(be)    
 
-        time.sleep(10)
         #------------------------------------------
 
         if deb_mod:
@@ -378,7 +378,7 @@ def run_t(env, params):
 
 
         #------------------------------------------
-        
+        #------------------------------------------
         print("AFter Settle")
 
         print("ORACLE VALUE:", oracle1_val, "; oracle signature:", oracle1_sig)
@@ -436,6 +436,8 @@ def run_t(env, params):
             assert bal2sum == lit1_bal_result, "The resulting lit2 node balance does not match." 
 
 
+
+
         #------------------------------------------
         if deb_mod:
             print("ADDRESSES AFTER SETTLE")
@@ -485,12 +487,13 @@ def t_11_0(env):
     #-----------------------------
     # 2) SettlementTx vsize will be printed
 
-
+ 
     # Vsize from Blockchain: 181
 
     # There fore we expect here
     # valueOurs: 17992800 = 18000000 - 7200     !!!
     # valueTheirs: 1992800 = 2000000 - 7200     !!!
+
 
     #-----------------------------
 
@@ -568,7 +571,7 @@ def t_1300_1(env):
 
     # Vsize from Blockchain: 252
 
-    # So we expect lit1, and lit2 balances equal to 89989920
+    # So we expect lit1, and lit2 balances equal to 89989920 !!!
     # 90000000 - 89989920 = 10080
     # But this is only when peers have one input each. What we expect.
 
@@ -582,10 +585,12 @@ def t_1300_1(env):
     # valueOurs: 5992800 = 6000000 - 7200     !!!
     # valueTheirs: 13992800 = 14000000 - 7200     !!!
 
+
     #-----------------------------
 
     # 3) Claim TX in SettleContract lit1
     # Here the transaction vsize is always the same: 121
+
 
     # Vsize from Blockchain: 121
 
@@ -647,7 +652,9 @@ def t_1300_1(env):
 
 
 
-# -----------------------------------------------------------------------------
+# ====================================================================================
+# ====================================================================================  
+
 
 
 def t_10_0(env):
@@ -683,7 +690,8 @@ def t_10_0(env):
 
 
 
-# -----------------------------------------------------------------------------  
+# ====================================================================================
+# ====================================================================================  
 
 
 
@@ -722,7 +730,8 @@ def t_10_1(env):
 
 
 
-# -----------------------------------------------------------------------------  
+# ====================================================================================
+# ====================================================================================  
 
 
 
