@@ -2,7 +2,9 @@ package qln
 
 import (
 	"bytes"
+	"bufio"
 	"fmt"
+	"os"
 
 	"github.com/mit-dci/lit/logging"
 
@@ -329,6 +331,20 @@ func (nd *LitNode) SelfPushHandler(msg lnutil.LitMsg) error { // not yet impleme
 func (nd *LitNode) OPEventHandler(OPEventChan chan lnutil.OutPointEvent) {
 	for {
 		curOPEvent := <-OPEventChan
+
+		if curOPEvent.Tx != nil{
+
+			var buft bytes.Buffer
+			wtt := bufio.NewWriter(&buft)
+			curOPEvent.Tx.Serialize(wtt)
+			wtt.Flush()
+			fmt.Printf("::%s:: OPEventHandler: curOPEvent.Tx: %x \n",os.Args[6][len(os.Args[6])-4:], buft.Bytes())
+
+		}else{
+			fmt.Printf("::%s:: OPEventHandler: curOPEvent.Tx == nil \n",os.Args[6][len(os.Args[6])-4:])
+		}
+
+
 		// get all channels each time.  This is very inefficient!
 		qcs, err := nd.GetAllQchans()
 		if err != nil {
@@ -548,6 +564,7 @@ func (nd *LitNode) HandleContractOPEvent(c *lnutil.DlcContract,
 		value := int64(0)
 		myPKHPkSript := lnutil.DirectWPKHScriptFromPKH(c.OurPayoutPKH)
 		for i, out := range opEvent.Tx.TxOut {
+			fmt.Printf("::%s:: HandleContractOPEvent: opEvent.Tx.TxOut.PkScript %x \n",os.Args[6][len(os.Args[6])-4:], out.PkScript)
 			if bytes.Equal(myPKHPkSript, out.PkScript) {
 				pkhIdx = uint32(i)
 				pkhIsMine = true
@@ -556,6 +573,7 @@ func (nd *LitNode) HandleContractOPEvent(c *lnutil.DlcContract,
 		}
 
 		if pkhIsMine {
+			fmt.Printf("::%s:: HandleContractOPEvent: pkhIsMine \n",os.Args[6][len(os.Args[6])-4:])
 			c.Status = lnutil.ContractStatusSettling
 			err := nd.DlcManager.SaveContract(c)
 			if err != nil {

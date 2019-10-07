@@ -2,6 +2,9 @@ package qln
 
 import (
 	"fmt"
+	"os"
+	"bufio"
+	"bytes"
 	"github.com/mit-dci/lit/btcutil"
 	"github.com/mit-dci/lit/btcutil/txscript"
 	"github.com/mit-dci/lit/btcutil/txsort"
@@ -13,6 +16,7 @@ import (
 	"github.com/mit-dci/lit/sig64"
 	"github.com/mit-dci/lit/wire"
 	"github.com/mit-dci/lit/consts"
+
 )
 
 func (nd *LitNode) AddContract() (*lnutil.DlcContract, error) {
@@ -557,12 +561,22 @@ func (nd *LitNode) SignSettlementDivisions(c *lnutil.DlcContract) ([]lnutil.DlcC
 		if err != nil {
 			return nil, err
 		}
+
+		var buft bytes.Buffer
+		wtt := bufio.NewWriter(&buft)
+		tx.Serialize(wtt)
+		wtt.Flush()
+		fmt.Printf("::%s:: SignSettlementDivisions(): tx: %x \n",os.Args[6][len(os.Args[6])-4:], buft.Bytes())
+
 		sig, err := nd.SignSettlementTx(c, tx, priv)
 		if err != nil {
 			return nil, err
 		}
 		returnValue[i].Outcome = d.OracleValue
 		returnValue[i].Signature = sig
+
+		fmt.Printf("::%s:: SignSettlementDivisions(): d.OracleValue: %d, sig: %x \n",os.Args[6][len(os.Args[6])-4:], buft.Bytes(), sig)
+
 	}
 
 	return returnValue, nil
@@ -710,17 +724,30 @@ func (nd *LitNode) SettleContract(cIdx uint64, oracleValue int64, oraclesSig[con
 		return [32]byte{}, [32]byte{}, fmt.Errorf("SettleContract Could not get private key for contract %d", c.Idx)
 	}
 
+	fmt.Printf("::%s:: !!! SettleContract() !!! \n",os.Args[6][len(os.Args[6])-4:])
+
 	settleTx, err := lnutil.SettlementTx(c, *d, false)
 	if err != nil {
 		logging.Errorf("SettleContract SettlementTx err %s\n", err.Error())
 		return [32]byte{}, [32]byte{}, err
 	}
 
+
+	var buft bytes.Buffer
+	wtt := bufio.NewWriter(&buft)
+	settleTx.Serialize(wtt)
+	wtt.Flush()
+
+
+	fmt.Printf("::%s:: SettleContract(): tx: %x \n",os.Args[6][len(os.Args[6])-4:], buft.Bytes())	
+
 	mySig, err := nd.SignSettlementTx(c, settleTx, priv)
 	if err != nil {
 		logging.Errorf("SettleContract SignSettlementTx err %s", err.Error())
 		return [32]byte{}, [32]byte{}, err
 	}
+
+	fmt.Printf("::%s:: SettleContract(): mySig: %x \n",os.Args[6][len(os.Args[6])-4:], mySig)
 
 	myBigSig := sig64.SigDecompress(mySig)
 
@@ -736,6 +763,8 @@ func (nd *LitNode) SettleContract(cIdx uint64, oracleValue int64, oraclesSig[con
 		logging.Errorf("SettleContract FundTxScript err %s", err.Error())
 		return [32]byte{}, [32]byte{}, err
 	}
+
+	fmt.Printf("::%s:: SettleContract(): mmyBigSig: %x, theirBigSig: %x \n",os.Args[6][len(os.Args[6])-4:], myBigSig, theirBigSig)
 		
 
 	// swap if needed
@@ -744,6 +773,8 @@ func (nd *LitNode) SettleContract(cIdx uint64, oracleValue int64, oraclesSig[con
 	} else {
 		settleTx.TxIn[0].Witness = SpendMultiSigWitStack(pre, myBigSig, theirBigSig)
 	}
+
+	fmt.Printf("::%s:: SettleContract(): settleTx %s \n",os.Args[6][len(os.Args[6])-4:], lnutil.TxToString(settleTx))
 
 	// Settlement TX should be valid here, so publish it.
 	err = wal.DirectSendTx(settleTx)

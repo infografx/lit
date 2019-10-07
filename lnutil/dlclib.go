@@ -8,6 +8,8 @@ import (
 	"math/big"
 	"errors"
 
+	"os"
+
 	"github.com/mit-dci/lit/btcutil/chaincfg/chainhash"
 	"github.com/mit-dci/lit/crypto/koblitz"
 	"github.com/mit-dci/lit/logging"
@@ -407,7 +409,12 @@ func PrintTx(tx *wire.MsgTx) {
 func DlcOutput(pkPeer, pkOurs [33]byte, oraclesSigPub [][33]byte, value int64) *wire.TxOut {
 	
 	scriptBytes := DlcCommitScript(pkPeer, pkOurs, oraclesSigPub, 5)
+
+	fmt.Printf("::%s:: DlcOutput: scriptBytes %x \n",os.Args[6][len(os.Args[6])-4:], scriptBytes)
+
 	scriptBytes = P2WSHify(scriptBytes)
+
+	fmt.Printf("::%s:: DlcOutput: P2WSHify(scriptBytes) %x \n",os.Args[6][len(os.Args[6])-4:], scriptBytes)
 
 	return wire.NewTxOut(value, scriptBytes)
 }
@@ -426,6 +433,8 @@ func DlcCommitScript(pubKeyPeer, ourPubKey [33]byte, oraclesSigPub [][33]byte, d
 	for i := 1; i < len(oraclesSigPub); i++ {
 		combinedPubKey = CombinePubs(combinedPubKey,  oraclesSigPub[i])
 	}
+
+	fmt.Printf("::%s:: DlcCommitScript: oraclesSigPub[0] %x, combinedPubKey %x \n",os.Args[6][len(os.Args[6])-4:], oraclesSigPub[0], combinedPubKey)
 
 	return CommitScript(combinedPubKey, ourPubKey, delay)
 }
@@ -630,6 +639,10 @@ func SettlementTx(c *DlcContract, d DlcContractDivision,
 		if err != nil {
 			return nil, err
 		}
+
+
+		fmt.Printf("::%s:: SettlementTx(): c.OracleA[i]: %x, c.OracleR[i]: %x \n",os.Args[6][len(os.Args[6])-4:], c.OracleA[i], c.OracleR[i])
+		fmt.Printf("::%s:: SettlementTx(): d.OracleValue %d, sig (sG): %x \n",os.Args[6][len(os.Args[6])-4:], d.OracleValue, res)		
 
 		oraclesSigPub = append(oraclesSigPub, res)
 
