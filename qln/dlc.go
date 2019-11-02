@@ -733,14 +733,6 @@ func (nd *LitNode) SettleContract(cIdx uint64, oracleValue int64, oraclesSig[con
 	}
 
 
-	var buft bytes.Buffer
-	wtt := bufio.NewWriter(&buft)
-	settleTx.Serialize(wtt)
-	wtt.Flush()
-
-
-	fmt.Printf("::%s:: SettleContract(): tx: %x \n",os.Args[6][len(os.Args[6])-4:], buft.Bytes())	
-
 	mySig, err := nd.SignSettlementTx(c, settleTx, priv)
 	if err != nil {
 		logging.Errorf("SettleContract SignSettlementTx err %s", err.Error())
@@ -773,6 +765,15 @@ func (nd *LitNode) SettleContract(cIdx uint64, oracleValue int64, oraclesSig[con
 	} else {
 		settleTx.TxIn[0].Witness = SpendMultiSigWitStack(pre, myBigSig, theirBigSig)
 	}
+
+
+	var buft bytes.Buffer
+	wtt := bufio.NewWriter(&buft)
+	settleTx.Serialize(wtt)
+	wtt.Flush()
+
+	
+	fmt.Printf("::%s:: SettleContract(): tx: %x \n",os.Args[6][len(os.Args[6])-4:], buft.Bytes())	
 
 	fmt.Printf("::%s:: SettleContract(): settleTx %s \n",os.Args[6][len(os.Args[6])-4:], lnutil.TxToString(settleTx))
 

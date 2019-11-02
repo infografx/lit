@@ -198,11 +198,11 @@ def run_t(env, params):
         rpoints = []
         for oracle, datasource in zip(oracles, datasources):
             res = oracle.get_rpoint(datasource[0]["id"], settlement_time)
-            print(res)
             b_RPoint = decode_hex(json.loads(res)['R'])[0]
             RPoint = [elem for elem in b_RPoint]
             brpoints.append(RPoint)
             rpoints.append(res)
+            print("RPOINT: ", res, " b_RPoint: ", b_RPoint, " RPoint: ", RPoint )
 
 
         res = lit1.rpc.SetContractRPoint(CIdx=contract["Contract"]["Idx"], RPoint=brpoints)
@@ -301,12 +301,15 @@ def run_t(env, params):
             try:
 
                 for pr in publications_result:
+                    print("try pub")
                     oracle_val = json.loads(pr)["value"]
                     OraclesVal.append(oracle_val)
                     oracle_sig = json.loads(pr)["signature"]
+                    print("oracle_val: ", oracle_val, "oracle_sig: ", oracle_sig)
                     b_OracleSig = decode_hex(oracle_sig)[0]
                     OracleSig = [elem for elem in b_OracleSig]
-                    OraclesSig.append(OracleSig)                        
+                    OraclesSig.append(OracleSig) 
+                    time.sleep(0.5)                       
 
                 break
             except BaseException as e:
@@ -405,9 +408,6 @@ def run_t(env, params):
             #print(pp.pprint(res))
             print(res)
             print("=====END CONTRACT N2=====")
-
-
-        print("ORACLE VALUE:", OraclesVal[0], "; oracle signature:", OraclesVal[0])
 
         valueOurs = 0 
   

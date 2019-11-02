@@ -497,6 +497,11 @@ func computePubKey(pubA, pubR [33]byte, msg []byte) ([33]byte, error) {
 
 	bigE := new(big.Int).SetBytes(e)
 
+
+	fmt.Printf("::%s:: dlclib.go:computePubKey: message: %x, R.X.Bytes(): %x \n",os.Args[6][len(os.Args[6])-4:], msg, R.X.Bytes())
+	fmt.Printf("::%s:: dlclib.go:computePubKey: HashB: %x \n",os.Args[6][len(os.Args[6])-4:], e)
+
+
 	if bigE.Cmp(curve.N) >= 0 {
 		return returnValue, fmt.Errorf("hash of (msg, pubR) too big")
 	}
