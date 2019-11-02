@@ -831,6 +831,10 @@ func (nd *LitNode) SettleContract(cIdx uint64, oracleValue int64, oraclesSig[con
 		copy(pubOracleBytes0[:], pubOracle0.SerializeCompressed())		
 		pubOracleBytes = append(pubOracleBytes, pubOracleBytes0)
 
+		fmt.Printf("::%s:: SettleContract(): oraclesSig[0]: %x \n",os.Args[6][len(os.Args[6])-4:], oraclesSig[0])
+		fmt.Printf("::%s:: SettleContract(): privOracle0: %x \n",os.Args[6][len(os.Args[6])-4:], privOracle0)
+		fmt.Printf("::%s:: SettleContract(): pubOracle0: %x \n",os.Args[6][len(os.Args[6])-4:], pubOracle0)
+
 		for i:=uint32(1); i < c.OraclesNumber; i++ {
 
 			privOracle, pubOracle := koblitz.PrivKeyFromBytes(koblitz.S256(), oraclesSig[i][:])

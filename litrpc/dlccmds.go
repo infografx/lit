@@ -3,10 +3,15 @@ package litrpc
 import (
 	"encoding/hex"
 	"fmt"
+	"os"
 
 	"github.com/mit-dci/lit/dlc"
 	"github.com/mit-dci/lit/lnutil"
 	"github.com/mit-dci/lit/consts"
+
+	"github.com/adiabat/btcd/btcec"
+	"math/big"
+	"bytes"
 )
 
 type ListOraclesArgs struct {
@@ -525,4 +530,146 @@ func (r *LitRPC) RefundContract(args RefundContractArgs,reply *RefundContractRep
 
 	reply.Success = true
 	return nil
+}
+
+
+//======================================================================
+
+// type DifferentResultsFraudArgs struct {
+// 	S1	string
+// 	H1	string
+// 	S2	string
+// 	H2	string
+
+// }
+
+// type DifferentResultsFraudReply struct {
+// 	Fraud	bool
+// }
+
+
+// func (r *LitRPC) DifferentResultsFraud(args DifferentResultsFraudArgs, reply *DifferentResultsFraudReply) error {
+
+// 	fmt.Printf("::%s:: dlccmds.go:DifferentResultsFraud() s1: %s \n",os.Args[6][len(os.Args[6])-4:], args.S1)
+// 	fmt.Printf("::%s:: dlccmds.go:DifferentResultsFraud() h1: %s \n",os.Args[6][len(os.Args[6])-4:], args.H1)
+// 	fmt.Printf("::%s:: dlccmds.go:DifferentResultsFraud() s2: %s \n",os.Args[6][len(os.Args[6])-4:], args.S2)
+// 	fmt.Printf("::%s:: dlccmds.go:DifferentResultsFraud() h2: %s \n",os.Args[6][len(os.Args[6])-4:], args.H2)
+
+// 	reply.Fraud = true
+
+
+
+// 	return nil
+
+// }
+
+
+type DifferentResultsFraudArgs struct {
+	Sfirst	string
+	Hfirst	string
+	Ssecond string
+	Hsecond string
+	Rpoint  string
+	Apoint  string
+
+}
+
+type DifferentResultsFraudReply struct {
+	Fraud	bool
+}
+
+
+func (r *LitRPC) DifferentResultsFraud(args DifferentResultsFraudArgs, reply *DifferentResultsFraudReply) error {
+
+	curve := btcec.S256()
+
+	fmt.Printf("::%s:: dlccmds.go:DifferentResultsFraud() s1: %s \n",os.Args[6][len(os.Args[6])-4:], args.Sfirst)
+	fmt.Printf("::%s:: dlccmds.go:DifferentResultsFraud() h1: %s \n",os.Args[6][len(os.Args[6])-4:], args.Hfirst)
+	fmt.Printf("::%s:: dlccmds.go:DifferentResultsFraud() s2: %s \n",os.Args[6][len(os.Args[6])-4:], args.Ssecond)
+	fmt.Printf("::%s:: dlccmds.go:DifferentResultsFraud() h2: %s \n",os.Args[6][len(os.Args[6])-4:], args.Hsecond)
+
+	fmt.Printf("::%s:: dlccmds.go:DifferentResultsFraud() Rpoint: %s \n",os.Args[6][len(os.Args[6])-4:], args.Rpoint)
+	fmt.Printf("::%s:: dlccmds.go:DifferentResultsFraud() Apoint: %s \n",os.Args[6][len(os.Args[6])-4:], args.Apoint)
+
+	argsRpoint := new(big.Int)
+	argsApoint := new(big.Int)
+	argsRpoint.SetString(args.Rpoint, 16)
+	argsApoint.SetString(args.Apoint, 16)
+
+
+	s1 := new(big.Int)
+	h1 := new(big.Int)
+
+	s1.SetString(args.Sfirst, 16)
+	h1.SetString(args.Hfirst, 16)
+
+	s2 := new(big.Int)
+	h2 := new(big.Int)
+	
+	s2.SetString(args.Ssecond, 16)
+	h2.SetString(args.Hsecond, 16)
+
+	s2s1 := new(big.Int)
+	h1h2 := new(big.Int)
+
+	s2s1.Sub(s2, s1)
+	h1h2.Sub(h1, h2)
+	
+	h1h2.ModInverse(h1h2,curve.N)
+
+	v := new(big.Int)
+	v.Mul(s2s1, h1h2)
+	v.Mod(v, curve.N)	
+
+	//--------------------------------
+
+	k := new(big.Int)
+	h1vres := new(big.Int)
+	h1vres.Mul(h1, v)
+
+	k.Add(s1,h1vres)
+	k.Mod(k, curve.N)
+
+	fmt.Printf("::%s:: dlccmds.go:DifferentResultsFraud() v: %x \n",os.Args[6][len(os.Args[6])-4:], v.Bytes())
+	fmt.Printf("::%s:: dlccmds.go:DifferentResultsFraud() k: %x \n",os.Args[6][len(os.Args[6])-4:], k.Bytes())
+
+	//---------------------------------
+
+	bigS := new(big.Int)
+	bigS.Mul(h1, v)
+	bigS.Sub(k, bigS)
+	bigS.Mod(bigS, curve.N)
+
+	fmt.Printf("::%s:: dlccmds.go:DifferentResultsFraud() bigS.Bytes(): %x \n",os.Args[6][len(os.Args[6])-4:], bigS.Bytes())
+
+
+	var Rpoint [33]byte
+	var Apoint [33]byte
+
+	_, pk := btcec.PrivKeyFromBytes(btcec.S256(), k.Bytes())
+	copy(Rpoint[:], pk.SerializeCompressed())
+
+
+	_, pk = btcec.PrivKeyFromBytes(btcec.S256(), v.Bytes())
+	copy(Apoint[:], pk.SerializeCompressed())
+
+
+	fmt.Printf("::%s:: dlccmds.go:DifferentResultsFraud() Rpoint: %x \n",os.Args[6][len(os.Args[6])-4:], Rpoint)
+	fmt.Printf("::%s:: dlccmds.go:DifferentResultsFraud() Apoint: %x \n",os.Args[6][len(os.Args[6])-4:], Apoint)
+
+
+	Rcompare := bytes.Compare(Rpoint[:], argsRpoint.Bytes())
+	Acompare := bytes.Compare(Apoint[:], argsApoint.Bytes())
+
+	fmt.Println(Rcompare)
+	fmt.Println(Acompare)
+
+
+	
+	reply.Fraud = true
+
+
+
+	return nil
+
 }
