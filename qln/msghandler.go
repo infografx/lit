@@ -565,6 +565,8 @@ func (nd *LitNode) HandleContractOPEvent(c *lnutil.DlcContract,
 		wtt := bufio.NewWriter(&buft)
 		opEvent.Tx.Serialize(wtt)
 		wtt.Flush()
+
+		nd.OpEventTx = opEvent.Tx
 		
 		fmt.Printf("::%s:: HandleContractOPEvent: opEvent.Tx: %x \n",os.Args[6][len(os.Args[6])-4:], buft.Bytes())
 	

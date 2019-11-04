@@ -12,6 +12,7 @@ import (
 	"github.com/adiabat/btcd/btcec"
 	"math/big"
 	"bytes"
+	"bufio"
 )
 
 type ListOraclesArgs struct {
@@ -642,33 +643,46 @@ func (r *LitRPC) DifferentResultsFraud(args DifferentResultsFraudArgs, reply *Di
 
 //======================================================================
 
-type OracleCounterpartyFraudArgs struct {
+type GetMessageFromTxArgs struct {
 	CIdx uint64
-	Tx	string
 }
 
-type OracleCounterpartyFraudReply struct {
+type GetMessageFromTxReply struct {
 	Fraud	bool
 }
 
 
-func (r *LitRPC) OracleCounterpartyFraud(args OracleCounterpartyFraudArgs, reply *OracleCounterpartyFraudReply) error {
+func (r *LitRPC) GetMessageFromTx(args GetMessageFromTxArgs, reply *GetMessageFromTxReply) error {
 
 
-	fmt.Printf("::%s:: dlccmds.go:DifferentResultsFraud() args.CIdx: %d \n",os.Args[6][len(os.Args[6])-4:], args.CIdx)
-	fmt.Printf("::%s:: dlccmds.go:DifferentResultsFraud() args.Tx: %s \n",os.Args[6][len(os.Args[6])-4:], args.Tx)
-
+	fmt.Printf("::%s:: dlccmds.go:GetMessageFromTx() args.CIdx: %d \n",os.Args[6][len(os.Args[6])-4:], args.CIdx)
 
 	c, _ := r.Node.DlcManager.LoadContract(args.CIdx)
 
 	for i, d := range c.Division {
 		tx, _ := lnutil.SettlementTx(c, d, true)
-		fmt.Printf("::%s:: dlccmds.go:DifferentResultsFraud() settlementtx: %x \n",os.Args[6][len(os.Args[6])-4:], tx)
+
+		var buft bytes.Buffer
+		wtt := bufio.NewWriter(&buft)
+		tx.Serialize(wtt)
+		wtt.Flush()	
+
+		fmt.Printf("::%s:: dlccmds.go:GetMessageFromTx() settlementtx: %x \n",os.Args[6][len(os.Args[6])-4:], buft.Bytes())
 		fmt.Println(i)
-	}	
+	}
+
+	var buft bytes.Buffer
+	wtt := bufio.NewWriter(&buft)
+	r.Node.OpEventTx.Serialize(wtt)
+	wtt.Flush()		
+	
+	fmt.Printf("::%s:: dlccmds.go:GetMessageFromTx() LitNodeTX: %x \n",os.Args[6][len(os.Args[6])-4:], buft.Bytes())
 
 	reply.Fraud = false
 
 	return nil
 
 }
+
+
+//======================================================================
