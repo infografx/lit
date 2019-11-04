@@ -535,35 +535,6 @@ func (r *LitRPC) RefundContract(args RefundContractArgs,reply *RefundContractRep
 
 //======================================================================
 
-// type DifferentResultsFraudArgs struct {
-// 	S1	string
-// 	H1	string
-// 	S2	string
-// 	H2	string
-
-// }
-
-// type DifferentResultsFraudReply struct {
-// 	Fraud	bool
-// }
-
-
-// func (r *LitRPC) DifferentResultsFraud(args DifferentResultsFraudArgs, reply *DifferentResultsFraudReply) error {
-
-// 	fmt.Printf("::%s:: dlccmds.go:DifferentResultsFraud() s1: %s \n",os.Args[6][len(os.Args[6])-4:], args.S1)
-// 	fmt.Printf("::%s:: dlccmds.go:DifferentResultsFraud() h1: %s \n",os.Args[6][len(os.Args[6])-4:], args.H1)
-// 	fmt.Printf("::%s:: dlccmds.go:DifferentResultsFraud() s2: %s \n",os.Args[6][len(os.Args[6])-4:], args.S2)
-// 	fmt.Printf("::%s:: dlccmds.go:DifferentResultsFraud() h2: %s \n",os.Args[6][len(os.Args[6])-4:], args.H2)
-
-// 	reply.Fraud = true
-
-
-
-// 	return nil
-
-// }
-
-
 type DifferentResultsFraudArgs struct {
 	Sfirst	string
 	Hfirst	string
@@ -571,7 +542,6 @@ type DifferentResultsFraudArgs struct {
 	Hsecond string
 	Rpoint  string
 	Apoint  string
-
 }
 
 type DifferentResultsFraudReply struct {
@@ -642,7 +612,6 @@ func (r *LitRPC) DifferentResultsFraud(args DifferentResultsFraudArgs, reply *Di
 
 	fmt.Printf("::%s:: dlccmds.go:DifferentResultsFraud() bigS.Bytes(): %x \n",os.Args[6][len(os.Args[6])-4:], bigS.Bytes())
 
-
 	var Rpoint [33]byte
 	var Apoint [33]byte
 
@@ -657,18 +626,48 @@ func (r *LitRPC) DifferentResultsFraud(args DifferentResultsFraudArgs, reply *Di
 	fmt.Printf("::%s:: dlccmds.go:DifferentResultsFraud() Rpoint: %x \n",os.Args[6][len(os.Args[6])-4:], Rpoint)
 	fmt.Printf("::%s:: dlccmds.go:DifferentResultsFraud() Apoint: %x \n",os.Args[6][len(os.Args[6])-4:], Apoint)
 
-
 	Rcompare := bytes.Compare(Rpoint[:], argsRpoint.Bytes())
 	Acompare := bytes.Compare(Apoint[:], argsApoint.Bytes())
 
 	fmt.Println(Rcompare)
 	fmt.Println(Acompare)
 
-
-	
 	reply.Fraud = true
 
+	return nil
 
+}
+
+
+
+//======================================================================
+
+type OracleCounterpartyFraudArgs struct {
+	CIdx uint64
+	Tx	string
+}
+
+type OracleCounterpartyFraudReply struct {
+	Fraud	bool
+}
+
+
+func (r *LitRPC) OracleCounterpartyFraud(args OracleCounterpartyFraudArgs, reply *OracleCounterpartyFraudReply) error {
+
+
+	fmt.Printf("::%s:: dlccmds.go:DifferentResultsFraud() args.CIdx: %d \n",os.Args[6][len(os.Args[6])-4:], args.CIdx)
+	fmt.Printf("::%s:: dlccmds.go:DifferentResultsFraud() args.Tx: %s \n",os.Args[6][len(os.Args[6])-4:], args.Tx)
+
+
+	c, _ := r.Node.DlcManager.LoadContract(args.CIdx)
+
+	for i, d := range c.Division {
+		tx, _ := lnutil.SettlementTx(c, d, true)
+		fmt.Printf("::%s:: dlccmds.go:DifferentResultsFraud() settlementtx: %x \n",os.Args[6][len(os.Args[6])-4:], tx)
+		fmt.Println(i)
+	}	
+
+	reply.Fraud = false
 
 	return nil
 
