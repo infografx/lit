@@ -2,12 +2,15 @@ package litrpc
 
 import (
 	"encoding/hex"
+	"encoding/binary"
 	"fmt"
 	"os"
 
 	"github.com/mit-dci/lit/dlc"
 	"github.com/mit-dci/lit/lnutil"
 	"github.com/mit-dci/lit/consts"
+
+	"github.com/mit-dci/lit/wire"
 
 	"github.com/adiabat/btcd/btcec"
 	"math/big"
@@ -642,43 +645,28 @@ func (r *LitRPC) DifferentResultsFraud(args DifferentResultsFraudArgs, reply *Di
 
 
 //======================================================================
+// For testing only
+// This should be replaced by a fraudulent transaction that was published.
 
-type GetMessageFromTxArgs struct {
+
+type GetLatestTxArgs struct {
 	CIdx uint64
 }
 
-type GetMessageFromTxReply struct {
-	Fraud	bool
+type GetLatestTxArgsReply struct {
+	Tx	string
 }
 
 
-func (r *LitRPC) GetMessageFromTx(args GetMessageFromTxArgs, reply *GetMessageFromTxReply) error {
+func (r *LitRPC) GetLatestTx(args GetLatestTxArgs, reply *GetLatestTxArgsReply) error {
 
-
-	fmt.Printf("::%s:: dlccmds.go:GetMessageFromTx() args.CIdx: %d \n",os.Args[6][len(os.Args[6])-4:], args.CIdx)
-
-	c, _ := r.Node.DlcManager.LoadContract(args.CIdx)
-
-	for i, d := range c.Division {
-		tx, _ := lnutil.SettlementTx(c, d, true)
-
-		var buft bytes.Buffer
-		wtt := bufio.NewWriter(&buft)
-		tx.Serialize(wtt)
-		wtt.Flush()	
-
-		fmt.Printf("::%s:: dlccmds.go:GetMessageFromTx() settlementtx: %x \n",os.Args[6][len(os.Args[6])-4:], buft.Bytes())
-		fmt.Println(i)
-	}
-
-	var buft bytes.Buffer
-	wtt := bufio.NewWriter(&buft)
+	var buf bytes.Buffer
+	wtt := bufio.NewWriter(&buf)
 	r.Node.OpEventTx.Serialize(wtt)
 	wtt.Flush()		
-	
-	fmt.Printf("::%s:: dlccmds.go:GetMessageFromTx() LitNodeTX: %x \n",os.Args[6][len(os.Args[6])-4:], buft.Bytes())
 
-	reply.Fraud = false
+	encodedStr := hex.EncodeToString(buf.Bytes())
+	reply.Tx = encodedStr
 
 	return nil
 
@@ -686,3 +674,170 @@ func (r *LitRPC) GetMessageFromTx(args GetMessageFromTxArgs, reply *GetMessageFr
 
 
 //======================================================================
+
+
+type GetMessageFromTxArgs struct {
+	CIdx uint64
+	Tx   string
+}
+
+type GetMessageFromTxReply struct {
+	OracleValue	int64
+	ValueOurs 	int64
+	ValueTheirs int64
+	OracleA		string
+	OracleR		string
+	TheirPayoutBase string
+	OurPayoutBase	string
+
+}
+
+
+func (r *LitRPC) GetMessageFromTx(args GetMessageFromTxArgs, reply *GetMessageFromTxReply) error {
+
+
+	parsedTx, _ := hex.DecodeString(args.Tx)
+	reader := bytes.NewReader(parsedTx)
+
+	var msgTx wire.MsgTx
+	err := msgTx.Deserialize(reader)
+	if err != nil {
+		return nil
+	}	
+
+	inputPkScript := msgTx.TxOut[0].PkScript
+
+	c, _ := r.Node.DlcManager.LoadContract(args.CIdx)
+
+	for _, d := range c.Division {
+
+		tx, _ := lnutil.SettlementTx(c, d, true)
+
+		pkScriptsCompare := bytes.Compare(inputPkScript, tx.TxOut[0].PkScript)
+
+		if pkScriptsCompare == 0 {
+
+			reply.OracleValue = d.OracleValue
+			reply.ValueOurs   = d.ValueOurs
+
+
+			totalContractValue := c.TheirFundingAmount + c.OurFundingAmount
+
+			reply.ValueTheirs = totalContractValue - d.ValueOurs
+
+
+			reply.OracleA = hex.EncodeToString(c.OracleA[0][:])
+			reply.OracleR = hex.EncodeToString(c.OracleR[0][:])
+
+			reply.TheirPayoutBase = hex.EncodeToString(c.TheirPayoutBase[:])
+			reply.OurPayoutBase = hex.EncodeToString(c.OurPayoutBase[:])			
+
+		}
+
+	}
+
+	return nil
+
+}
+
+
+//======================================================================
+
+
+
+type CompactProofOfMsgArgs struct {
+	OracleValue	int64
+	ValueOurs 	int64
+	ValueTheirs int64
+	OracleA		string
+	OracleR		string
+	TheirPayoutBase string
+	OurPayoutBase	string	
+	Tx		string
+}
+
+type CompactProofOfMsgReply struct {
+	Success		bool
+}
+
+
+func (r *LitRPC) CompactProofOfMsg(args CompactProofOfMsgArgs, reply *CompactProofOfMsgReply) error {
+
+
+
+	fmt.Printf("::%s:: dlccmds.go:CompactProofOfMsg() OracleValue: %d \n",os.Args[6][len(os.Args[6])-4:], args.OracleValue)
+	fmt.Printf("::%s:: dlccmds.go:CompactProofOfMsg() ValueOurs: %d \n",os.Args[6][len(os.Args[6])-4:], args.ValueOurs)
+	fmt.Printf("::%s:: dlccmds.go:CompactProofOfMsg() OracleA: %s \n",os.Args[6][len(os.Args[6])-4:], args.OracleA)
+	fmt.Printf("::%s:: dlccmds.go:CompactProofOfMsg() OracleR: %s \n",os.Args[6][len(os.Args[6])-4:], args.OracleR)
+	fmt.Printf("::%s:: dlccmds.go:CompactProofOfMsg() TheirPayoutBase: %s \n",os.Args[6][len(os.Args[6])-4:], args.TheirPayoutBase)
+	fmt.Printf("::%s:: dlccmds.go:CompactProofOfMsg() OurPayoutBase: %s \n",os.Args[6][len(os.Args[6])-4:], args.OurPayoutBase)
+	fmt.Printf("::%s:: dlccmds.go:CompactProofOfMsg() Tx: %s \n",os.Args[6][len(os.Args[6])-4:], args.Tx)
+
+
+	parsedTx, _ := hex.DecodeString(args.Tx)
+	reader := bytes.NewReader(parsedTx)
+	var msgTx wire.MsgTx
+	err := msgTx.Deserialize(reader)
+	if err != nil {
+		return nil
+	}
+
+
+	var buf bytes.Buffer
+	w := bufio.NewWriter(&buf)
+	msgTx.Serialize(w)
+	w.Flush()
+
+	fmt.Printf("::%s:: dlccmds.go:CompactProofOfMsg() Tx: %x \n",os.Args[6][len(os.Args[6])-4:], buf.Bytes())
+
+
+	var oraclea []byte
+	var oracler []byte
+	var theirPayoutbase []byte
+	var ourPayoutbase []byte
+	oraclea, _ = hex.DecodeString(args.OracleA)
+	oracler, _ = hex.DecodeString(args.OracleR)
+
+	theirPayoutbase, _ = hex.DecodeString(args.TheirPayoutBase)
+	ourPayoutbase, _ = hex.DecodeString(args.OurPayoutBase)
+
+
+	var oraclea33 [33]byte
+	var oracler33 [33]byte
+	var theirPayoutbase33 [33]byte
+	var ourPayoutbase33 [33]byte
+	copy(oraclea33[:], oraclea)
+	copy(oracler33[:], oracler)
+	copy(theirPayoutbase33[:], theirPayoutbase)
+	copy(ourPayoutbase33[:], ourPayoutbase)
+
+
+	var buft bytes.Buffer
+	binary.Write(&buft, binary.BigEndian, uint64(0))
+	binary.Write(&buft, binary.BigEndian, uint64(0))
+	binary.Write(&buft, binary.BigEndian, uint64(0))
+	binary.Write(&buft, binary.BigEndian, args.OracleValue)
+
+	
+	oraclesSigPub, _ := lnutil.DlcCalcOracleSignaturePubKey(buft.Bytes(), oraclea33, oracler33)
+	fmt.Printf("sGGGGG: %x \n", oraclesSigPub)
+
+	var oraclesSigPubs [][33]byte
+	
+
+	oraclesSigPubs = append(oraclesSigPubs, oraclesSigPub)
+
+
+	txoutput := lnutil.DlcOutput(theirPayoutbase33, ourPayoutbase33, oraclesSigPubs, args.ValueTheirs)
+
+
+	fmt.Printf("txoutput.PkScript: %x \n", txoutput.PkScript)
+
+	fmt.Printf("msgTx.TxOut[0].PkScript: %x \n", msgTx.TxOut[0].PkScript)
+
+	reply.Success = true
+
+
+	return nil
+
+}
