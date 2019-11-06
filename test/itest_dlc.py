@@ -202,7 +202,6 @@ def run_t(env, params):
             RPoint = [elem for elem in b_RPoint]
             brpoints.append(RPoint)
             rpoints.append(res)
-            print("RPOINT: ", res, " b_RPoint: ", b_RPoint, " RPoint: ", RPoint )
 
 
         res = lit1.rpc.SetContractRPoint(CIdx=contract["Contract"]["Idx"], RPoint=brpoints)

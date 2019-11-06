@@ -635,7 +635,6 @@ type GetLatestTxArgsReply struct {
 	Tx	string
 }
 
-
 func (r *LitRPC) GetLatestTx(args GetLatestTxArgs, reply *GetLatestTxArgsReply) error {
 
 	var buf bytes.Buffer
@@ -706,10 +705,7 @@ func (r *LitRPC) GetMessageFromTx(args GetMessageFromTxArgs, reply *GetMessageFr
 
 }
 
-
 //======================================================================
-
-
 
 type CompactProofOfMsgArgs struct {
 	OracleValue	int64

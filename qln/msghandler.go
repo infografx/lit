@@ -2,10 +2,7 @@ package qln
 
 import (
 	"bytes"
-	"bufio"
-	"encoding/binary"
 	"fmt"
-	"os"
 
 	"github.com/mit-dci/lit/logging"
 
@@ -333,18 +330,6 @@ func (nd *LitNode) OPEventHandler(OPEventChan chan lnutil.OutPointEvent) {
 	for {
 		curOPEvent := <-OPEventChan
 
-		if curOPEvent.Tx != nil{
-
-			var buft bytes.Buffer
-			wtt := bufio.NewWriter(&buft)
-			curOPEvent.Tx.Serialize(wtt)
-			wtt.Flush()
-			fmt.Printf("::%s:: OPEventHandler: curOPEvent.Tx: %x \n",os.Args[6][len(os.Args[6])-4:], buft.Bytes())
-
-		}else{
-			fmt.Printf("::%s:: OPEventHandler: curOPEvent.Tx == nil \n",os.Args[6][len(os.Args[6])-4:])
-		}
-
 
 		// get all channels each time.  This is very inefficient!
 		qcs, err := nd.GetAllQchans()
@@ -560,47 +545,13 @@ func (nd *LitNode) HandleContractOPEvent(c *lnutil.DlcContract,
 				" for type %d", c.CoinType)
 		}
 
-
-		var buft bytes.Buffer
-		wtt := bufio.NewWriter(&buft)
-		opEvent.Tx.Serialize(wtt)
-		wtt.Flush()
-
 		nd.OpEventTx = opEvent.Tx
 		
-		fmt.Printf("::%s:: HandleContractOPEvent: opEvent.Tx: %x \n",os.Args[6][len(os.Args[6])-4:], buft.Bytes())
-	
-
-		for _, d := range c.Division {
-
-			var buf bytes.Buffer
-			binary.Write(&buf, binary.BigEndian, uint64(0))
-			binary.Write(&buf, binary.BigEndian, uint64(0))
-			binary.Write(&buf, binary.BigEndian, uint64(0))
-			binary.Write(&buf, binary.BigEndian, d.OracleValue)
-
-			var oraclesSigPub [][33]byte
-
-			oraclesigpub, err := lnutil.DlcCalcOracleSignaturePubKey(buf.Bytes(),c.OracleA[0], c.OracleR[0])
-			if err != nil {
-				return err
-			}
-			
-			oraclesSigPub = append(oraclesSigPub, oraclesigpub)
-
-			txout := lnutil.DlcOutput(c.TheirPayoutBase, c.OurPayoutBase, oraclesSigPub, d.ValueOurs)
-			fmt.Printf("::%s:: HandleContractOPEvent: txout.Value: %d, txout.PkScript: %x \n",os.Args[6][len(os.Args[6])-4:], txout.Value, txout.PkScript)
-			
-			
-		}		
-
 		pkhIsMine := false
 		pkhIdx := uint32(0)
 		value := int64(0)
 		myPKHPkSript := lnutil.DirectWPKHScriptFromPKH(c.OurPayoutPKH)
-		fmt.Printf("::%s:: HandleContractOPEvent: myPKHPkSript %x \n",os.Args[6][len(os.Args[6])-4:], myPKHPkSript)
 		for i, out := range opEvent.Tx.TxOut {
-			fmt.Printf("::%s:: HandleContractOPEvent: opEvent.Tx.TxOut.PkScript %x \n",os.Args[6][len(os.Args[6])-4:], out.PkScript)
 			if bytes.Equal(myPKHPkSript, out.PkScript) {
 				pkhIdx = uint32(i)
 				pkhIsMine = true
@@ -609,7 +560,6 @@ func (nd *LitNode) HandleContractOPEvent(c *lnutil.DlcContract,
 		}
 
 		if pkhIsMine {
-			fmt.Printf("::%s:: HandleContractOPEvent: pkhIsMine \n",os.Args[6][len(os.Args[6])-4:])
 			c.Status = lnutil.ContractStatusSettling
 			err := nd.DlcManager.SaveContract(c)
 			if err != nil {

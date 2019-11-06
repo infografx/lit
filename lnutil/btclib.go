@@ -5,8 +5,6 @@ import (
 	"encoding/binary"
 	"fmt"
 
-	"os"
-
 	"github.com/mit-dci/lit/btcutil"
 	"github.com/mit-dci/lit/btcutil/blockchain"
 	"github.com/mit-dci/lit/btcutil/txscript"
@@ -80,7 +78,6 @@ func P2WSHify(scriptBytes []byte) []byte {
 	bldr := txscript.NewScriptBuilder()
 	bldr.AddOp(txscript.OP_0)
 	wsh := fastsha256.Sum256(scriptBytes)
-	fmt.Printf("::%s:: P2WSHify(): fastsha256.Sum256(scriptBytes): %x \n",os.Args[6][len(os.Args[6])-4:], wsh)
 	bldr.AddData(wsh[:])
 	b, _ := bldr.Script() // ignore script errors
 	return b
