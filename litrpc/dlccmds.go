@@ -4,7 +4,6 @@ import (
 	"encoding/hex"
 	"encoding/binary"
 	"fmt"
-	"os"
 
 	"github.com/mit-dci/lit/dlc"
 	"github.com/mit-dci/lit/lnutil"
@@ -555,15 +554,9 @@ type DifferentResultsFraudReply struct {
 
 func (r *LitRPC) DifferentResultsFraud(args DifferentResultsFraudArgs, reply *DifferentResultsFraudReply) error {
 
+	reply.Fraud = false
+
 	curve := btcec.S256()
-
-	fmt.Printf("::%s:: dlccmds.go:DifferentResultsFraud() s1: %s \n",os.Args[6][len(os.Args[6])-4:], args.Sfirst)
-	fmt.Printf("::%s:: dlccmds.go:DifferentResultsFraud() h1: %s \n",os.Args[6][len(os.Args[6])-4:], args.Hfirst)
-	fmt.Printf("::%s:: dlccmds.go:DifferentResultsFraud() s2: %s \n",os.Args[6][len(os.Args[6])-4:], args.Ssecond)
-	fmt.Printf("::%s:: dlccmds.go:DifferentResultsFraud() h2: %s \n",os.Args[6][len(os.Args[6])-4:], args.Hsecond)
-
-	fmt.Printf("::%s:: dlccmds.go:DifferentResultsFraud() Rpoint: %s \n",os.Args[6][len(os.Args[6])-4:], args.Rpoint)
-	fmt.Printf("::%s:: dlccmds.go:DifferentResultsFraud() Apoint: %s \n",os.Args[6][len(os.Args[6])-4:], args.Apoint)
 
 	argsRpoint := new(big.Int)
 	argsApoint := new(big.Int)
@@ -604,9 +597,6 @@ func (r *LitRPC) DifferentResultsFraud(args DifferentResultsFraudArgs, reply *Di
 	k.Add(s1,h1vres)
 	k.Mod(k, curve.N)
 
-	fmt.Printf("::%s:: dlccmds.go:DifferentResultsFraud() v: %x \n",os.Args[6][len(os.Args[6])-4:], v.Bytes())
-	fmt.Printf("::%s:: dlccmds.go:DifferentResultsFraud() k: %x \n",os.Args[6][len(os.Args[6])-4:], k.Bytes())
-
 	//---------------------------------
 
 	bigS := new(big.Int)
@@ -614,29 +604,23 @@ func (r *LitRPC) DifferentResultsFraud(args DifferentResultsFraudArgs, reply *Di
 	bigS.Sub(k, bigS)
 	bigS.Mod(bigS, curve.N)
 
-	fmt.Printf("::%s:: dlccmds.go:DifferentResultsFraud() bigS.Bytes(): %x \n",os.Args[6][len(os.Args[6])-4:], bigS.Bytes())
-
 	var Rpoint [33]byte
 	var Apoint [33]byte
 
 	_, pk := btcec.PrivKeyFromBytes(btcec.S256(), k.Bytes())
 	copy(Rpoint[:], pk.SerializeCompressed())
 
-
 	_, pk = btcec.PrivKeyFromBytes(btcec.S256(), v.Bytes())
 	copy(Apoint[:], pk.SerializeCompressed())
-
-
-	fmt.Printf("::%s:: dlccmds.go:DifferentResultsFraud() Rpoint: %x \n",os.Args[6][len(os.Args[6])-4:], Rpoint)
-	fmt.Printf("::%s:: dlccmds.go:DifferentResultsFraud() Apoint: %x \n",os.Args[6][len(os.Args[6])-4:], Apoint)
 
 	Rcompare := bytes.Compare(Rpoint[:], argsRpoint.Bytes())
 	Acompare := bytes.Compare(Apoint[:], argsApoint.Bytes())
 
-	fmt.Println(Rcompare)
-	fmt.Println(Acompare)
+	if (Rcompare == 0) && (Acompare == 0){
 
-	reply.Fraud = true
+		reply.Fraud = true
+
+	}
 
 	return nil
 
@@ -661,9 +645,9 @@ type GetLatestTxArgsReply struct {
 func (r *LitRPC) GetLatestTx(args GetLatestTxArgs, reply *GetLatestTxArgsReply) error {
 
 	var buf bytes.Buffer
-	wtt := bufio.NewWriter(&buf)
-	r.Node.OpEventTx.Serialize(wtt)
-	wtt.Flush()		
+	w := bufio.NewWriter(&buf)
+	r.Node.OpEventTx.Serialize(w)
+	w.Flush()		
 
 	encodedStr := hex.EncodeToString(buf.Bytes())
 	reply.Tx = encodedStr
@@ -710,25 +694,16 @@ func (r *LitRPC) GetMessageFromTx(args GetMessageFromTxArgs, reply *GetMessageFr
 	c, _ := r.Node.DlcManager.LoadContract(args.CIdx)
 
 	for _, d := range c.Division {
-
 		tx, _ := lnutil.SettlementTx(c, d, true)
-
 		pkScriptsCompare := bytes.Compare(inputPkScript, tx.TxOut[0].PkScript)
 
 		if pkScriptsCompare == 0 {
-
 			reply.OracleValue = d.OracleValue
 			reply.ValueOurs   = d.ValueOurs
-
-
 			totalContractValue := c.TheirFundingAmount + c.OurFundingAmount
-
 			reply.ValueTheirs = totalContractValue - d.ValueOurs
-
-
 			reply.OracleA = hex.EncodeToString(c.OracleA[0][:])
 			reply.OracleR = hex.EncodeToString(c.OracleR[0][:])
-
 			reply.TheirPayoutBase = hex.EncodeToString(c.TheirPayoutBase[:])
 			reply.OurPayoutBase = hex.EncodeToString(c.OurPayoutBase[:])			
 
@@ -763,16 +738,7 @@ type CompactProofOfMsgReply struct {
 
 func (r *LitRPC) CompactProofOfMsg(args CompactProofOfMsgArgs, reply *CompactProofOfMsgReply) error {
 
-
-
-	fmt.Printf("::%s:: dlccmds.go:CompactProofOfMsg() OracleValue: %d \n",os.Args[6][len(os.Args[6])-4:], args.OracleValue)
-	fmt.Printf("::%s:: dlccmds.go:CompactProofOfMsg() ValueOurs: %d \n",os.Args[6][len(os.Args[6])-4:], args.ValueOurs)
-	fmt.Printf("::%s:: dlccmds.go:CompactProofOfMsg() OracleA: %s \n",os.Args[6][len(os.Args[6])-4:], args.OracleA)
-	fmt.Printf("::%s:: dlccmds.go:CompactProofOfMsg() OracleR: %s \n",os.Args[6][len(os.Args[6])-4:], args.OracleR)
-	fmt.Printf("::%s:: dlccmds.go:CompactProofOfMsg() TheirPayoutBase: %s \n",os.Args[6][len(os.Args[6])-4:], args.TheirPayoutBase)
-	fmt.Printf("::%s:: dlccmds.go:CompactProofOfMsg() OurPayoutBase: %s \n",os.Args[6][len(os.Args[6])-4:], args.OurPayoutBase)
-	fmt.Printf("::%s:: dlccmds.go:CompactProofOfMsg() Tx: %s \n",os.Args[6][len(os.Args[6])-4:], args.Tx)
-
+	reply.Success = false
 
 	parsedTx, _ := hex.DecodeString(args.Tx)
 	reader := bytes.NewReader(parsedTx)
@@ -782,14 +748,10 @@ func (r *LitRPC) CompactProofOfMsg(args CompactProofOfMsgArgs, reply *CompactPro
 		return nil
 	}
 
-
 	var buf bytes.Buffer
 	w := bufio.NewWriter(&buf)
 	msgTx.Serialize(w)
 	w.Flush()
-
-	fmt.Printf("::%s:: dlccmds.go:CompactProofOfMsg() Tx: %x \n",os.Args[6][len(os.Args[6])-4:], buf.Bytes())
-
 
 	var oraclea []byte
 	var oracler []byte
@@ -801,7 +763,6 @@ func (r *LitRPC) CompactProofOfMsg(args CompactProofOfMsgArgs, reply *CompactPro
 	theirPayoutbase, _ = hex.DecodeString(args.TheirPayoutBase)
 	ourPayoutbase, _ = hex.DecodeString(args.OurPayoutBase)
 
-
 	var oraclea33 [33]byte
 	var oracler33 [33]byte
 	var theirPayoutbase33 [33]byte
@@ -811,32 +772,21 @@ func (r *LitRPC) CompactProofOfMsg(args CompactProofOfMsgArgs, reply *CompactPro
 	copy(theirPayoutbase33[:], theirPayoutbase)
 	copy(ourPayoutbase33[:], ourPayoutbase)
 
-
 	var buft bytes.Buffer
 	binary.Write(&buft, binary.BigEndian, uint64(0))
 	binary.Write(&buft, binary.BigEndian, uint64(0))
 	binary.Write(&buft, binary.BigEndian, uint64(0))
 	binary.Write(&buft, binary.BigEndian, args.OracleValue)
-
 	
 	oraclesSigPub, _ := lnutil.DlcCalcOracleSignaturePubKey(buft.Bytes(), oraclea33, oracler33)
-	fmt.Printf("sGGGGG: %x \n", oraclesSigPub)
-
 	var oraclesSigPubs [][33]byte
-	
-
 	oraclesSigPubs = append(oraclesSigPubs, oraclesSigPub)
-
-
 	txoutput := lnutil.DlcOutput(theirPayoutbase33, ourPayoutbase33, oraclesSigPubs, args.ValueTheirs)
+	PkScriptCompare := bytes.Compare(txoutput.PkScript, msgTx.TxOut[0].PkScript)
 
-
-	fmt.Printf("txoutput.PkScript: %x \n", txoutput.PkScript)
-
-	fmt.Printf("msgTx.TxOut[0].PkScript: %x \n", msgTx.TxOut[0].PkScript)
-
-	reply.Success = true
-
+	if PkScriptCompare == 0 {
+		reply.Success = true
+	}
 
 	return nil
 

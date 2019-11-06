@@ -462,14 +462,24 @@ def run_t(env, params):
             assert bal2sum == lit1_bal_result, "The resulting lit2 node balance does not match." 
 
 
-        print("Before lit2.rpc.GetLatestTx(CIdx=1)")
+
+        # Check for possible ofracle fraud.
+        # If Olivia herself is a counterparty to a contract (e.g. Alice is Olivia), she can
+        # cause it to execute in an arbitrary fashion withouth revealing her private key.
+
+        # This is detectable, and the defrauded party
+        # Bob can provide a compact proof of the fraud so that all other users can
+        # stop using Olivia’s commitments and signatures. 
 
         # For testing only
         publishedTX = lit2.rpc.GetLatestTx(CIdx=1)
         print("GetLatestTx res: ", publishedTX["Tx"])
 
+        # At the moment we get lagest published tx.
         msg = lit2.rpc.GetMessageFromTx(CIdx=1, Tx=str(publishedTX["Tx"]))
         print("GetMessageFromTx res: ", msg)
+
+        assert msg["OracleValue"] == oracle_value, "lit.rpc.GetMessageFromTx does not works." 
 
         proofOfMsg = lit2.rpc.CompactProofOfMsg(\
             OracleValue=msg["OracleValue"], \
@@ -479,8 +489,9 @@ def run_t(env, params):
             OracleR=msg["OracleR"],\
             TheirPayoutBase=msg["TheirPayoutBase"],\
             OurPayoutBase=msg["OurPayoutBase"], Tx=publishedTX["Tx"])
-      
 
+        print("proofOfMsg: ", proofOfMsg)    
+      
     except BaseException as be:
         raise be  
 
