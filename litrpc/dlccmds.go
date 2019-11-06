@@ -509,9 +509,7 @@ func (r *LitRPC) SettleContract(args SettleContractArgs,
 	return nil
 }
 
-
 //======================================================================
-
 
 type RefundContractArgs struct {
 	CIdx        uint64
@@ -535,7 +533,6 @@ func (r *LitRPC) RefundContract(args RefundContractArgs,reply *RefundContractRep
 	return nil
 }
 
-
 //======================================================================
 
 type DifferentResultsFraudArgs struct {
@@ -550,7 +547,6 @@ type DifferentResultsFraudArgs struct {
 type DifferentResultsFraudReply struct {
 	Fraud	bool
 }
-
 
 func (r *LitRPC) DifferentResultsFraud(args DifferentResultsFraudArgs, reply *DifferentResultsFraudReply) error {
 
@@ -626,8 +622,6 @@ func (r *LitRPC) DifferentResultsFraud(args DifferentResultsFraudArgs, reply *Di
 
 }
 
-
-
 //======================================================================
 // For testing only
 // This should be replaced by a fraudulent transaction that was published.
@@ -656,9 +650,7 @@ func (r *LitRPC) GetLatestTx(args GetLatestTxArgs, reply *GetLatestTxArgsReply) 
 
 }
 
-
 //======================================================================
-
 
 type GetMessageFromTxArgs struct {
 	CIdx uint64
@@ -675,7 +667,6 @@ type GetMessageFromTxReply struct {
 	OurPayoutBase	string
 
 }
-
 
 func (r *LitRPC) GetMessageFromTx(args GetMessageFromTxArgs, reply *GetMessageFromTxReply) error {
 
