@@ -1,8 +1,6 @@
 
 def run_test(env):
 
-    print('Whether the oracle publish two different results or not.')
-
     lit = env.lits[0]
 
     s1string = "424b62134ec5ff7f8ff25de43917a03582e253283575b8f815d26bbdc27d17f8"
