@@ -6,6 +6,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"os"
 	"net/http"
 )
 
@@ -30,6 +31,8 @@ func (mgr *DlcManager) AddOracle(key [33]byte, name string) (*DlcOracle, error) 
 	if err != nil {
 		return nil, err
 	}
+
+	fmt.Printf("::%s:: AddOracle(): oracle.go: o: %+v \n",os.Args[6][len(os.Args[6])-4:], o)
 
 	return o, nil
 }

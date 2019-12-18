@@ -2,6 +2,7 @@ package dlc
 
 import (
 	"fmt"
+	"os"
 
 	"github.com/mit-dci/lit/lnutil"
 	"github.com/mit-dci/lit/consts"
@@ -58,6 +59,9 @@ func (mgr *DlcManager) SetContractOracle(cIdx uint64, oIdx []uint64) error {
 			return err
 		}
 		c.OracleA[i-1] = o.A
+
+		fmt.Printf("::%s:: SetContractOracle(): qln/contract.go: o: %+v \n",os.Args[6][len(os.Args[6])-4:], o)
+
 		// Reset R point after oracle setting
 		c.OracleR[i-1] = [33]byte{}
 	}

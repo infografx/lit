@@ -44,6 +44,14 @@ const (
 	ContractStatusNegotiateDeclinedByHim    DlcContractStatus = 16
 )
 
+
+type DatasourceType uint64
+
+const (
+	Price	DatasourceType = 1
+	Event  	DatasourceType = 2
+)
+
 // scalarSize is the size of an encoded big endian scalar.
 const scalarSize = 32
 
@@ -490,12 +498,12 @@ func BigIntToEncodedBytes(a *big.Int) *[32]byte {
 // DlcCalcOracleSignaturePubKey computes the predicted signature s*G
 // it's just R - h(R||m)A
 func DlcCalcOracleSignaturePubKey(msg []byte, oracleA,
-	oracleR [33]byte) ([33]byte, error) {
-	return computePubKey(oracleA, oracleR, msg)
+	oracleR [33]byte, datasourceType DatasourceType) ([33]byte, error) {
+	return computePubKey(oracleA, oracleR, msg, datasourceType)
 }
 
 // calculates P = pubR - h(msg, pubR)pubA
-func computePubKey(pubA, pubR [33]byte, msg []byte) ([33]byte, error) {
+func computePubKey(pubA, pubR [33]byte, msg []byte, datasourceType DatasourceType) ([33]byte, error) {
 	var returnValue [33]byte
 
 	// Hardcode curve
@@ -511,19 +519,23 @@ func computePubKey(pubA, pubR [33]byte, msg []byte) ([33]byte, error) {
 		return returnValue, err
 	}
 
-	// e = Hash(messageType, oraclePubQ)
-	var hashInput []byte
-	hashInput = append(msg, R.X.Bytes()...)
-	e := chainhash.HashB(hashInput)
+	if datasourceType == Price{
 
-	bigE := new(big.Int).SetBytes(e)
+		// e = Hash(messageType, oraclePubQ)
+		var hashInput []byte
+		hashInput = append(msg, R.X.Bytes()...)
+		e := chainhash.HashB(hashInput)
 
-	if bigE.Cmp(curve.N) >= 0 {
-		return returnValue, fmt.Errorf("hash of (msg, pubR) too big")
+		bigE := new(big.Int).SetBytes(e)
+
+		if bigE.Cmp(curve.N) >= 0 {
+			return returnValue, fmt.Errorf("hash of (msg, pubR) too big")
+		}
+
+		// e * B
+		A.X, A.Y = curve.ScalarMult(A.X, A.Y, e)
+
 	}
-
-	// e * B
-	A.X, A.Y = curve.ScalarMult(A.X, A.Y, e)
 
 	A.Y.Neg(A.Y)
 
@@ -656,7 +668,7 @@ func SettlementTx(c *DlcContract, d DlcContractDivision,
 
 	for i:=uint32(0); i < c.OraclesNumber; i++ {
 
-		res, err := DlcCalcOracleSignaturePubKey(buf.Bytes(),c.OracleA[i], c.OracleR[i])
+		res, err := DlcCalcOracleSignaturePubKey(buf.Bytes(),c.OracleA[i], c.OracleR[i], Price)
 		if err != nil {
 			return nil, err
 		}

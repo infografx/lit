@@ -751,7 +751,7 @@ func (r *LitRPC) CompactProofOfMsg(args CompactProofOfMsgArgs, reply *CompactPro
 	binary.Write(&buft, binary.BigEndian, uint64(0))
 	binary.Write(&buft, binary.BigEndian, args.OracleValue)
 	
-	oraclesSigPub, _ := lnutil.DlcCalcOracleSignaturePubKey(buft.Bytes(), oraclea33, oracler33)
+	oraclesSigPub, _ := lnutil.DlcCalcOracleSignaturePubKey(buft.Bytes(), oraclea33, oracler33, lnutil.Price)
 	var oraclesSigPubs [][33]byte
 	oraclesSigPubs = append(oraclesSigPubs, oraclesSigPub)
 	txoutput := lnutil.DlcOutput(theirPayoutbase33, ourPayoutbase33, oraclesSigPubs, args.ValueTheirs)

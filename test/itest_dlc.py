@@ -143,6 +143,9 @@ def run_t(env, params):
 
         for oracle in oracles:
             opk = json.loads(oracle.get_pubkey())
+
+            print("opk['A']: ", opk["A"])
+
             oracles_pubkey.append(opk)
 
             oidx = lit1.rpc.AddOracle(Key=opk["A"], Name=opk["A"])["Oracle"]["Idx"]
@@ -185,9 +188,6 @@ def run_t(env, params):
         # we set settlement_time equal to refundtime, actually the refund transaction will be valid.
         res = lit1.rpc.SetContractRefundTime(CIdx=contract["Contract"]["Idx"], Time=settlement_time)
         assert res["Success"], "SetContractRefundTime does not works"
-
-        # we set settlement_time equal to refundtime, actually the refund transaction will be valid.
-        lit1.rpc.SetContractRefundTime(CIdx=contract["Contract"]["Idx"], Time=settlement_time)
 
         res = lit1.rpc.ListContracts()
         assert res["Contracts"][contract["Contract"]["Idx"] - 1]["OracleTimestamp"] == settlement_time, "SetContractSettlementTime does not match settlement_time"
@@ -549,7 +549,7 @@ def t_11_0(env):
 
     #-----------------------------
 
-    oracles_number = 1
+    oracles_number = 3
     oracle_value = 11
     node_to_settle = 0
 

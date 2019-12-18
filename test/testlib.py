@@ -308,6 +308,7 @@ class OracleNode():
         return res.text
 
     def get_datasources(self):
+        print("get_datasources()")
         res = requests.get("http://localhost:"+self.httpport+"/api/datasources")
         return res.text
 
