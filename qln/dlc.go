@@ -3,6 +3,7 @@ package qln
 import (
 	"fmt"
 	"errors"
+	"os"
 
 	"encoding/hex"
 
@@ -310,6 +311,7 @@ func (nd *LitNode) DlcOfferHandler(msg lnutil.DlcOfferMsg, peer *RemotePeer) {
 
 		c.OracleA[i] = msg.Contract.OracleA[i]
 		c.OracleR[i] = msg.Contract.OracleR[i]
+		c.DsType[i] = msg.Contract.DsType[i]
 
 	}
 
@@ -677,6 +679,9 @@ func (nd *LitNode) FundContract(c *lnutil.DlcContract) error {
 
 func (nd *LitNode) SettleContract(cIdx uint64, oracleValue int64, oraclesSig[consts.MaxOraclesNumber][32]byte) ([32]byte, [32]byte, error) {
 
+
+	fmt.Printf("::%s:: SettleContract(): oracleValue %d \n", os.Args[6][len(os.Args[6])-4:], oracleValue)
+
 	c, err := nd.DlcManager.LoadContract(cIdx)
 	if err != nil {
 		logging.Errorf("SettleContract FindContract err %s\n", err.Error())
@@ -815,6 +820,12 @@ func (nd *LitNode) SettleContract(cIdx uint64, oracleValue int64, oraclesSig[con
 			pubOracleBytes = append(pubOracleBytes, pubOracleBytes1)
 
 		}
+
+		for _, s := range oraclesSig{
+			fmt.Printf("::%s:: Claim Tx s: %x \n", os.Args[6][len(os.Args[6])-4:], s)
+		}
+
+		
 
 		settleScript := lnutil.DlcCommitScript(c.OurPayoutBase, c.TheirPayoutBase, pubOracleBytes , 5)
 		err = nd.SignClaimTx(txClaim, settleTx.TxOut[0].Value, settleScript, privContractOutput, false)

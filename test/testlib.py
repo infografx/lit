@@ -319,6 +319,13 @@ class OracleNode():
         print(res.text)
         return res.text
 
+
+    def get_eventrpoint(self, data):
+        res = requests.get("http://localhost:"+self.httpport+"/api/eventrpoint/" + str(data))
+        print("get_rpoint:", "http://localhost:"+self.httpport+"/api/eventrpoint/" + str(data))
+        print(res.text)
+        return res.text        
+
     def get_publication(self, rpoint):
         res  = requests.get("http://localhost:"+self.httpport+"/api/publication/" + rpoint)
         return res.text

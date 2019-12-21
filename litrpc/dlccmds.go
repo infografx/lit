@@ -4,6 +4,7 @@ import (
 	"encoding/hex"
 	"encoding/binary"
 	"fmt"
+	"os"
 
 	"github.com/mit-dci/lit/dlc"
 	"github.com/mit-dci/lit/lnutil"
@@ -200,6 +201,7 @@ func (r *LitRPC) SetContractDatafeed(args SetContractDatafeedArgs,
 type SetContractRPointArgs struct {
 	CIdx   uint64
 	RPoint [][33]byte
+	DsType []uint64
 }
 
 type SetContractRPointReply struct {
@@ -211,7 +213,7 @@ func (r *LitRPC) SetContractRPoint(args SetContractRPointArgs,
 	reply *SetContractRPointReply) error {
 	var err error
 
-	err = r.Node.DlcManager.SetContractRPoint(args.CIdx, args.RPoint)
+	err = r.Node.DlcManager.SetContractRPoint(args.CIdx, args.RPoint, args.DsType)
 	if err != nil {
 		return err
 	}
@@ -499,6 +501,9 @@ func (r *LitRPC) SettleContract(args SettleContractArgs,
 	reply *SettleContractReply) error {
 	var err error
 
+
+	fmt.Printf("::%s:: (r *LitRPC) SettleContract: args.OracleValue %d \n", os.Args[6][len(os.Args[6])-4:], args.OracleValue)
+
 	reply.SettleTxHash, reply.ClaimTxHash, err = r.Node.SettleContract(
 		args.CIdx, args.OracleValue, args.OracleSig)
 	if err != nil {
@@ -751,7 +756,7 @@ func (r *LitRPC) CompactProofOfMsg(args CompactProofOfMsgArgs, reply *CompactPro
 	binary.Write(&buft, binary.BigEndian, uint64(0))
 	binary.Write(&buft, binary.BigEndian, args.OracleValue)
 	
-	oraclesSigPub, _ := lnutil.DlcCalcOracleSignaturePubKey(buft.Bytes(), oraclea33, oracler33, lnutil.Price)
+	oraclesSigPub, _ := lnutil.DlcCalcOracleSignaturePubKey(buft.Bytes(), oraclea33, oracler33)
 	var oraclesSigPubs [][33]byte
 	oraclesSigPubs = append(oraclesSigPubs, oraclesSigPub)
 	txoutput := lnutil.DlcOutput(theirPayoutbase33, ourPayoutbase33, oraclesSigPubs, args.ValueTheirs)

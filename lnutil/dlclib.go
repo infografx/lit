@@ -8,6 +8,8 @@ import (
 	"math/big"
 	"errors"
 
+	"os"
+
 	"github.com/mit-dci/lit/btcutil/chaincfg/chainhash"
 	"github.com/mit-dci/lit/crypto/koblitz"
 	"github.com/mit-dci/lit/logging"
@@ -74,6 +76,8 @@ type DlcContract struct {
 	OraclesNumber uint32
 	// Pub keys of the oracle and the R point used in the contract
 	OracleA, OracleR [consts.MaxOraclesNumber][33]byte
+	// Datasource type
+	DsType [consts.MaxOraclesNumber] uint64
 	// The time we expect the oracle to publish
 	OracleTimestamp uint64
 	// The time after which the refund transaction becomes valid.
@@ -174,6 +178,11 @@ func DlcContractFromBytes(b []byte) (*DlcContract, error) {
 
 		copy(c.OracleA[i][:], buf.Next(33))
 		copy(c.OracleR[i][:], buf.Next(33))
+		dsType, err := wire.ReadVarInt(buf, 0)
+		if err != nil {
+			return nil, err
+		}
+		c.DsType[i] = dsType		
 	}	
 
 	c.OracleTimestamp, err = wire.ReadVarInt(buf, 0)
@@ -319,13 +328,12 @@ func (self *DlcContract) Bytes() []byte {
 
 	//fmt.Printf("Bytes() self.OraclesNumber: %d\n", self.OraclesNumber)
 
-
 	for i := uint64(0); i < uint64(consts.MaxOraclesNumber); i++ {
 
 		//fmt.Printf("Bytes() i: %d\n", i)
-
 		buf.Write(self.OracleA[i][:])
 		buf.Write(self.OracleR[i][:])
+		wire.WriteVarInt(&buf, 0, self.DsType[i])
 	}
 
 	wire.WriteVarInt(&buf, 0, uint64(self.OracleTimestamp))
@@ -498,12 +506,12 @@ func BigIntToEncodedBytes(a *big.Int) *[32]byte {
 // DlcCalcOracleSignaturePubKey computes the predicted signature s*G
 // it's just R - h(R||m)A
 func DlcCalcOracleSignaturePubKey(msg []byte, oracleA,
-	oracleR [33]byte, datasourceType DatasourceType) ([33]byte, error) {
-	return computePubKey(oracleA, oracleR, msg, datasourceType)
+	oracleR [33]byte) ([33]byte, error) {
+	return computePubKey(oracleA, oracleR, msg)
 }
 
 // calculates P = pubR - h(msg, pubR)pubA
-func computePubKey(pubA, pubR [33]byte, msg []byte, datasourceType DatasourceType) ([33]byte, error) {
+func computePubKey(pubA, pubR [33]byte, msg []byte) ([33]byte, error) {
 	var returnValue [33]byte
 
 	// Hardcode curve
@@ -519,23 +527,21 @@ func computePubKey(pubA, pubR [33]byte, msg []byte, datasourceType DatasourceTyp
 		return returnValue, err
 	}
 
-	if datasourceType == Price{
 
-		// e = Hash(messageType, oraclePubQ)
-		var hashInput []byte
-		hashInput = append(msg, R.X.Bytes()...)
-		e := chainhash.HashB(hashInput)
+	// e = Hash(messageType, oraclePubQ)
+	var hashInput []byte
+	hashInput = append(msg, R.X.Bytes()...)
+	e := chainhash.HashB(hashInput)
 
-		bigE := new(big.Int).SetBytes(e)
+	bigE := new(big.Int).SetBytes(e)
 
-		if bigE.Cmp(curve.N) >= 0 {
-			return returnValue, fmt.Errorf("hash of (msg, pubR) too big")
-		}
-
-		// e * B
-		A.X, A.Y = curve.ScalarMult(A.X, A.Y, e)
-
+	if bigE.Cmp(curve.N) >= 0 {
+		return returnValue, fmt.Errorf("hash of (msg, pubR) too big")
 	}
+
+	// e * B
+	A.X, A.Y = curve.ScalarMult(A.X, A.Y, e)
+
 
 	A.Y.Neg(A.Y)
 
@@ -664,11 +670,30 @@ func SettlementTx(c *DlcContract, d DlcContractDivision,
 	binary.Write(&buf, binary.BigEndian, d.OracleValue)
 
 
+	var eventbuf bytes.Buffer
+	binary.Write(&eventbuf, binary.BigEndian, uint64(0))
+	binary.Write(&eventbuf, binary.BigEndian, uint64(0))
+	binary.Write(&eventbuf, binary.BigEndian, uint64(0))
+	binary.Write(&eventbuf, binary.BigEndian, int64(1))		// The value for Event type datasource is always eq. 1
+
+
 	var oraclesSigPub [][33]byte
 
 	for i:=uint32(0); i < c.OraclesNumber; i++ {
 
-		res, err := DlcCalcOracleSignaturePubKey(buf.Bytes(),c.OracleA[i], c.OracleR[i], Price)
+		var res [33]byte
+		var err error
+
+		if DatasourceType(c.DsType[i]) == Price {
+			fmt.Printf("::%s:: dlclib.go:SettltmentTx: A %x, R %x, value %d, c.DsType %d \n", os.Args[6][len(os.Args[6])-4:], c.OracleA[i], c.OracleR[i], d.OracleValue, DatasourceType(c.DsType[i]))
+			res, err = DlcCalcOracleSignaturePubKey(buf.Bytes(),c.OracleA[i], c.OracleR[i])
+		}
+
+		if DatasourceType(c.DsType[i]) == Event {
+			fmt.Printf("::%s:: dlclib.go:SettltmentTx: A %x, R %x, value %d, c.DsType %d \n", os.Args[6][len(os.Args[6])-4:], c.OracleA[i], c.OracleR[i], 1, DatasourceType(c.DsType[i]))
+			res, err = DlcCalcOracleSignaturePubKey(eventbuf.Bytes(),c.OracleA[i], c.OracleR[i])
+		}
+
 		if err != nil {
 			return nil, err
 		}

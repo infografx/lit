@@ -169,31 +169,38 @@ def run_t(env, params):
         # Add Rpoints
         #------------------
 
+        dsTypePrice = 1
+        dsTypeEvent = 2
+
         decode_hex = codecs.getdecoder("hex_codec")
         brpoints = []
-        rpoints = []   
+        rpoints = []
+        dstypes = []   
 
         res = oracles[0].get_rpoint(1, settlement_time)
         b_RPoint = decode_hex(json.loads(res)['R'])[0]
         RPoint = [elem for elem in b_RPoint]
         brpoints.append(RPoint)
         rpoints.append(res)
+        dstypes.append(dsTypePrice)
 
         res = oracles[1].get_rpoint(1, settlement_time)
         b_RPoint = decode_hex(json.loads(res)['R'])[0]
         RPoint = [elem for elem in b_RPoint]
         brpoints.append(RPoint)
-        rpoints.append(res)        
+        rpoints.append(res) 
+        dstypes.append(dsTypePrice)       
 
 
-        res = oracles[1].get_rpoint(1, settlement_time)
+        res = oracles[1].get_eventrpoint("66e7a20e71a1585e1e467bac2c68e87a56ac73f0c8b19c7d8fead37185b6a192")
         b_RPoint = decode_hex(json.loads(res)['R'])[0]
         RPoint = [elem for elem in b_RPoint]
         brpoints.append(RPoint)
         rpoints.append(res)  
+        dstypes.append(dsTypeEvent)
 
 
-        res = lit1.rpc.SetContractRPoint(CIdx=contract["Contract"]["Idx"], RPoint=brpoints)
+        res = lit1.rpc.SetContractRPoint(CIdx=contract["Contract"]["Idx"], RPoint=brpoints, DsType=dstypes)
         assert res["Success"], "SetContractRpoint does not works"
 
 
@@ -291,14 +298,14 @@ def run_t(env, params):
                 print(e)
                 next
 
-        # Oracles have to publish the same value
-        vEqual = True
-        nTemp = OraclesVal[0]
-        for v in OraclesVal:
-            if nTemp != v:
-                vEqual = False
-                break;
-        assert vEqual, "Oracles publish different values"      
+        # # Oracles have to publish the same value
+        # vEqual = True
+        # nTemp = OraclesVal[0]
+        # for v in OraclesVal:
+        #     if nTemp != v:
+        #         vEqual = False
+        #         break;
+        # assert vEqual, "Oracles publish different values"      
 
         res = env.lits[node_to_settle].rpc.SettleContract(CIdx=contract["Contract"]["Idx"], OracleValue=OraclesVal[0], OracleSig=OraclesSig)
         assert res["Success"], "SettleContract does not works."

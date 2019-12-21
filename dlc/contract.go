@@ -152,7 +152,7 @@ func (mgr *DlcManager) SetContractDatafeed(cIdx, feed uint64) error {
 
 // SetContractRPoint allows you to manually set the R-point key if an oracle is
 // not imported from a REST API
-func (mgr *DlcManager) SetContractRPoint(cIdx uint64, rPoint [][33]byte) error {
+func (mgr *DlcManager) SetContractRPoint(cIdx uint64, rPoint [][33]byte, dsType[] uint64) error {
 	c, err := mgr.LoadContract(cIdx)
 	if err != nil {
 		return err
@@ -165,6 +165,7 @@ func (mgr *DlcManager) SetContractRPoint(cIdx uint64, rPoint [][33]byte) error {
 
 	for i:=uint32(0); i < c.OraclesNumber; i++{
 		c.OracleR[i] = rPoint[i]
+		c.DsType[i] = dsType[i]
 	}
 
 	
